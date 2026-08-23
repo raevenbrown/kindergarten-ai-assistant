@@ -55,7 +55,7 @@ def mic_reading_component(target_phrase):
     function startListening() {{
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {{
-            document.getElementById('status').innerText = 'Speech recognition not supported in this browser. Try Chrome/Safari.';
+            document.getElementById('status').innerText = 'Speech recognition not supported in this browser. Try Chrome or Safari.';
             return;
         }}
         const recognition = new SpeechRecognition();
@@ -68,7 +68,7 @@ def mic_reading_component(target_phrase):
         const heardBox = document.getElementById('heardBox');
 
         btn.style.background = '#22c55e';
-        btn.innerText = '🔴 Listening... Speak now!';
+        btn.innerText = '🔴 Listening... Speak clearly!';
         status.innerText = 'Listening to student...';
 
         recognition.start();
@@ -80,7 +80,7 @@ def mic_reading_component(target_phrase):
             heardBox.innerHTML = '🗣️ You said: "' + transcript + '"';
             
             if (transcript.includes(target) || target.includes(transcript)) {{
-                status.innerHTML = '<b style="color: #22c55e;">🎉 PERFECT PRONUNCIATION! Match verified!</b>';
+                status.innerHTML = '<b style="color: #22c55e;">🎉 PERFECT PRONUNCIATION! Click "Verified! Next Step" below to collect stars!</b>';
                 let audio = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
                 audio.play();
             }} else {{
@@ -91,7 +91,7 @@ def mic_reading_component(target_phrase):
         }};
 
         recognition.onerror = function(event) {{
-            status.innerText = 'Mic error: ' + event.error;
+            status.innerText = 'Mic notice: ' + event.error;
             btn.style.background = '#ef4444';
             btn.innerText = '🎙️ Tap to Speak';
         }};
@@ -756,17 +756,17 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
         speak_button(f"The letter {v_letter}. Short sound is {v_letter} like apple. Long sound is {v_letter} like acorn.", label=f"🔊 Listen to Vowel '{v_letter}' Sounds")
 
 # ==========================================
-# MODULE 5: SENTENCE LADDER FLUENCY WITH LIVE MIC VALIDATION
+# MODULE 5: SENTENCE LADDER FLUENCY WITH LIVE MIC VALIDATION & BALLOONS
 # ==========================================
 elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
-    st.subheader("🪜 Sentence Ladder Fluency Reader (With Microphone Validation)")
+    st.subheader("🪜 Sentence Ladder Fluency Reader (With Speech Recognition)")
     st.markdown("""
     <div class="instruction-box">
         👉 <b>How to Practice:</b> 
         1. Look at the ladder step shown below. 
-        2. Click <b>🔊 Listen</b> if you need help hearing it. 
-        3. Click the <b>🎙️ Tap to Speak</b> button and read the phrase into your microphone! 
-        4. When verified, click <b>Next Ladder Step</b> to build the next word!
+        2. Click <b>🔊 Listen</b> if you need help hearing it first. 
+        3. Click the <b>🎙️ Tap to Speak</b> button and read the phrase into your mic! 
+        4. When verified, click <b>⭐ Verified! Next Step (+50 XP)</b> to pop balloons and climb the ladder!
     </div>
     """, unsafe_allow_html=True)
 
@@ -787,31 +787,40 @@ elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
 
     st.write("---")
     
-    # Progress Controls
-    c_next, c_reset, _ = st.columns([2, 1, 2])
-    with c_next:
+    # Progress Controls with Instant Balloon & XP Promotion
+    c_verify, c_restart, _ = st.columns([2, 1, 2])
+    with c_verify:
         if current_idx < max_step - 1:
-            if st.button("🪜 Next Ladder Step (+1 Word) ➡️"):
-                st.session_state.ladder_step += 1
-                st.rerun()
-        else:
-            if st.button("🎉 I Finished the Entire Story! (+50 XP, +1 ⭐)"):
+            if st.button("⭐ Verified! Next Step (+50 XP, +1 ⭐) ➡️"):
                 st.session_state.stars += 1
                 st.session_state.streak += 1
                 st.session_state.xp += 50
-                log_milestone(st.session_state.student_name, "Sentence Ladder", f"Mastered: {story_name}")
-                st.balloons()
+                log_milestone(st.session_state.student_name, "Sentence Ladder", f"Read Step {current_idx+1}: {current_phrase}")
+                st.session_state.ladder_step += 1
                 st.session_state.feedback = {
                     "type": "success",
-                    "msg": f"🎉 CHAMPION READER! You read all steps of '{story_name}' perfectly!",
+                    "msg": f"🎉 EXCELLENT READING! '{current_phrase}' was read correctly! (+50 XP, +1 ⭐) Moving to Step {st.session_state.ladder_step}...",
+                    "celebrate": True
+                }
+                st.rerun()
+        else:
+            if st.button("👑 Finished Entire Story! (+100 XP, +2 ⭐) 🎉"):
+                st.session_state.stars += 2
+                st.session_state.streak += 1
+                st.session_state.xp += 100
+                log_milestone(st.session_state.student_name, "Sentence Ladder", f"Mastered Whole Story: {story_name}")
+                st.session_state.feedback = {
+                    "type": "success",
+                    "msg": f"🏆 STORY MASTER! You read all steps of '{story_name}' aloud perfectly! (+100 XP, +2 ⭐)",
                     "celebrate": True
                 }
                 st.session_state.ladder_step = 1
                 st.rerun()
 
-    with c_reset:
+    with c_restart:
         if st.button("🔄 Restart Story"):
             st.session_state.ladder_step = 1
+            st.session_state.feedback = None
             st.rerun()
 
 # ==========================================
