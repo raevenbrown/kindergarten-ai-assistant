@@ -76,6 +76,8 @@ if "student_name" not in st.session_state:
     st.session_state.student_name = "Skylar"
 if "active_nav" not in st.session_state:
     st.session_state.active_nav = "🎵 Rhyme Quest"
+if "prev_nav" not in st.session_state:
+    st.session_state.prev_nav = "🎵 Rhyme Quest"
 if "feedback" not in st.session_state:
     st.session_state.feedback = None
 
@@ -250,11 +252,17 @@ nav_options = [
     "🗂️ Sight Word Test"
 ]
 
-st.session_state.active_nav = st.sidebar.radio(
+selected_nav = st.sidebar.radio(
     "Choose Learning Area:", 
     nav_options, 
     index=nav_options.index(st.session_state.active_nav) if st.session_state.active_nav in nav_options else 0
 )
+
+# If the user switched pages via sidebar, clear any lingering feedback banner so balloons don't fire
+if selected_nav != st.session_state.prev_nav:
+    st.session_state.feedback = None
+    st.session_state.active_nav = selected_nav
+    st.session_state.prev_nav = selected_nav
 
 if st.sidebar.button("🔄 Reset All Progress"):
     st.session_state.xp = 0
@@ -278,14 +286,16 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Persistent Feedback & Balloon Banner
+# One-time feedback display (cleared immediately after rendering so it won't repeat on other clicks)
 if st.session_state.feedback:
-    if st.session_state.feedback.get("celebrate"):
+    fb = st.session_state.feedback
+    if fb.get("celebrate"):
         st.balloons()
-    if st.session_state.feedback["type"] == "success":
-        st.success(st.session_state.feedback["msg"])
+    if fb["type"] == "success":
+        st.success(fb["msg"])
     else:
-        st.error(st.session_state.feedback["msg"])
+        st.error(fb["msg"])
+    st.session_state.feedback = None
 
 # ==========================================
 # MODULE 1: RHYME QUEST
