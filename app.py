@@ -17,7 +17,7 @@ st.markdown("""
     .card-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(245,158,11,0.25); padding: 18px; border-radius: 12px; margin-bottom: 15px; }
     .instruction-box { background: rgba(56, 189, 248, 0.08); border-left: 4px solid #38bdf8; padding: 12px 16px; border-radius: 6px; margin-bottom: 18px; color: #e0f2fe; }
     .explain-card { background: rgba(34, 197, 94, 0.1); border: 2px solid #22c55e; border-radius: 12px; padding: 18px; margin-top: 15px; margin-bottom: 15px; }
-    .ladder-card { background: rgba(245, 158, 11, 0.08); border: 2px dashed #f59e0b; border-radius: 8px; padding: 16px; min-height: 60px; font-size: 1.6rem; font-weight: 700; color: #fef08a; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+    .ladder-card { background: rgba(245, 158, 11, 0.08); border-left: 6px solid #f59e0b; border-radius: 8px; padding: 16px; font-size: 1.6rem; font-weight: 800; color: #fef08a; margin-bottom: 12px; }
     .ten-frame-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 320px; margin: 12px 0; }
     .ten-frame-cell { border: 2px solid #f59e0b; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 6px; background: rgba(255,255,255,0.02); }
     .letter-card { font-size: 3.5rem; font-weight: 800; color: #f59e0b; text-align: center; padding: 15px; border: 2px dashed rgba(245,158,11,0.4); border-radius: 12px; margin-bottom: 10px; background: rgba(0,0,0,0.2); width: 120px; }
@@ -38,6 +38,67 @@ def speak_button(text_to_speak, label="🔊 Listen"):
     ">{label}</button>
     """
     components.html(html_code, height=45)
+
+# Helper HTML5 Live Speech-To-Text Recognition Component
+def mic_reading_component(target_phrase):
+    clean_target = target_phrase.replace("'", "").replace(".", "").replace("!", "").strip().lower()
+    html_code = f"""
+    <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(56,189,248,0.3); border-radius: 10px; padding: 12px; margin-top: 10px;">
+        <button id="micBtn" style="background: #ef4444; color: #fff; font-weight: bold; border: none; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-size: 1rem;" onclick="startListening()">
+            🎙️ Tap to Speak (Read Phrase Aloud)
+        </button>
+        <span id="status" style="color: #94a3b8; margin-left: 12px; font-size: 0.95rem;">Click mic to start</span>
+        <div id="heardBox" style="margin-top: 10px; color: #38bdf8; font-weight: bold; font-size: 1.1rem;"></div>
+    </div>
+
+    <script>
+    function startListening() {{
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {{
+            document.getElementById('status').innerText = 'Speech recognition not supported in this browser. Try Chrome/Safari.';
+            return;
+        }}
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        const btn = document.getElementById('micBtn');
+        const status = document.getElementById('status');
+        const heardBox = document.getElementById('heardBox');
+
+        btn.style.background = '#22c55e';
+        btn.innerText = '🔴 Listening... Speak now!';
+        status.innerText = 'Listening to student...';
+
+        recognition.start();
+
+        recognition.onresult = function(event) {{
+            const transcript = event.results[0][0].transcript.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+            const target = "{clean_target}";
+            
+            heardBox.innerHTML = '🗣️ You said: "' + transcript + '"';
+            
+            if (transcript.includes(target) || target.includes(transcript)) {{
+                status.innerHTML = '<b style="color: #22c55e;">🎉 PERFECT PRONUNCIATION! Match verified!</b>';
+                let audio = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
+                audio.play();
+            }} else {{
+                status.innerHTML = '<b style="color: #f87171;">❌ Try sounding it out again!</b>';
+            }}
+            btn.style.background = '#ef4444';
+            btn.innerText = '🎙️ Tap to Speak Again';
+        }};
+
+        recognition.onerror = function(event) {{
+            status.innerText = 'Mic error: ' + event.error;
+            btn.style.background = '#ef4444';
+            btn.innerText = '🎙️ Tap to Speak';
+        }};
+    }}
+    </script>
+    """
+    components.html(html_code, height=140)
 
 # --- SUPABASE CONFIGURATION ---
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
@@ -86,8 +147,8 @@ if "vowel_submitted" not in st.session_state:
     st.session_state.vowel_submitted = False
 if "vowel_explanation" not in st.session_state:
     st.session_state.vowel_explanation = None
-if "built_words" not in st.session_state:
-    st.session_state.built_words = []
+if "ladder_step" not in st.session_state:
+    st.session_state.ladder_step = 1
 
 # --- DATASETS ---
 LEVEL_WORDS = {
@@ -179,12 +240,42 @@ VOWEL_GAME_WORDS = [
     }
 ]
 
-BUILDER_SENTENCES = {
-    "🐱 The Fat Cat": ["This", "fat", "cat", "sat", "on", "the", "mat."],
-    "🐷 The Big Pig": ["I", "see", "the", "big", "pig", "dig."],
-    "🐔 The Red Hen": ["The", "red", "hen", "has", "ten", "eggs."],
-    "☀️ The Hot Sun": ["We", "can", "run", "in", "the", "hot", "sun."],
-    "🐛 The Little Bug": ["The", "little", "bug", "sat", "on", "the", "rug."]
+LADDER_STORIES = {
+    "🐱 The Fat Cat": [
+        "This",
+        "This is",
+        "This is a cat.",
+        "This is a fat cat.",
+        "This fat cat sat on the mat."
+    ],
+    "🐷 The Big Pig": [
+        "I",
+        "I see",
+        "I see a pig.",
+        "I see a big pig.",
+        "I see the big pig dig in mud."
+    ],
+    "🐔 The Red Hen": [
+        "The",
+        "The red",
+        "The red hen",
+        "The red hen has ten",
+        "The red hen has ten eggs in the pen."
+    ],
+    "☀️ The Hot Sun": [
+        "The",
+        "The sun",
+        "The sun is hot.",
+        "We can run in the sun.",
+        "We can run and have fun in the hot sun."
+    ],
+    "🐛 The Little Bug": [
+        "The",
+        "The bug",
+        "The little bug",
+        "The little bug sat",
+        "The little bug sat on the big rug."
+    ]
 }
 
 SYNONYMS_DATA = {
@@ -315,7 +406,7 @@ nav_options = [
     "🔢 Ten-Frame Math", 
     "🔤 Letter Match",
     "🍎 Vowel Hunter",
-    "🧩 Sentence Builder Game",
+    "🪜 Sentence Ladder Fluency",
     "🗣️ Sound Wall Lab",
     "📝 Sentence Scaffolds",
     "🦸 Super Synonyms",
@@ -340,7 +431,7 @@ if st.sidebar.button("🔄 Reset All Progress"):
     st.session_state.level = 1
     st.session_state.stars = 0
     st.session_state.feedback = None
-    st.session_state.built_words = []
+    st.session_state.ladder_step = 1
     init_rhyme_question()
     init_math_question()
     init_letter_question()
@@ -665,72 +756,62 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
         speak_button(f"The letter {v_letter}. Short sound is {v_letter} like apple. Long sound is {v_letter} like acorn.", label=f"🔊 Listen to Vowel '{v_letter}' Sounds")
 
 # ==========================================
-# MODULE 5: INTERACTIVE SENTENCE BUILDER GAME (REPLACES CONFUSING LADDER)
+# MODULE 5: SENTENCE LADDER FLUENCY WITH LIVE MIC VALIDATION
 # ==========================================
-elif st.session_state.active_nav == "🧩 Sentence Builder Game":
-    st.subheader("🧩 Interactive Sentence Builder & Phonics Reader")
+elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
+    st.subheader("🪜 Sentence Ladder Fluency Reader (With Microphone Validation)")
     st.markdown("""
     <div class="instruction-box">
-        👉 <b>How to Play:</b> 
-        1. Listen to the target sentence below. 
-        2. Click the word cards at the bottom in order to build the sentence on your board!
+        👉 <b>How to Practice:</b> 
+        1. Look at the ladder step shown below. 
+        2. Click <b>🔊 Listen</b> if you need help hearing it. 
+        3. Click the <b>🎙️ Tap to Speak</b> button and read the phrase into your microphone! 
+        4. When verified, click <b>Next Ladder Step</b> to build the next word!
     </div>
     """, unsafe_allow_html=True)
 
-    sentence_theme = st.selectbox("Choose a Sentence to Build:", list(BUILDER_SENTENCES.keys()))
-    target_words = BUILDER_SENTENCES[sentence_theme]
-    full_sentence = " ".join(target_words)
+    story_name = st.selectbox("Choose a Sentence Ladder Story:", list(LADDER_STORIES.keys()))
+    ladder_steps = LADDER_STORIES[story_name]
+    max_step = len(ladder_steps)
+    current_idx = min(st.session_state.ladder_step - 1, max_step - 1)
+    current_phrase = ladder_steps[current_idx]
 
-    col_target1, col_target2 = st.columns([3, 1])
-    with col_target1:
-        st.markdown(f"### 🎯 Goal Sentence: **{full_sentence}**")
-    with col_target2:
-        speak_button(full_sentence, label="🔊 Hear Target Sentence")
+    st.markdown(f"### 🪜 Ladder Step {current_idx + 1} of {max_step}:")
+    st.markdown(f'<div class="ladder-card">{current_phrase}</div>', unsafe_allow_html=True)
+
+    col_tts, col_mic = st.columns([1, 2])
+    with col_tts:
+        speak_button(current_phrase, label=f"🔊 Hear '{current_phrase}'")
+    with col_mic:
+        mic_reading_component(current_phrase)
 
     st.write("---")
     
-    # Render Current Built Sentence Board
-    current_built = " ".join(st.session_state.built_words)
-    st.markdown(f'<div class="ladder-card"><span>{current_built if current_built else "👆 (Tap the word cards below in order to build your sentence!)"}</span></div>', unsafe_allow_html=True)
-
-    # Word Bank Buttons
-    st.markdown("#### 🗂️ Word Bank (Click to add):")
-    
-    # Shuffle display order deterministically
-    word_cols = st.columns(len(target_words))
-    for i, w in enumerate(target_words):
-        with word_cols[i]:
-            if st.button(f"➕ {w}", key=f"add_word_{i}_{w}"):
-                st.session_state.built_words.append(w)
+    # Progress Controls
+    c_next, c_reset, _ = st.columns([2, 1, 2])
+    with c_next:
+        if current_idx < max_step - 1:
+            if st.button("🪜 Next Ladder Step (+1 Word) ➡️"):
+                st.session_state.ladder_step += 1
                 st.rerun()
-
-    c_check, c_clear, _ = st.columns([2, 1, 3])
-    with c_check:
-        if st.button("✅ Check My Sentence"):
-            if st.session_state.built_words == target_words:
+        else:
+            if st.button("🎉 I Finished the Entire Story! (+50 XP, +1 ⭐)"):
                 st.session_state.stars += 1
                 st.session_state.streak += 1
                 st.session_state.xp += 50
-                log_milestone(st.session_state.student_name, "Sentence Builder", f"Built: {full_sentence}")
+                log_milestone(st.session_state.student_name, "Sentence Ladder", f"Mastered: {story_name}")
                 st.balloons()
                 st.session_state.feedback = {
                     "type": "success",
-                    "msg": f"🎉 AWESOME JOB! You built: '{full_sentence}' perfectly! (+50 XP, +1 ⭐)",
+                    "msg": f"🎉 CHAMPION READER! You read all steps of '{story_name}' perfectly!",
                     "celebrate": True
                 }
-                st.session_state.built_words = []
+                st.session_state.ladder_step = 1
                 st.rerun()
-            else:
-                st.session_state.feedback = {
-                    "type": "error",
-                    "msg": f"❌ Not quite in the right order yet! Look at the goal sentence: '{full_sentence}'. Click 'Clear & Try Again' to restart.",
-                    "celebrate": False
-                }
-                st.rerun()
-                
-    with c_clear:
-        if st.button("🔄 Clear & Try Again"):
-            st.session_state.built_words = []
+
+    with c_reset:
+        if st.button("🔄 Restart Story"):
+            st.session_state.ladder_step = 1
             st.rerun()
 
 # ==========================================
@@ -820,7 +901,7 @@ elif st.session_state.active_nav == "🦸 Super Synonyms":
 # ==========================================
 elif st.session_state.active_nav == "🗂️ Sight Word Test":
     st.subheader("🗂️ Sight Word Reading Test")
-    st.markdown('<div class="instruction-box">👉 <b>Instructions:</b> Look at the sight word on the flashcard. Try reading it out loud, then click <b>Listen</b> to verify. If you knew it, click <b>I Got It Right!</b> to earn stars!</div>', unsafe_allow_html=True)
+    st.markdown('<div class="instruction-box">👉 <b>Instructions:</b> Look at the sight word on the flashcard. Try reading it out loud into the mic or listening first!</div>', unsafe_allow_html=True)
 
     sw = st.session_state.current_sight_word
     col_x, col_y = st.columns([1, 2])
@@ -829,7 +910,9 @@ elif st.session_state.active_nav == "🗂️ Sight Word Test":
         speak_button(sw, label=f"🔊 Pronounce '{sw}'")
 
     with col_y:
-        st.markdown("#### Did you read the word correctly?")
+        st.markdown("#### Speech Mic Verification:")
+        mic_reading_component(sw)
+        
         c_yes, c_next = st.columns(2)
         with c_yes:
             if st.button("⭐ Yes, I Got It Right! (+50 XP)"):
