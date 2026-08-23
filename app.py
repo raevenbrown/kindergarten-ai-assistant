@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import random
 from supabase import create_client, Client
 
@@ -13,12 +14,27 @@ st.markdown("""
 <style>
     .main-title { font-size: 2.2rem; font-weight: 800; color: #f59e0b; margin-bottom: 0px; }
     .sub-text { font-size: 1rem; color: #a89f91; margin-bottom: 20px; }
-    .card-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(245,158,11,0.2); padding: 18px; border-radius: 12px; margin-bottom: 15px; }
+    .card-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(245,158,11,0.25); padding: 18px; border-radius: 12px; margin-bottom: 15px; }
+    .instruction-box { background: rgba(56, 189, 248, 0.08); border-left: 4px solid #38bdf8; padding: 12px 16px; border-radius: 6px; margin-bottom: 18px; color: #e0f2fe; }
     .ten-frame-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 320px; margin: 12px 0; }
     .ten-frame-cell { border: 2px solid #f59e0b; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 6px; background: rgba(255,255,255,0.02); }
     .letter-card { font-size: 3.5rem; font-weight: 800; color: #f59e0b; text-align: center; padding: 15px; border: 2px dashed rgba(245,158,11,0.4); border-radius: 12px; margin-bottom: 10px; background: rgba(0,0,0,0.2); width: 120px; }
+    .audio-btn { background: #38bdf8; color: #000; font-weight: bold; border-radius: 8px; border: none; padding: 6px 12px; cursor: pointer; }
 </style>
 """, unsafe_allow_html=True)
+
+# Helper HTML5 Text-To-Speech Component
+def speak_button(text_to_speak, label="🔊 Listen"):
+    html_code = f"""
+    <button class="audio-btn" onclick="
+        window.speechSynthesis.cancel();
+        let utter = new SpeechSynthesisUtterance('{text_to_speak}');
+        utter.rate = 0.85;
+        utter.pitch = 1.1;
+        window.speechSynthesis.speak(utter);
+    ">{label}</button>
+    """
+    components.html(html_code, height=45)
 
 # --- SUPABASE CONFIGURATION ---
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
@@ -58,6 +74,8 @@ if "stars" not in st.session_state:
     st.session_state.stars = 0
 if "student_name" not in st.session_state:
     st.session_state.student_name = "Skylar"
+if "active_nav" not in st.session_state:
+    st.session_state.active_nav = "🎵 Rhyme Quest"
 
 # --- DATASETS ---
 LEVEL_WORDS = {
@@ -90,62 +108,58 @@ HEART_WORDS_LIST = ["a", "to", "is", "the", "do", "was", "as", "I", "you"]
 DECODABLE_WORDS_LIST = ["am", "man", "did", "at", "in", "sit", "an", "it", "can"]
 
 MONTHLY_VOCAB = {
-    "August": ["pencil", "crayons", "lemonade", "apple", "beach ball", "flip flop", "school"],
-    "September": ["Johnny Appleseed", "backpack", "pumpkin", "bus", "leaf", "pirate", "apple tree"],
-    "October": ["jack-o-lantern", "acorn", "candy corn", "Frankenstein", "scarecrow", "pumpkin"],
-    "November": ["Native American", "skull", "corn", "poppy", "sun", "pilgrim", "turkey"],
-    "December": ["mitten", "peppermint", "gingerbread house", "hot chocolate", "snow globe", "poinsettia", "tree"],
-    "January": ["letter", "snowman", "ice skate", "penguin", "MLK Jr.", "polar bear", "snowflake"],
-    "February": ["tooth", "groundhog", "football", "Mardi Gras", "heart", "Valentine", "Abe Lincoln"],
-    "March": ["flower", "rainbow", "shamrock", "lamb", "kite", "leprechaun", "butterfly"],
-    "April": ["tree", "rainboots", "rain", "earth", "umbrella", "bunny", "raincoat"],
-    "May": ["Mother's Day", "horse", "shovel", "seeds", "watering can", "sombrero", "nurse"],
-    "June": ["picnic", "hot air balloon", "sun", "Father's Day", "sunglasses", "ocean", "sandcastle"],
-    "July": ["ice cream", "hotdog", "grill", "fireworks", "star", "shell", "Uncle Sam"]
+    "August": ["pencil", "crayons", "lemonade", "apple", "school"],
+    "September": ["backpack", "pumpkin", "bus", "leaf", "apple tree"],
+    "October": ["jack-o-lantern", "acorn", "candy corn", "scarecrow"],
+    "November": ["corn", "poppy", "sun", "turkey"],
+    "December": ["mitten", "peppermint", "hot chocolate", "snow globe"],
+    "January": ["snowman", "ice skate", "penguin", "snowflake"],
+    "February": ["groundhog", "heart", "Valentine"],
+    "March": ["rainbow", "shamrock", "kite", "butterfly"],
+    "April": ["rainboots", "rain", "earth", "umbrella"],
+    "May": ["seeds", "watering can", "horse", "flower"]
 }
 
 SYNONYMS_DATA = {
-    "bad": ["awful", "terrible", "horrific", "dreadful", "shocking"],
-    "big": ["large", "huge", "gigantic", "giant", "enormous"],
-    "eat": ["gobble", "munch", "chomp", "devour", "swallow"],
-    "good": ["superior", "excellent", "decent", "worthy", "talented", "helpful"],
-    "like": ["love", "enjoy", "adore", "fancy"],
-    "little": ["small", "petite", "tiny", "miniature", "slight"],
-    "nice": ["enjoyable", "pleasant", "sweet", "delightful"],
-    "pretty": ["attractive", "beautiful", "cute", "appealing", "lovely", "adorable"],
-    "said": ["whispered", "murmured", "uttered", "declared", "cried", "exclaimed"],
-    "saw": ["observed", "noticed", "witnessed", "spotted", "caught a glimpse of"],
-    "shout": ["yell", "cry", "scream", "screech", "holler", "roar"],
-    "ugly": ["unattractive", "hideous", "unsightly", "repulsive", "gross"]
+    "bad": ["awful", "terrible", "horrific", "dreadful"],
+    "big": ["large", "huge", "gigantic", "giant"],
+    "eat": ["gobble", "munch", "chomp", "devour"],
+    "good": ["super", "excellent", "talented", "helpful"],
+    "like": ["love", "enjoy", "adore"],
+    "little": ["small", "tiny", "miniature"],
+    "nice": ["pleasant", "sweet", "delightful"],
+    "pretty": ["beautiful", "cute", "lovely"],
+    "said": ["whispered", "shouted", "cried", "exclaimed"],
+    "saw": ["spotted", "noticed", "observed"]
 }
 
 SIGHT_WORDS_WALL = {
-    "A": ["a", "about", "after", "again", "all", "always", "am", "an", "and", "any", "are", "around", "as", "ask", "ate"],
-    "B": ["be", "because", "been", "before", "best", "better", "black", "both", "bring", "brown", "but", "buy", "by"],
-    "C": ["call", "came", "can", "cannot", "can't", "carry", "clean", "cold", "color", "come", "could", "cut"],
-    "D": ["did", "do", "does", "doesn't", "don't", "done", "down", "draw", "drink", "drive", "drop", "dry", "during"],
-    "E": ["each", "early", "earth", "east", "easy", "eat", "eight", "even", "every", "everyone", "everything"],
-    "F": ["fall", "far", "fast", "find", "first", "five", "fly", "for", "found", "four", "from", "full", "funny"],
-    "G": ["get", "girl", "give", "go", "goes", "going", "gold", "good", "got", "green", "grew", "ground", "group"],
-    "H": ["had", "has", "have", "he", "help", "her", "here", "him", "his", "hold", "hot", "how", "hurt"],
-    "I": ["I", "if", "I'll", "in", "into", "is", "isn't", "it", "its", "it's"],
+    "A": ["a", "about", "after", "again", "all", "always", "am", "an", "and", "are", "as", "ask", "ate"],
+    "B": ["be", "because", "been", "before", "best", "black", "both", "bring", "brown", "but", "buy", "by"],
+    "C": ["call", "came", "can", "cannot", "carry", "clean", "cold", "color", "come", "could", "cut"],
+    "D": ["did", "do", "does", "done", "down", "draw", "drink", "drive", "drop", "dry"],
+    "E": ["each", "early", "earth", "easy", "eat", "eight", "every"],
+    "F": ["fall", "far", "fast", "find", "first", "five", "fly", "for", "found", "four", "funny"],
+    "G": ["get", "girl", "give", "go", "goes", "gold", "good", "got", "green", "grew"],
+    "H": ["had", "has", "have", "he", "help", "her", "here", "him", "his", "hold", "hot"],
+    "I": ["I", "if", "in", "into", "is", "it", "its"],
     "J": ["jump", "just"],
     "K": ["keep", "kind", "know"],
     "L": ["let", "like", "little", "live", "long", "look", "love"],
-    "M": ["made", "make", "many", "may", "me", "much", "must", "my", "myself"],
+    "M": ["made", "make", "many", "may", "me", "much", "must", "my"],
     "N": ["never", "new", "no", "not", "now"],
-    "O": ["of", "off", "old", "on", "once", "one", "only", "open", "or", "our", "out", "over", "own"],
+    "O": ["of", "off", "old", "on", "once", "one", "only", "open", "or", "our", "out", "over"],
     "P": ["pick", "play", "please", "pretty", "pool", "put"],
     "R": ["ran", "read", "red", "right", "round", "run"],
-    "S": ["said", "saw", "say", "see", "seven", "shall", "she", "show", "sing", "sit", "six", "sleep", "small", "so", "some", "soon", "start", "stop"],
-    "T": ["take", "tell", "ten", "thank", "that", "the", "their", "them", "then", "there", "these", "they", "think", "this", "those", "three", "to", "today", "together", "too", "try", "two"],
+    "S": ["said", "saw", "say", "see", "seven", "she", "show", "sing", "sit", "six", "sleep", "small", "so", "some", "soon", "stop"],
+    "T": ["take", "tell", "ten", "thank", "that", "the", "their", "them", "then", "there", "these", "they", "this", "three", "to", "today", "two"],
     "U": ["under", "up", "upon", "us", "use"],
     "V": ["very"],
-    "W": ["walk", "want", "warm", "was", "wash", "we", "well", "went", "were", "what", "when", "where", "which", "white", "who", "why", "will", "wish", "work", "would", "write"],
-    "Y": ["yellow", "yes", "you", "your", "you're", "you've"]
+    "W": ["walk", "want", "warm", "was", "wash", "we", "well", "went", "were", "what", "when", "where", "which", "white", "who", "why", "will", "wish", "work"],
+    "Y": ["yellow", "yes", "you", "your"]
 }
 
-# --- PERSISTENT QUESTION INITIALIZERS ---
+# --- INITIALIZE QUESTION GENERATORS ---
 def init_rhyme_question():
     pool = LEVEL_WORDS[st.session_state.level]
     item = random.choice(pool)
@@ -162,40 +176,78 @@ def init_rhyme_question():
     }
 
 def init_math_question():
-    max_num = 5 if st.session_state.level == 1 else (10 if st.session_state.level == 2 else 20)
-    st.session_state.current_math_target = random.randint(1, max_num)
+    if st.session_state.level == 1:
+        st.session_state.math_type = "count"
+        st.session_state.current_math_target = random.randint(1, 5)
+        st.session_state.sub_start = 0
+        st.session_state.sub_take = 0
+    elif st.session_state.level == 2:
+        st.session_state.math_type = "add"
+        a = random.randint(1, 5)
+        b = random.randint(1, 4)
+        st.session_state.add_a = a
+        st.session_state.add_b = b
+        st.session_state.current_math_target = a + b
+    else:
+        st.session_state.math_type = "subtract"
+        start = random.randint(4, 9)
+        takeaway = random.randint(1, start - 1)
+        st.session_state.sub_start = start
+        st.session_state.sub_take = takeaway
+        st.session_state.current_math_target = start - takeaway
 
 def init_letter_question():
     st.session_state.current_letter_pair = random.choice(ALPHABET_PAIRS)
 
-# Initialize on startup if not present
+def init_sight_word_test():
+    letter = random.choice(list(SIGHT_WORDS_WALL.keys()))
+    st.session_state.current_sight_word = random.choice(SIGHT_WORDS_WALL[letter])
+
 if "current_rhyme" not in st.session_state:
     init_rhyme_question()
 if "current_math_target" not in st.session_state:
     init_math_question()
 if "current_letter_pair" not in st.session_state:
     init_letter_question()
+if "current_sight_word" not in st.session_state:
+    init_sight_word_test()
 
 # --- ADAPTIVE LEVEL PROGRESSION CHECK ---
 if st.session_state.stars >= 5 and st.session_state.level == 1:
     st.session_state.level = 2
-    log_milestone(st.session_state.student_name, "Level Promotion", "Reached Level 2")
+    log_milestone(st.session_state.student_name, "Level Promotion", "Reached Level 2 (Addition Unlocked)")
     st.balloons()
     init_rhyme_question()
     init_math_question()
 elif st.session_state.stars >= 12 and st.session_state.level == 2:
     st.session_state.level = 3
-    log_milestone(st.session_state.student_name, "Level Promotion", "Reached Level 3")
+    log_milestone(st.session_state.student_name, "Level Promotion", "Reached Level 3 (Subtraction Unlocked)")
     st.balloons()
     init_rhyme_question()
     init_math_question()
 
-# --- SIDEBAR & HEADER ---
-st.markdown('<div class="main-title">✏️ Early Childhood Learning Studio</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-text">Interactive Literacy & Math Lab with Progress Tracking</div>', unsafe_allow_html=True)
-
-st.sidebar.title("🎒 Student Profile")
+# --- SIDEBAR NAVIGATION ---
+st.sidebar.title("🎒 Navigation & Profile")
 st.session_state.student_name = st.sidebar.text_input("Student Name:", value=st.session_state.student_name)
+
+nav_options = [
+    "🎵 Rhyme Quest", 
+    "🔢 Ten-Frame Math", 
+    "🔤 Letter Match",
+    "🍎 Vowel Hunter",
+    "📖 Decodable Story Builder",
+    "🗣️ Sound Wall Lab",
+    "📝 Sentence Scaffolds",
+    "🦸 Super Synonyms",
+    "🗂️ Sight Word Test"
+]
+
+# Preserve selected tab across form submissions
+st.session_state.active_nav = st.sidebar.radio(
+    "Choose Learning Area:", 
+    nav_options, 
+    index=nav_options.index(st.session_state.active_nav) if st.session_state.active_nav in nav_options else 0
+)
 
 if st.sidebar.button("🔄 Reset All Progress"):
     st.session_state.xp = 0
@@ -205,244 +257,310 @@ if st.sidebar.button("🔄 Reset All Progress"):
     init_rhyme_question()
     init_math_question()
     init_letter_question()
+    init_sight_word_test()
     st.rerun()
 
 # Top Scoreboard Banner
 st.markdown(f"""
 <div style="background: rgba(245, 158, 11, 0.08); border: 2px solid #f59e0b; padding: 18px; border-radius: 12px; display: flex; justify-content: space-around; align-items: center; margin-bottom: 24px;">
-    <div style="text-align: center;"><span style="font-size: 0.8rem; color: #aaa;">STUDENT LEVEL</span><br><b style="font-size: 1.4rem; color: #f59e0b;">Level {st.session_state.level} {'🌱 (Emergent)' if st.session_state.level==1 else '🌟 (On-Level)' if st.session_state.level==2 else '🚀 (Advanced)'}</b></div>
+    <div style="text-align: center;"><span style="font-size: 0.8rem; color: #aaa;">STUDENT LEVEL</span><br><b style="font-size: 1.4rem; color: #f59e0b;">Level {st.session_state.level} {'🌱 (Counting 1-5)' if st.session_state.level==1 else '🌟 (Addition 1-10)' if st.session_state.level==2 else '🚀 (Subtraction 1-10)'}</b></div>
     <div style="text-align: center;"><span style="font-size: 0.8rem; color: #aaa;">STARS COLLECTED</span><br><b style="font-size: 1.4rem; color: #fbbf24;">⭐ {st.session_state.stars}</b></div>
     <div style="text-align: center;"><span style="font-size: 0.8rem; color: #aaa;">CURRENT STREAK</span><br><b style="font-size: 1.4rem; color: #34d399;">🔥 {st.session_state.streak}</b></div>
     <div style="text-align: center;"><span style="font-size: 0.8rem; color: #aaa;">TOTAL XP</span><br><b style="font-size: 1.4rem; color: #38bdf8;">💎 {st.session_state.xp}</b></div>
 </div>
 """, unsafe_allow_html=True)
 
-# Main Activity Tabs
-tab_rhyme, tab_math, tab_letter, tab_story, tab_sound, tab_frames, tab_syn, tab_wall = st.tabs([
-    "🎵 Rhyme Quest", 
-    "🔢 Ten-Frame Math", 
-    "🔤 Letter Match",
-    "📖 Story Builder",
-    "🗣️ Sound Wall",
-    "📝 Writing Frames",
-    "🦸 Super Synonyms",
-    "🗂️ Sight Word Wall"
-])
-
 # ==========================================
-# 1. RHYME QUEST (LOCKED FORM)
+# MODULE 1: RHYME QUEST
 # ==========================================
-with tab_rhyme:
-    st.subheader(f"Level {st.session_state.level} Rhyme Challenge")
+if st.session_state.active_nav == "🎵 Rhyme Quest":
+    st.subheader(f"Level {st.session_state.level} Rhyme Quest")
+    st.markdown('<div class="instruction-box">👉 <b>Instructions for Kindergartener:</b> Listen to the target word. Click on the word that rhymes (ends with the same sound), then click <b>Submit Rhyme</b>!</div>', unsafe_allow_html=True)
+    
     q = st.session_state.current_rhyme
-    st.markdown(f"### Which word rhymes with **{q['target']}**?")
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.markdown(f"### Target Word: **{q['target']}**")
+        speak_button(q['target'], label=f"🔊 Say '{q['target']}'")
     
-    with st.form("rhyme_form", clear_on_submit=False):
-        selected_rhyme = st.radio("Pick the rhyming partner:", q["options"], key="rhyme_radio_select")
-        submit_rhyme = st.form_submit_button("Submit Rhyme 🎯")
-        
-        if submit_rhyme:
-            if selected_rhyme in q["valid_rhymes"]:
-                st.session_state.stars += 1
-                st.session_state.streak += 1
-                st.session_state.xp += 50
-                log_milestone(st.session_state.student_name, "Rhyme Quest", f"Correct: {q['target']}->{selected_rhyme}")
-                st.success(f"🎉 Correct! **{q['target']}** rhymes with **{selected_rhyme}**! (+50 XP, +1 ⭐)")
-                init_rhyme_question()
-                st.rerun()
+    with col2:
+        with st.form("rhyme_form_locked", clear_on_submit=False):
+            selected_rhyme = st.radio("Which word rhymes?", q["options"], key="rhyme_radio_fixed")
+            submit_rhyme = st.form_submit_button("Submit Rhyme 🎯")
+            
+            if submit_rhyme:
+                if selected_rhyme in q["valid_rhymes"]:
+                    st.session_state.stars += 1
+                    st.session_state.streak += 1
+                    st.session_state.xp += 50
+                    log_milestone(st.session_state.student_name, "Rhyme Quest", f"Correct: {q['target']}->{selected_rhyme}")
+                    st.success(f"🎉 Correct! **{q['target']}** rhymes with **{selected_rhyme}**! (+50 XP, +1 ⭐)")
+                    init_rhyme_question()
+                    st.rerun()
+                else:
+                    st.session_state.streak = 0
+                    log_milestone(st.session_state.student_name, "Rhyme Quest", f"Missed: {q['target']}->{selected_rhyme}")
+                    st.error(f"❌ Not quite! Listen closely to the ending sound of **{q['target']}** and try again.")
+
+# ==========================================
+# MODULE 2: TEN-FRAME MATH (COUNT / ADD / SUBTRACT)
+# ==========================================
+elif st.session_state.active_nav == "🔢 Ten-Frame Math":
+    st.subheader(f"Level {st.session_state.level} Ten-Frame Math Lab")
+    
+    # Adaptive instructions & display based on Level
+    if st.session_state.level == 1:
+        st.markdown('<div class="instruction-box">👉 <b>Instructions:</b> Count how many <b>yellow counters (🟡)</b> are in the 10-frame. Type your number and click <b>Check Count</b>!</div>', unsafe_allow_html=True)
+        target = st.session_state.current_math_target
+        cells = ["🟡" if i < target else "⬜" for i in range(10)]
+    elif st.session_state.level == 2:
+        st.markdown(f'<div class="instruction-box">👉 <b>Addition Challenge:</b> First we put <b>{st.session_state.add_a}</b> yellow dots (🟡), then we added <b>{st.session_state.add_b}</b> blue dots (🔵). How many dots in total?</div>', unsafe_allow_html=True)
+        target = st.session_state.current_math_target
+        cells = []
+        for i in range(10):
+            if i < st.session_state.add_a:
+                cells.append("🟡")
+            elif i < st.session_state.add_a + st.session_state.add_b:
+                cells.append("🔵")
             else:
-                st.session_state.streak = 0
-                log_milestone(st.session_state.student_name, "Rhyme Quest", f"Missed: {q['target']}->{selected_rhyme}")
-                st.error(f"Not quite! Listen to the ending rime of **{q['target']}** and try again.")
+                cells.append("⬜")
+    else:
+        st.markdown(f'<div class="instruction-box">👉 <b>Subtraction Challenge:</b> We started with <b>{st.session_state.sub_start}</b> dots, but we took away <b>{st.session_state.sub_take}</b> (shown with ❌). Count only the remaining 🟡 dots!</div>', unsafe_allow_html=True)
+        target = st.session_state.current_math_target
+        cells = []
+        for i in range(10):
+            if i < target:
+                cells.append("🟡")
+            elif i < st.session_state.sub_start:
+                cells.append("❌")  # Crossed out counters
+            else:
+                cells.append("⬜")
 
-# ==========================================
-# 2. TEN-FRAME MATH (LOCKED FORM)
-# ==========================================
-with tab_math:
-    st.subheader(f"Level {st.session_state.level} Ten-Frame Count")
-    target_count = st.session_state.current_math_target
-    st.write("Count the yellow dots in the 10-block frame:")
-    
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.markdown("**Frame 1 (1–10):**")
-        cells_1 = ["🟡" if i < min(target_count, 10) else "⬜" for i in range(10)]
-        r1 = "".join([f"<div class='ten-frame-cell'>{c}</div>" for c in cells_1[:5]])
-        r2 = "".join([f"<div class='ten-frame-cell'>{c}</div>" for c in cells_1[5:]])
-        st.markdown(f"<div class='ten-frame-grid'>{r1}{r2}</div>", unsafe_allow_html=True)
-    
-    if target_count > 10:
-        with col_b:
-            st.markdown("**Frame 2 (11–20):**")
-            rem = target_count - 10
-            cells_2 = ["🟡" if i < rem else "⬜" for i in range(10)]
-            r1_2 = "".join([f"<div class='ten-frame-cell'>{c}</div>" for c in cells_2[:5]])
-            r2_2 = "".join([f"<div class='ten-frame-cell'>{c}</div>" for c in cells_2[5:]])
-            st.markdown(f"<div class='ten-frame-grid'>{r1_2}{r2_2}</div>", unsafe_allow_html=True)
+    # Render Frame Grid
+    r1 = "".join([f"<div class='ten-frame-cell'>{c}</div>" for c in cells[:5]])
+    r2 = "".join([f"<div class='ten-frame-cell'>{c}</div>" for c in cells[5:]])
+    st.markdown(f"<div class='ten-frame-grid'>{r1}{r2}</div>", unsafe_allow_html=True)
 
-    with st.form("math_form", clear_on_submit=False):
-        user_count = st.number_input("How many yellow dots did you count?", min_value=0, max_value=20, step=1, key="math_input_count")
-        submit_math = st.form_submit_button("Check Count ✅")
+    with st.form("math_form_locked", clear_on_submit=False):
+        user_num = st.number_input("What is your answer?", min_value=0, max_value=20, step=1, key="math_input_locked")
+        submit_math = st.form_submit_button("Check Math Answer ✅")
         
         if submit_math:
-            if user_count == target_count:
+            if user_num == target:
                 st.session_state.stars += 1
                 st.session_state.streak += 1
                 st.session_state.xp += 50
-                log_milestone(st.session_state.student_name, "Ten-Frame Math", f"Correct Count: {target_count}")
-                st.success(f"🎉 Spot on! You counted **{target_count}**! (+50 XP, +1 ⭐)")
+                log_milestone(st.session_state.student_name, "Ten-Frame Math", f"Correct Answer: {target}")
+                st.success(f"🎉 Correct! The answer is **{target}**! (+50 XP, +1 ⭐)")
                 init_math_question()
                 st.rerun()
             else:
                 st.session_state.streak = 0
-                log_milestone(st.session_state.student_name, "Ten-Frame Math", f"Missed Count: {target_count}")
-                st.error("Recount the top and bottom rows carefully and try again!")
+                log_milestone(st.session_state.student_name, "Ten-Frame Math", f"Missed Math: expected {target} got {user_num}")
+                st.error("❌ Not quite! Recount the active yellow dots (🟡) and try again!")
 
 # ==========================================
-# 3. LETTER MATCH (LOCKED FORM)
+# MODULE 3: LETTER MATCH
 # ==========================================
-with tab_letter:
+elif st.session_state.active_nav == "🔤 Letter Match":
     st.subheader(f"Level {st.session_state.level} Uppercase to Lowercase Match")
+    st.markdown('<div class="instruction-box">👉 <b>Instructions:</b> Look at the BIG uppercase letter. Type its small lowercase partner in the box and click <b>Check Letter</b>!</div>', unsafe_allow_html=True)
+    
     pair = st.session_state.current_letter_pair
-    
-    st.markdown(f'<div class="letter-card">{pair[0]}</div>', unsafe_allow_html=True)
-    st.caption("Uppercase Target Letter")
-    
-    with st.form("letter_form", clear_on_submit=True):
-        letter_in = st.text_input("Type the matching lowercase letter:", max_chars=1)
-        submit_letter = st.form_submit_button("Check Letter 🔤")
-        
-        if submit_letter:
-            if letter_in.strip().lower() == pair[1]:
-                st.session_state.stars += 1
-                st.session_state.streak += 1
-                st.session_state.xp += 50
-                log_milestone(st.session_state.student_name, "Letter Match", f"Matched: {pair[0]}->{pair[1]}")
-                st.success(f"🎉 Perfect match! **{pair[0]}** pairs with **{pair[1]}**! (+50 XP, +1 ⭐)")
-                init_letter_question()
-                st.rerun()
-            else:
-                st.session_state.streak = 0
-                log_milestone(st.session_state.student_name, "Letter Match", f"Missed: {pair[0]}")
-                st.error(f"Not quite! Look at the shape of uppercase **{pair[0]}** and try again.")
-
-# ==========================================
-# 4. STORY BUILDER
-# ==========================================
-with tab_story:
-    st.subheader("Decodable & Heart Word Story Builder")
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns([1, 2])
     with col1:
-        chosen_heart = st.multiselect("Select Heart Words:", HEART_WORDS_LIST, default=["the", "was", "to"])
+        st.markdown(f'<div class="letter-card">{pair[0]}</div>', unsafe_allow_html=True)
+        speak_button(f"Uppercase letter {pair[0]}", label=f"🔊 Hear Letter '{pair[0]}'")
+    
     with col2:
-        chosen_decodable = st.multiselect("Select Decodable Words:", DECODABLE_WORDS_LIST, default=["can", "sit", "man"])
-    with col3:
-        chosen_month = st.selectbox("Select Theme Month:", list(MONTHLY_VOCAB.keys()), index=1)
+        with st.form("letter_form_locked", clear_on_submit=True):
+            user_char = st.text_input("Type the matching lowercase letter:", max_chars=1)
+            submit_let = st.form_submit_button("Check Letter 🔤")
+            
+            if submit_let:
+                if user_char.strip().lower() == pair[1]:
+                    st.session_state.stars += 1
+                    st.session_state.streak += 1
+                    st.session_state.xp += 50
+                    log_milestone(st.session_state.student_name, "Letter Match", f"Matched: {pair[0]}->{pair[1]}")
+                    st.success(f"🎉 Perfect match! Big **{pair[0]}** pairs with little **{pair[1]}**! (+50 XP, +1 ⭐)")
+                    init_letter_question()
+                    st.rerun()
+                else:
+                    st.session_state.streak = 0
+                    log_milestone(st.session_state.student_name, "Letter Match", f"Missed: {pair[0]} got {user_char}")
+                    st.error(f"❌ Not quite! Uppercase **{pair[0]}** matches with lowercase **{pair[1]}**. Try another one!")
 
-    if st.button("✨ Generate Story Practice Sheet"):
-        vocab = MONTHLY_VOCAB[chosen_month]
-        item1 = random.choice(vocab)
-        item2 = random.choice(vocab)
+# ==========================================
+# MODULE 4: VOWEL HUNTER LAB
+# ==========================================
+elif st.session_state.active_nav == "🍎 Vowel Hunter":
+    st.subheader("🍎 Vowel Hunter & Articulation Lab")
+    st.markdown('<div class="instruction-box">👉 <b>What are Vowels?</b> Every word must have a vowel: <b>A, E, I, O, U</b> (and sometimes Y)! Let\'s find them in your name and learn their sounds.</div>', unsafe_allow_html=True)
+
+    vowel_tab1, vowel_tab2 = st.tabs(["🔍 Vowels in Student Name", "🔊 Short vs. Long Vowel Sounds"])
+    
+    with vowel_tab1:
+        st.markdown(f"### Hunting Vowels in: **{st.session_state.student_name}**")
+        name_vowels = [ch for ch in st.session_state.student_name.upper() if ch in "AEIOU"]
+        st.write(f"- Total vowels found: **{len(name_vowels)}**")
+        st.write(f"- Vowels present: **{', '.join(set(name_vowels)) if name_vowels else 'None'}**")
         
-        st.info(f"""
-        **{st.session_state.student_name} and the {item1.title()}**
+        test_word = st.text_input("Type any word to count its vowels:", "banana")
+        if test_word:
+            found = [c for c in test_word.upper() if c in "AEIOU"]
+            st.success(f"The word **{test_word.upper()}** has **{len(found)}** vowels: `{', '.join(found)}`")
 
-        {st.session_state.student_name} saw **{chosen_heart[0] if chosen_heart else 'the'}** {item1} by the school path. 
-        **{chosen_heart[1] if len(chosen_heart) > 1 else 'I'}** **{chosen_decodable[0] if chosen_decodable else 'can'}** see a little friend **{chosen_decodable[1] if len(chosen_decodable) > 1 else 'sit'}** nearby. 
-        It **{chosen_heart[2] if len(chosen_heart) > 2 else 'was'}** a fun time to look at the **{item2}**. 
-        {st.session_state.student_name} will **{chosen_decodable[2] if len(chosen_decodable) > 2 else 'man'}** the station and smile!
-        """)
+    with vowel_tab2:
+        vowel_choice = st.selectbox("Select a Vowel:", ["A (Short: Apple | Long: Acorn)", "E (Short: Egg | Long: Eagle)", "I (Short: Igloo | Long: Ice)", "O (Short: Octopus | Long: Ocean)", "U (Short: Umbrella | Long: Unicorn)"])
+        v_letter = vowel_choice[0]
+        speak_button(f"The letter {v_letter}. Short sound is {v_letter} like apple. Long sound is {v_letter} like acorn.", label=f"🔊 Listen to Vowel '{v_letter}' Sounds")
 
 # ==========================================
-# 5. SOUND WALL
+# MODULE 5: DECODABLE STORY BUILDER
 # ==========================================
-with tab_sound:
-    st.subheader("Kindergarten Personal Sound Wall & Articulation Guide")
-    sound_choice = st.selectbox("Select Target Phoneme Sound:", [
-        "/p/ (lips together, unvoiced - pan)",
-        "/b/ (lips together, voiced - bat)",
-        "/t/ (tongue tap, unvoiced - taco)",
-        "/d/ (tongue tap, voiced - duck)",
-        "/k/ (back of tongue - kite)",
-        "/g/ (back of tongue - goat)",
-        "/m/ (nasal humming - mitten)",
-        "/n/ (nasal tongue - nest)",
-        "/ng/ (nasal back - ring)",
-        "/th/ (tongue between teeth - thumb)",
-        "/s/ (air hiss, unvoiced - sun)",
-        "/sh/ (rounded air - shark)",
-        "/ch/ (stop and push - cherry)"
-    ])
-    st.markdown(f"""
-    <div class="card-box">
-        <h4>👄 Articulation Profile for <code>{sound_choice.split()[0]}</code></h4>
-        <p><b>Mouth Gesture:</b> {sound_choice.split('(')[1].replace(')', '')}</p>
-        <p><b>Classroom Prompt:</b> <i>"Watch my mouth! Put your hand gently on your throat to feel if your voice box is ON (voiced) or OFF (unvoiced)."</i></p>
+elif st.session_state.active_nav == "📖 Decodable Story Builder":
+    st.subheader("📖 Decodable & Heart Word Story Builder")
+    st.markdown("""
+    <div class="instruction-box">
+        👉 <b>What to do:</b> 
+        <ol>
+            <li>Pick <b>Heart Words</b> (words to memorize by sight, like <i>the, was, to</i>).</li>
+            <li>Pick <b>Decodable Words</b> (words you can sound out with phonics, like <i>can, sit, man</i>).</li>
+            <li>Choose a fun monthly theme, then click <b>Build Story</b> to generate a custom reading page you can read and listen to!</li>
+        </ol>
     </div>
     """, unsafe_allow_html=True)
 
-# ==========================================
-# 6. WRITING FRAMES
-# ==========================================
-with tab_frames:
-    st.subheader("Structured Writing Scaffolds")
-    genre = st.selectbox("Select Writing Genre:", ["Story-Narrative", "Opinion Writing", "Informational Text"])
-    topic = st.text_input("Enter Topic:", "My Favorite Season")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        hw = st.multiselect("1. Heart Words (Sight):", HEART_WORDS_LIST, default=["the", "was", "to"])
+    with col2:
+        dw = st.multiselect("2. Decodable Words (Phonics):", DECODABLE_WORDS_LIST, default=["can", "sit", "man"])
+    with col3:
+        month = st.selectbox("3. Monthly Theme:", list(MONTHLY_VOCAB.keys()), index=1)
 
-    if genre == "Story-Narrative":
-        st.markdown(f"""
-        <div class="card-box">
-            <h4>📖 Story-Narrative Structure for: {topic}</h4>
-            <ul>
-                <li><b>Opening Sentence:</b> Start with a sentence that gets your reader interested! Introduce the characters.</li>
-                <li><b>Beginning:</b> Tell your reader where your characters are. What are they doing?</li>
-                <li><b>Middle:</b> Give your character a problem. Describe what the problem is and how it happened.</li>
-                <li><b>Last:</b> Have your character solve their problem. What did they do to solve it?</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    elif genre == "Opinion Writing":
-        st.markdown(f"""
-        <div class="card-box">
-            <h4>💭 Opinion Writing Structure for: {topic}</h4>
-            <ul>
-                <li><b>Opening Sentence:</b> Tell your reader your own opinion. How you think or feel.</li>
-                <li><b>First:</b> Give one reason why you feel that way. Explain with one more sentence.</li>
-                <li><b>Next:</b> Give another reason why you feel that way. Explain with one more sentence.</li>
-                <li><b>Last:</b> Give your last reason why you feel that way. Explain with one more sentence.</li>
-                <li><b>Closing Sentence:</b> Ask a question to your reader.</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown(f"""
-        <div class="card-box">
-            <h4>📚 Informational Text Structure for: {topic}</h4>
-            <ul>
-                <li><b>Opening Sentence:</b> Tell an interesting fact or ask a question about your topic.</li>
-                <li><b>First:</b> Write something you learned about your topic.</li>
-                <li><b>Next:</b> What else did you learn about your topic?</li>
-                <li><b>Last:</b> Give one final fact about your topic.</li>
-                <li><b>Closing Sentence:</b> Ask a question about your topic.</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
+    if st.button("✨ Build Story Practice Sheet"):
+        item1 = random.choice(MONTHLY_VOCAB[month])
+        item2 = random.choice(MONTHLY_VOCAB[month])
+        
+        story_text = f"{st.session_state.student_name} saw {hw[0] if hw else 'the'} {item1} by the school path. " \
+                     f"{hw[1] if len(hw) > 1 else 'I'} {dw[0] if dw else 'can'} see a little friend {dw[1] if len(dw) > 1 else 'sit'} nearby. " \
+                     f"It {hw[2] if len(hw) > 2 else 'was'} a fun time to look at the {item2}. " \
+                     f"{st.session_state.student_name} will smile and enjoy the {month} day!"
+        
+        st.markdown(f"### 📄 {st.session_state.student_name}'s {month} Story")
+        st.info(story_text)
+        speak_button(story_text, label="🔊 Read Entire Story Aloud")
 
 # ==========================================
-# 7. SUPER SYNONYMS
+# MODULE 6: SOUND WALL LAB (WITH VOICE)
 # ==========================================
-with tab_syn:
-    st.subheader("Super Synonyms & Sentence Stretcher")
-    base_word = st.selectbox("Choose a basic word to upgrade:", list(SYNONYMS_DATA.keys()))
-    st.write(f"**Instead of using `{base_word}`, use one of these:**")
-    st.write(" • ".join([f"✨ **{s}**" for s in SYNONYMS_DATA[base_word]]))
+elif st.session_state.active_nav == "🗣️ Sound Wall Lab":
+    st.subheader("🗣️ Kindergarten Personal Sound Wall & Articulation Guide")
+    st.markdown("""
+    <div class="instruction-box">
+        👉 <b>Instructions for Students & Parents:</b> 
+        Look at how your lips and mouth move when making each sound. Click the sound button to hear the sound pronounced clearly!
+    </div>
+    """, unsafe_allow_html=True)
+
+    sound_list = {
+        "/p/ (Lips together, unvoiced - pan)": ("p", "pan", "Put lips together and pop air out without your voice box."),
+        "/b/ (Lips together, voiced - bat)": ("b", "bat", "Put lips together and turn your voice box ON."),
+        "/t/ (Tongue tap, unvoiced - taco)": ("t", "taco", "Tap the tip of your tongue behind your top teeth."),
+        "/d/ (Tongue tap, voiced - duck)": ("d", "duck", "Tap your tongue behind your teeth with voice ON."),
+        "/s/ (Air hiss, unvoiced - sun)": ("s", "sun", "Hiss air through your teeth like a snake."),
+        "/sh/ (Rounded lips air - shark)": ("sh", "shark", "Round your lips like you are telling someone to be quiet."),
+        "/ch/ (Stop and push - cherry)": ("ch", "cherry", "Touch your tongue to the roof of your mouth and push out air.")
+    }
+
+    choice = st.selectbox("Select Target Phoneme Sound:", list(sound_list.keys()))
+    char, word_ex, tip = sound_list[choice]
+
+    col_a, col_b = st.columns([2, 1])
+    with col_a:
+        st.markdown(f"""
+        <div class="card-box">
+            <h4>👄 Sound Profile: <code>{choice.split()[0]}</code></h4>
+            <p><b>Example Word:</b> ✨ <b>{word_ex.upper()}</b></p>
+            <p><b>Mouth Gesture Tip:</b> {tip}</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_b:
+        st.write("Hear Sound & Word:")
+        speak_button(f"The sound is {char}. As in {word_ex}.", label=f"🔊 Hear {choice.split()[0]} Sound")
 
 # ==========================================
-# 8. SIGHT WORD WALL
+# MODULE 7: WRITING SCAFFOLDS
 # ==========================================
-with tab_wall:
-    st.subheader("Complete A–Z Word Wall (Lists 1–14)")
-    letter = st.selectbox("Select Letter of the Alphabet:", list(SIGHT_WORDS_WALL.keys()))
-    words = SIGHT_WORDS_WALL[letter]
-    st.markdown(f"### Words starting with **{letter}**:")
-    st.write(" • ".join([f"**{w}**" for w in words]))
+elif st.session_state.active_nav == "📝 Sentence Scaffolds":
+    st.subheader("📝 Kindergarten Interactive Sentence Scaffolds")
+    st.markdown("""
+    <div class="instruction-box">
+        👉 <b>How Kindergarteners Build a 5-Star Sentence:</b>
+        Every good sentence starts with a <b>Capital letter</b>, has <b>Finger spaces</b> between words, and ends with a <b>Period (.)</b>!
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 🧩 Build-A-Sentence Activity")
+    who = st.selectbox("Who is in the story? (Noun):", ["The cute puppy", "My big brother", "The happy frog", "Skylar"])
+    did_what = st.selectbox("What did they do? (Verb):", ["ran quickly", "jumped high", "read a book", "ate sweet apples"])
+    where = st.selectbox("Where were they? (Setting):", ["in the green park.", "at kindergarten school.", "under the tall tree."])
+
+    built_sentence = f"{who} {did_what} {where}"
+    st.success(f"**Your Complete Sentence:** {built_sentence}")
+    speak_button(built_sentence, label="🔊 Hear Your Sentence Read Aloud")
+
+    st.markdown("#### ✅ Sentence Quality Checklist:")
+    c1, c2, c3 = st.columns(3)
+    c1.checkbox("Capital letter at the start", value=True)
+    c2.checkbox("Finger spaces used", value=True)
+    c3.checkbox("Punctuation mark at the end (.)", value=True)
+
+# ==========================================
+# MODULE 8: SUPER SYNONYMS
+# ==========================================
+elif st.session_state.active_nav == "🦸 Super Synonyms":
+    st.subheader("🦸 Super Synonyms & Sentence Stretcher")
+    st.markdown('<div class="instruction-box">👉 <b>Instructions:</b> Trade boring, tired words for powerful words! Click any upgraded synonym to hear how it sounds in a sentence.</div>', unsafe_allow_html=True)
+
+    base = st.selectbox("Pick a simple word to upgrade:", list(SYNONYMS_DATA.keys()))
+    syns = SYNONYMS_DATA[base]
+
+    st.markdown(f"### Super Words for **{base.upper()}**:")
+    cols = st.columns(len(syns))
+    for idx, s in enumerate(syns):
+        with cols[idx]:
+            st.markdown(f"✨ **{s.upper()}**")
+            speak_button(f"Instead of {base}, we can say {s}.", label=f"🔊 {s}")
+
+# ==========================================
+# MODULE 9: SIGHT WORD TEST
+# ==========================================
+elif st.session_state.active_nav == "🗂️ Sight Word Test":
+    st.subheader("🗂️ Sight Word Reading Test")
+    st.markdown('<div class="instruction-box">👉 <b>Instructions:</b> Look at the sight word on the flashcard. Try reading it out loud, then click <b>Listen</b> to verify. If you knew it, click <b>I Got It Right!</b> to earn stars!</div>', unsafe_allow_html=True)
+
+    sw = st.session_state.current_sight_word
+    col_x, col_y = st.columns([1, 2])
+    with col_x:
+        st.markdown(f'<div class="letter-card" style="font-size:2.5rem; width:220px;">{sw}</div>', unsafe_allow_html=True)
+        speak_button(sw, label=f"🔊 Pronounce '{sw}'")
+
+    with col_y:
+        st.markdown("#### Did you read the word correctly?")
+        c_yes, c_next = st.columns(2)
+        with c_yes:
+            if st.button("⭐ Yes, I Got It Right! (+50 XP)"):
+                st.session_state.stars += 1
+                st.session_state.streak += 1
+                st.session_state.xp += 50
+                log_milestone(st.session_state.student_name, "Sight Word Test", f"Mastered: {sw}")
+                st.balloons()
+                init_sight_word_test()
+                st.rerun()
+        with c_next:
+            if st.button("➡️ Next Word"):
+                init_sight_word_test()
+                st.rerun()
