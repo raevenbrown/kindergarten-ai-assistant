@@ -39,19 +39,35 @@ def speak_button(text_to_speak, label="🔊 Listen"):
     """
     components.html(html_code, height=50)
 
-# Browser Speech Recognition Component
+# Browser Speech Recognition Component with Live Balloon Confetti Engine
 def mic_checker_component(target_word):
     clean_target = target_word.replace("'", "").replace(".", "").replace("!", "").strip().lower()
     html_code = f"""
-    <div style="background: rgba(255,255,255,0.05); border: 2px solid rgba(56,189,248,0.4); border-radius: 12px; padding: 16px; margin-top: 10px;">
-        <button id="micBtn" style="background: #ef4444; color: #ffffff; font-weight: bold; font-size: 1.1rem; border: none; border-radius: 10px; padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 8px;" onclick="runSpeechRec()">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <div style="background: rgba(255,255,255,0.05); border: 2px solid rgba(56,189,248,0.4); border-radius: 12px; padding: 16px; margin-top: 10px; min-height: 200px;">
+        <button id="micBtn" style="background: #ef4444; color: #ffffff; font-weight: bold; font-size: 1.1rem; border: none; border-radius: 10px; padding: 12px 20px; cursor: pointer;" onclick="runSpeechRec()">
             🎙️ Tap to Speak
         </button>
         <div id="heardText" style="margin-top: 12px; font-size: 1.15rem; font-weight: 700; color: #38bdf8;"></div>
-        <div id="resultBanner" style="margin-top: 10px; font-size: 1.25rem; font-weight: 800;"></div>
+        <div id="resultBanner" style="margin-top: 10px; font-size: 1.15rem; font-weight: 800;"></div>
     </div>
 
     <script>
+    function triggerBalloonsAndConfetti() {{
+        var count = 200;
+        var defaults = {{ origin: {{ y: 0.7 }} }};
+        function fire(particleRatio, opts) {{
+            confetti(Object.assign({{}}, defaults, opts, {{
+                particleCount: Math.floor(count * particleRatio)
+            }}));
+        }}
+        fire(0.25, {{ spread: 26, startVelocity: 55, shapes: ['circle'] }});
+        fire(0.2, {{ spread: 60, shapes: ['circle'] }});
+        fire(0.35, {{ spread: 100, decay: 0.91, scalar: 1.2 }});
+        fire(0.1, {{ spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.5 }});
+        fire(0.1, {{ spread: 120, startVelocity: 45 }});
+    }}
+
     async function runSpeechRec() {{
         const btn = document.getElementById('micBtn');
         const heard = document.getElementById('heardText');
@@ -66,7 +82,7 @@ def mic_checker_component(target_word):
         try {{
             await navigator.mediaDevices.getUserMedia({{ audio: true }});
         }} catch(err) {{
-            banner.innerHTML = '<span style="color:#f87171;">⚠️ Microphone permission denied. Please allow microphone access in your browser.</span>';
+            banner.innerHTML = '<span style="color:#f87171;">⚠️ Microphone permission denied. Please allow microphone access.</span>';
             return;
         }}
 
@@ -89,9 +105,12 @@ def mic_checker_component(target_word):
             heard.innerHTML = '🗣️ You said: <u>"' + said + '"</u>';
             
             if (said.includes(expected) || expected.includes(said)) {{
-                banner.innerHTML = '<div style="background: rgba(34,197,94,0.2); border: 2px solid #22c55e; color: #4ade80; padding: 10px; border-radius: 8px;">🎉 YOU SAID IT CORRECTLY! Awesome job! ⭐</div>';
+                banner.innerHTML = '<div style="background: rgba(34,197,94,0.25); border: 2px solid #22c55e; color: #4ade80; padding: 12px; border-radius: 8px;">🎉 YOU SAID IT CORRECTLY! Awesome job! ⭐🎈</div>';
+                triggerBalloonsAndConfetti();
+                let audio = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
+                audio.play();
             }} else {{
-                banner.innerHTML = '<div style="background: rgba(239,68,68,0.2); border: 2px solid #ef4444; color: #f87171; padding: 10px; border-radius: 8px;">❌ Not quite! Try saying the word again clearly.</div>';
+                banner.innerHTML = '<div style="background: rgba(239,68,68,0.25); border: 2px solid #ef4444; color: #f87171; padding: 12px; border-radius: 8px;">❌ Not quite! Try saying the word again clearly.</div>';
             }}
 
             btn.style.background = '#ef4444';
@@ -104,13 +123,13 @@ def mic_checker_component(target_word):
             if (event.error === 'no-speech') {{
                 banner.innerHTML = '<span style="color:#f87171;">⚠️ No voice heard. Tap the button and speak into your mic!</span>';
             }} else {{
-                banner.innerHTML = '<span style="color:#f87171;">⚠️ Mic issue: ' + event.error + '. Try again!</span>';
+                banner.innerHTML = '<span style="color:#f87171;">⚠️ Mic notice: ' + event.error + '. Try again!</span>';
             }}
         }};
     }}
     </script>
     """
-    components.html(html_code, height=180)
+    components.html(html_code, height=230)
 
 # --- SUPABASE CONFIGURATION ---
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
@@ -182,7 +201,7 @@ LEVEL_WORDS = {
 }
 
 ALPHABET_PAIRS = [
-    ("A", "a"), ("B", "b"), ("C", "c"), ("D", "d"), ("E", "e"), ("F", "f"),
+    ("A", "a"), ("B", "b"), ("C", "d"), ("D", "d"), ("E", "e"), ("F", "f"),
     ("G", "g"), ("H", "h"), ("I", "i"), ("J", "j"), ("K", "k"), ("L", "l"),
     ("M", "m"), ("N", "n"), ("O", "o"), ("P", "p"), ("Q", "q"), ("R", "r"),
     ("S", "s"), ("T", "t"), ("U", "u"), ("V", "v"), ("W", "w"), ("X", "x"),
@@ -810,7 +829,7 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
         speak_button(f"The letter {v_letter}. Short sound is {v_letter} like apple. Long sound is {v_letter} like acorn.", label=f"🔊 Listen to Vowel '{v_letter}' Sounds")
 
 # ==========================================
-# MODULE 5: SENTENCE LADDER FLUENCY WITH BROWSER SPEECH RECOGNITION
+# MODULE 5: SENTENCE LADDER FLUENCY WITH LIVE MIC CHECKER
 # ==========================================
 elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
     st.subheader("🪜 Sentence Ladder Fluency Reader")
@@ -819,7 +838,7 @@ elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
         👉 <b>How to Practice:</b> 
         1. Click <b>🔊 Listen</b> to hear the goal sentence.
         2. Click <b>🎙️ Tap to Speak</b> and read the phrase aloud.
-        3. When verified, click <b>⭐ Verified! Next Step</b> to collect stars and climb the ladder!
+        3. Watch for the 🎈 celebration, then click <b>⭐ Verified! Next Step</b> to climb the ladder!
     </div>
     """, unsafe_allow_html=True)
 
@@ -877,7 +896,7 @@ elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
             st.rerun()
 
 # ==========================================
-# MODULE 6: SOUND WALL LAB (WITH BROWSER SPEECH RECOGNITION)
+# MODULE 6: SOUND WALL LAB (EXPANDED CONTAINER & BURSTING CELEBRATIONS)
 # ==========================================
 elif st.session_state.active_nav == "🗣️ Sound Wall Lab":
     st.subheader("🗣️ Kindergarten Personal Sound Wall & Speech Lab")
