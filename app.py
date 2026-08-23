@@ -44,12 +44,12 @@ def mic_checker_component(target_word):
     clean_target = target_word.replace("'", "").replace(".", "").replace("!", "").strip().lower()
     html_code = f"""
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <div style="background: rgba(255,255,255,0.05); border: 2px solid rgba(56,189,248,0.4); border-radius: 12px; padding: 16px; margin-top: 10px; min-height: 200px;">
-        <button id="micBtn" style="background: #ef4444; color: #ffffff; font-weight: bold; font-size: 1.1rem; border: none; border-radius: 10px; padding: 12px 20px; cursor: pointer;" onclick="runSpeechRec()">
+    <div style="background: rgba(255,255,255,0.05); border: 2px solid rgba(56,189,248,0.4); border-radius: 12px; padding: 14px;">
+        <button id="micBtn" style="background: #ef4444; color: #ffffff; font-weight: bold; font-size: 1.05rem; border: none; border-radius: 10px; padding: 10px 18px; cursor: pointer;" onclick="runSpeechRec()">
             🎙️ Tap to Speak
         </button>
-        <div id="heardText" style="margin-top: 12px; font-size: 1.15rem; font-weight: 700; color: #38bdf8;"></div>
-        <div id="resultBanner" style="margin-top: 10px; font-size: 1.15rem; font-weight: 800;"></div>
+        <div id="heardText" style="margin-top: 8px; font-size: 1.05rem; font-weight: 700; color: #38bdf8;"></div>
+        <div id="resultBanner" style="margin-top: 8px; font-size: 1.05rem; font-weight: 800;"></div>
     </div>
 
     <script>
@@ -92,7 +92,7 @@ def mic_checker_component(target_word):
         recognizer.maxAlternatives = 1;
 
         btn.style.background = '#22c55e';
-        btn.innerText = '🔴 Listening... Say the word now!';
+        btn.innerText = '🔴 Listening... Say it now!';
         heard.innerText = '';
         banner.innerText = '';
 
@@ -105,12 +105,12 @@ def mic_checker_component(target_word):
             heard.innerHTML = '🗣️ You said: <u>"' + said + '"</u>';
             
             if (said.includes(expected) || expected.includes(said)) {{
-                banner.innerHTML = '<div style="background: rgba(34,197,94,0.25); border: 2px solid #22c55e; color: #4ade80; padding: 12px; border-radius: 8px;">🎉 YOU SAID IT CORRECTLY! Awesome job! ⭐🎈</div>';
+                banner.innerHTML = '<div style="background: rgba(34,197,94,0.25); border: 2px solid #22c55e; color: #4ade80; padding: 10px; border-radius: 8px;">🎉 YOU SAID IT CORRECTLY! Awesome job! ⭐🎈</div>';
                 triggerBalloonsAndConfetti();
                 let audio = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
                 audio.play();
             }} else {{
-                banner.innerHTML = '<div style="background: rgba(239,68,68,0.25); border: 2px solid #ef4444; color: #f87171; padding: 12px; border-radius: 8px;">❌ Not quite! Try saying the word again clearly.</div>';
+                banner.innerHTML = '<div style="background: rgba(239,68,68,0.25); border: 2px solid #ef4444; color: #f87171; padding: 10px; border-radius: 8px;">❌ Not quite! Try saying it again clearly.</div>';
             }}
 
             btn.style.background = '#ef4444';
@@ -121,7 +121,7 @@ def mic_checker_component(target_word):
             btn.style.background = '#ef4444';
             btn.innerText = '🎙️ Tap to Speak';
             if (event.error === 'no-speech') {{
-                banner.innerHTML = '<span style="color:#f87171;">⚠️ No voice heard. Tap the button and speak into your mic!</span>';
+                banner.innerHTML = '<span style="color:#f87171;">⚠️ No voice heard. Tap and speak into your mic!</span>';
             }} else {{
                 banner.innerHTML = '<span style="color:#f87171;">⚠️ Mic notice: ' + event.error + '. Try again!</span>';
             }}
@@ -129,7 +129,7 @@ def mic_checker_component(target_word):
     }}
     </script>
     """
-    components.html(html_code, height=230)
+    components.html(html_code, height=140)
 
 # --- SUPABASE CONFIGURATION ---
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
@@ -201,7 +201,7 @@ LEVEL_WORDS = {
 }
 
 ALPHABET_PAIRS = [
-    ("A", "a"), ("B", "b"), ("C", "d"), ("D", "d"), ("E", "e"), ("F", "f"),
+    ("A", "a"), ("B", "b"), ("C", "c"), ("D", "d"), ("E", "e"), ("F", "f"),
     ("G", "g"), ("H", "h"), ("I", "i"), ("J", "j"), ("K", "k"), ("L", "l"),
     ("M", "m"), ("N", "n"), ("O", "o"), ("P", "p"), ("Q", "q"), ("R", "r"),
     ("S", "s"), ("T", "t"), ("U", "u"), ("V", "v"), ("W", "w"), ("X", "x"),
@@ -352,6 +352,22 @@ SOUND_WALL_WORDS = {
     }
 }
 
+# --- STRUCTURED KINDERGARTEN SIGHT WORD LISTS (1 & 2 FIRST) ---
+SIGHT_WORD_LISTS = {
+    "⭐ List 1 (Kindergarten Core)": [
+        "the", "to", "and", "a", "I", "you", "it", "in", "said", "for"
+    ],
+    "🌟 List 2 (Kindergarten Core)": [
+        "up", "look", "is", "go", "we", "little", "down", "can", "see", "not"
+    ],
+    "🚀 List 3 (Advanced)": [
+        "one", "my", "me", "big", "come", "blue", "red", "where", "jump", "away"
+    ],
+    "💎 List 4 (Advanced)": [
+        "here", "help", "make", "yellow", "two", "play", "run", "find", "three", "funny"
+    ]
+}
+
 SYNONYMS_DATA = {
     "bad": ["awful", "terrible", "horrific", "dreadful"],
     "big": ["large", "huge", "gigantic", "giant"],
@@ -363,32 +379,6 @@ SYNONYMS_DATA = {
     "pretty": ["beautiful", "cute", "lovely"],
     "said": ["whispered", "shouted", "cried", "exclaimed"],
     "saw": ["spotted", "noticed", "observed"]
-}
-
-SIGHT_WORDS_WALL = {
-    "A": ["a", "about", "after", "again", "all", "always", "am", "an", "and", "are", "as", "ask", "ate"],
-    "B": ["be", "because", "been", "before", "best", "black", "both", "bring", "brown", "but", "buy", "by"],
-    "C": ["call", "came", "can", "cannot", "carry", "clean", "cold", "color", "come", "could", "cut"],
-    "D": ["did", "do", "does", "done", "down", "draw", "drink", "drive", "drop", "dry"],
-    "E": ["each", "early", "earth", "easy", "eat", "eight", "every"],
-    "F": ["fall", "far", "fast", "find", "first", "five", "fly", "for", "found", "four", "funny"],
-    "G": ["get", "girl", "give", "go", "goes", "gold", "good", "got", "green", "grew"],
-    "H": ["had", "has", "have", "he", "help", "her", "here", "him", "his", "hold", "hot"],
-    "I": ["I", "if", "in", "into", "is", "it", "its"],
-    "J": ["jump", "just"],
-    "K": ["keep", "kind", "know"],
-    "L": ["let", "like", "little", "live", "long", "look", "love"],
-    "M": ["made", "make", "many", "may", "me", "much", "must", "my"],
-    "N": ["never", "new", "no", "not", "now"],
-    "O": ["of", "off", "old", "on", "once", "one", "only", "open", "or", "our", "out", "over"],
-    "P": ["pick", "play", "please", "pretty", "pool", "put"],
-    "R": ["ran", "read", "red", "right", "round", "run"],
-    "S": ["said", "saw", "say", "see", "seven", "she", "show", "sing", "sit", "six", "sleep", "small", "so", "some", "soon", "stop"],
-    "T": ["take", "tell", "ten", "thank", "that", "the", "their", "them", "then", "there", "these", "they", "this", "three", "to", "today", "two"],
-    "U": ["under", "up", "upon", "us", "use"],
-    "V": ["very"],
-    "W": ["walk", "want", "warm", "was", "wash", "we", "well", "went", "were", "what", "when", "where", "which", "white", "who", "why", "will", "wish", "work"],
-    "Y": ["yellow", "yes", "you", "your"]
 }
 
 # --- INITIALIZE QUESTION GENERATORS ---
@@ -442,10 +432,6 @@ def init_vowel_word_game():
     st.session_state.vowel_submitted = False
     st.session_state.vowel_explanation = None
 
-def init_sight_word_test():
-    letter = random.choice(list(SIGHT_WORDS_WALL.keys()))
-    st.session_state.current_sight_word = random.choice(SIGHT_WORDS_WALL[letter])
-
 if "current_rhyme" not in st.session_state:
     init_rhyme_question()
 if "current_math_target" not in st.session_state:
@@ -454,8 +440,6 @@ if "current_letter_target" not in st.session_state:
     init_letter_question()
 if "current_vowel_game" not in st.session_state:
     init_vowel_word_game()
-if "current_sight_word" not in st.session_state:
-    init_sight_word_test()
 
 # --- ADAPTIVE LEVEL PROGRESSION CHECK ---
 if st.session_state.stars >= 5 and st.session_state.level == 1:
@@ -509,7 +493,6 @@ if st.sidebar.button("🔄 Reset All Progress"):
     init_math_question()
     init_letter_question()
     init_vowel_word_game()
-    init_sight_word_test()
     st.rerun()
 
 # Top Scoreboard Banner
@@ -829,7 +812,7 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
         speak_button(f"The letter {v_letter}. Short sound is {v_letter} like apple. Long sound is {v_letter} like acorn.", label=f"🔊 Listen to Vowel '{v_letter}' Sounds")
 
 # ==========================================
-# MODULE 5: SENTENCE LADDER FLUENCY WITH LIVE MIC CHECKER
+# MODULE 5: SENTENCE LADDER FLUENCY WITH COMPACT MIC CHECKER
 # ==========================================
 elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
     st.subheader("🪜 Sentence Ladder Fluency Reader")
@@ -896,7 +879,7 @@ elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
             st.rerun()
 
 # ==========================================
-# MODULE 6: SOUND WALL LAB (EXPANDED CONTAINER & BURSTING CELEBRATIONS)
+# MODULE 6: SOUND WALL LAB (COMPACT SPEECH BOX)
 # ==========================================
 elif st.session_state.active_nav == "🗣️ Sound Wall Lab":
     st.subheader("🗣️ Kindergarten Personal Sound Wall & Speech Lab")
@@ -985,16 +968,27 @@ elif st.session_state.active_nav == "🦸 Super Synonyms":
             speak_button(f"Instead of {base}, we can say {s}.", label=f"🔊 {s}")
 
 # ==========================================
-# MODULE 9: SIGHT WORD TEST
+# MODULE 9: SIGHT WORD TEST (LIST 1 & LIST 2 FIRST)
 # ==========================================
 elif st.session_state.active_nav == "🗂️ Sight Word Test":
-    st.subheader("🗂️ Sight Word Reading Test")
-    st.markdown('<div class="instruction-box">👉 <b>Instructions:</b> Look at the sight word on the flashcard. Try reading it out loud into the mic or listening first!</div>', unsafe_allow_html=True)
+    st.subheader("🗂️ Kindergarten Sight Word Reading Test")
+    st.markdown("""
+    <div class="instruction-box">
+        👉 <b>Instructions:</b> We start with <b>List 1 and List 2</b> (Core Kindergarten Words). 
+        Look at the word, click <b>🎙️ Tap to Speak</b> and read it into your microphone!
+    </div>
+    """, unsafe_allow_html=True)
+
+    selected_list = st.selectbox("Choose Sight Word List:", list(SIGHT_WORD_LISTS.keys()), index=0)
+    word_bank = SIGHT_WORD_LISTS[selected_list]
+
+    if "current_sight_word" not in st.session_state or st.session_state.current_sight_word not in word_bank:
+        st.session_state.current_sight_word = random.choice(word_bank)
 
     sw = st.session_state.current_sight_word
     col_x, col_y = st.columns([1, 2])
     with col_x:
-        st.markdown(f'<div class="letter-card" style="font-size:2.5rem; width:220px;">{sw}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="letter-card" style="font-size:2.8rem; width:220px; color:#fbbf24;">{sw}</div>', unsafe_allow_html=True)
         speak_button(sw, label=f"🔊 Pronounce '{sw}'")
 
     with col_y:
@@ -1007,16 +1001,16 @@ elif st.session_state.active_nav == "🗂️ Sight Word Test":
                 st.session_state.stars += 1
                 st.session_state.streak += 1
                 st.session_state.xp += 50
-                log_milestone(st.session_state.student_name, "Sight Word Test", f"Mastered: {sw}")
+                log_milestone(st.session_state.student_name, "Sight Word Test", f"Mastered {selected_list}: {sw}")
                 st.session_state.feedback = {
                     "type": "success",
                     "msg": f"🎉 AWESOME! You read '{sw}' correctly! (+50 XP, +1 ⭐)",
                     "celebrate": True
                 }
-                init_sight_word_test()
+                st.session_state.current_sight_word = random.choice(word_bank)
                 st.rerun()
         with c_next:
             if st.button("➡️ Next Word"):
                 st.session_state.feedback = None
-                init_sight_word_test()
+                st.session_state.current_sight_word = random.choice(word_bank)
                 st.rerun()
