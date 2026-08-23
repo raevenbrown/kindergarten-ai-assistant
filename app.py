@@ -22,7 +22,7 @@ st.markdown("""
     .ten-frame-cell { border: 2px solid #f59e0b; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 6px; background: rgba(255,255,255,0.02); }
     .letter-card { font-size: 3.5rem; font-weight: 800; color: #f59e0b; text-align: center; padding: 15px; border: 2px dashed rgba(245,158,11,0.4); border-radius: 12px; margin-bottom: 10px; background: rgba(0,0,0,0.2); width: 120px; }
     .word-card { font-size: 2.8rem; font-weight: 800; color: #38bdf8; letter-spacing: 4px; text-align: center; padding: 15px; border: 2px solid #38bdf8; border-radius: 12px; margin-bottom: 15px; background: rgba(0,0,0,0.2); }
-    .audio-btn { background: #38bdf8; color: #000; font-weight: bold; border-radius: 8px; border: none; padding: 6px 12px; cursor: pointer; }
+    .audio-btn { background: #38bdf8; color: #000; font-weight: bold; border-radius: 8px; border: none; padding: 8px 14px; cursor: pointer; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -37,68 +37,7 @@ def speak_button(text_to_speak, label="🔊 Listen"):
         window.speechSynthesis.speak(utter);
     ">{label}</button>
     """
-    components.html(html_code, height=45)
-
-# Helper HTML5 Live Speech-To-Text Recognition Component
-def mic_reading_component(target_phrase):
-    clean_target = target_phrase.replace("'", "").replace(".", "").replace("!", "").strip().lower()
-    html_code = f"""
-    <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(56,189,248,0.3); border-radius: 10px; padding: 12px; margin-top: 10px;">
-        <button id="micBtn" style="background: #ef4444; color: #fff; font-weight: bold; border: none; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-size: 1rem;" onclick="startListening()">
-            🎙️ Tap to Speak (Say the Word)
-        </button>
-        <span id="status" style="color: #94a3b8; margin-left: 12px; font-size: 0.95rem;">Click mic to start</span>
-        <div id="heardBox" style="margin-top: 10px; color: #38bdf8; font-weight: bold; font-size: 1.1rem;"></div>
-    </div>
-
-    <script>
-    function startListening() {{
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {{
-            document.getElementById('status').innerText = 'Speech recognition not supported in this browser. Try Chrome or Safari.';
-            return;
-        }}
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'en-US';
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-
-        const btn = document.getElementById('micBtn');
-        const status = document.getElementById('status');
-        const heardBox = document.getElementById('heardBox');
-
-        btn.style.background = '#22c55e';
-        btn.innerText = '🔴 Listening... Speak now!';
-        status.innerText = 'Listening to student...';
-
-        recognition.start();
-
-        recognition.onresult = function(event) {{
-            const transcript = event.results[0][0].transcript.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
-            const target = "{clean_target}";
-            
-            heardBox.innerHTML = '🗣️ You said: "' + transcript + '"';
-            
-            if (transcript.includes(target) || target.includes(transcript)) {{
-                status.innerHTML = '<b style="color: #22c55e;">🎉 PERFECT! You said the word correctly!</b>';
-                let audio = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
-                audio.play();
-            }} else {{
-                status.innerHTML = '<b style="color: #f87171;">❌ Let\'s try saying it again!</b>';
-            }}
-            btn.style.background = '#ef4444';
-            btn.innerText = '🎙️ Tap to Speak Again';
-        }};
-
-        recognition.onerror = function(event) {{
-            status.innerText = 'Mic notice: ' + event.error;
-            btn.style.background = '#ef4444';
-            btn.innerText = '🎙️ Tap to Speak';
-        }};
-    }}
-    </script>
-    """
-    components.html(html_code, height=140)
+    components.html(html_code, height=50)
 
 # --- SUPABASE CONFIGURATION ---
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
@@ -799,17 +738,16 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
         speak_button(f"The letter {v_letter}. Short sound is {v_letter} like apple. Long sound is {v_letter} like acorn.", label=f"🔊 Listen to Vowel '{v_letter}' Sounds")
 
 # ==========================================
-# MODULE 5: SENTENCE LADDER FLUENCY WITH LIVE MIC VALIDATION
+# MODULE 5: SENTENCE LADDER FLUENCY WITH DIRECT MIC RECORDER
 # ==========================================
 elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
-    st.subheader("🪜 Sentence Ladder Fluency Reader (With Speech Recognition)")
+    st.subheader("🪜 Sentence Ladder Fluency Reader")
     st.markdown("""
     <div class="instruction-box">
         👉 <b>How to Practice:</b> 
-        1. Look at the ladder step shown below. 
-        2. Click <b>🔊 Listen</b> to hear it read naturally. 
-        3. Click the <b>🎙️ Tap to Speak</b> button and read the phrase into your mic! 
-        4. When verified, click <b>⭐ Verified! Next Step (+50 XP)</b> to pop balloons and climb the ladder!
+        1. Click <b>🔊 Hear Sentence</b> to listen to the goal phrase.
+        2. Click the microphone button below to record the student reading aloud.
+        3. Listen back to your recording and click <b>⭐ Verified! Next Step</b> to celebrate and climb the ladder!
     </div>
     """, unsafe_allow_html=True)
 
@@ -822,11 +760,15 @@ elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
     st.markdown(f"### 🪜 Ladder Step {current_idx + 1} of {max_step}:")
     st.markdown(f'<div class="ladder-card">{current_phrase}</div>', unsafe_allow_html=True)
 
-    col_tts, col_mic = st.columns([1, 2])
+    col_tts, col_rec = st.columns([1, 2])
     with col_tts:
         speak_button(current_phrase, label=f"🔊 Hear '{current_phrase}'")
-    with col_mic:
-        mic_reading_component(current_phrase)
+    
+    with col_rec:
+        st.write("🎙️ **Record Student Reading:**")
+        audio_data = st.audio_input("Record your voice reading this step:", key=f"ladder_mic_{current_idx}")
+        if audio_data:
+            st.success("✅ Voice recording captured! Great reading effort!")
 
     st.write("---")
     
@@ -866,7 +808,7 @@ elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
             st.rerun()
 
 # ==========================================
-# MODULE 6: SOUND WALL LAB (STREAMLINED PRONUNCIATION & LIVE SPEECH CHECK)
+# MODULE 6: SOUND WALL LAB (STREAMLINED WITH DIRECT MIC RECORDER)
 # ==========================================
 elif st.session_state.active_nav == "🗣️ Sound Wall Lab":
     st.subheader("🗣️ Kindergarten Personal Sound Wall & Speech Lab")
@@ -874,7 +816,7 @@ elif st.session_state.active_nav == "🗣️ Sound Wall Lab":
     <div class="instruction-box">
         👉 <b>How to Practice:</b> 
         1. <b>Hear Word:</b> Click the blue button to hear the target word pronounced cleanly. 
-        2. <b>Say It:</b> Tap the red <b>🎙️ Tap to Speak</b> button and say the word into your microphone to verify!
+        2. <b>Say It:</b> Record the student saying the word into the mic, then award stars!
     </div>
     """, unsafe_allow_html=True)
 
@@ -891,12 +833,26 @@ elif st.session_state.active_nav == "🗣️ Sound Wall Lab":
             <p><b>Mouth Gesture Tip:</b> {s_info['tip']}</p>
         </div>
         """, unsafe_allow_html=True)
-        speak_button(s_info['word'], label=f"🔊 Say Word '{s_info['word'].upper()}'")
+        speak_button(s_info['word'], label=f"🔊 Hear Word '{s_info['word'].upper()}'")
 
     with col_audio:
-        st.markdown("#### 🎙️ Student Speaking Test:")
+        st.markdown("#### 🎙️ Student Speaking Practice:")
         st.write(f"Say **'{s_info['word'].upper()}'** into your microphone:")
-        mic_reading_component(s_info["word"])
+        rec_data = st.audio_input("Record student voice:", key=f"sound_wall_mic_{s_info['word']}")
+        
+        if rec_data:
+            st.success("✅ Voice recording captured!")
+            if st.button(f"⭐ Verified: {s_info['word'].upper()} (+50 XP, +1 ⭐)"):
+                st.session_state.stars += 1
+                st.session_state.streak += 1
+                st.session_state.xp += 50
+                log_milestone(st.session_state.student_name, "Sound Wall", f"Said: {s_info['word']}")
+                st.session_state.feedback = {
+                    "type": "success",
+                    "msg": f"🎉 AWESOME! You pronounced '{s_info['word'].upper()}' correctly! (+50 XP, +1 ⭐)",
+                    "celebrate": True
+                }
+                st.rerun()
 
 # ==========================================
 # MODULE 7: WRITING SCAFFOLDS
@@ -956,8 +912,8 @@ elif st.session_state.active_nav == "🗂️ Sight Word Test":
         speak_button(sw, label=f"🔊 Pronounce '{sw}'")
 
     with col_y:
-        st.markdown("#### Speech Mic Verification:")
-        mic_reading_component(sw)
+        st.write(f"🎙️ **Record saying '{sw}':**")
+        sw_audio = st.audio_input(f"Read '{sw}' aloud:", key=f"sw_mic_{sw}")
         
         c_yes, c_next = st.columns(2)
         with c_yes:
