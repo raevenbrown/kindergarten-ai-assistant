@@ -20,6 +20,7 @@ st.markdown("""
     .ten-frame-cell { border: 2px solid #f59e0b; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 6px; background: rgba(255,255,255,0.02); }
     .letter-card { font-size: 3.5rem; font-weight: 800; color: #f59e0b; text-align: center; padding: 15px; border: 2px dashed rgba(245,158,11,0.4); border-radius: 12px; margin-bottom: 10px; background: rgba(0,0,0,0.2); width: 120px; }
     .audio-btn { background: #38bdf8; color: #000; font-weight: bold; border-radius: 8px; border: none; padding: 6px 12px; cursor: pointer; }
+    .option-card { background: rgba(255,255,255,0.05); border: 2px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 12px; text-align: center; margin-bottom: 8px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -30,7 +31,7 @@ def speak_button(text_to_speak, label="🔊 Listen"):
         window.speechSynthesis.cancel();
         let utter = new SpeechSynthesisUtterance('{text_to_speak}');
         utter.rate = 0.85;
-        utter.pitch = 1.1;
+        utter.pitch = 1.15;
         window.speechSynthesis.speak(utter);
     ">{label}</button>
     """
@@ -197,7 +198,13 @@ def init_math_question():
         st.session_state.current_math_target = start - takeaway
 
 def init_letter_question():
-    st.session_state.current_letter_pair = random.choice(ALPHABET_PAIRS)
+    target = random.choice(ALPHABET_PAIRS)
+    other_lowers = [l for u, l in ALPHABET_PAIRS if l != target[1]]
+    distractors = random.sample(other_lowers, 3)
+    opts = distractors + [target[1]]
+    random.shuffle(opts)
+    st.session_state.current_letter_target = target
+    st.session_state.current_letter_options = opts
 
 def init_sight_word_test():
     letter = random.choice(list(SIGHT_WORDS_WALL.keys()))
@@ -207,7 +214,7 @@ if "current_rhyme" not in st.session_state:
     init_rhyme_question()
 if "current_math_target" not in st.session_state:
     init_math_question()
-if "current_letter_pair" not in st.session_state:
+if "current_letter_target" not in st.session_state:
     init_letter_question()
 if "current_sight_word" not in st.session_state:
     init_sight_word_test()
@@ -222,11 +229,11 @@ if st.session_state.stars >= 5 and st.session_state.level == 1:
 elif st.session_state.stars >= 12 and st.session_state.level == 2:
     st.session_state.level = 3
     log_milestone(st.session_state.student_name, "Level Promotion", "Reached Level 3 (Subtraction Unlocked)")
-    st.balloons()
+    st.snow()
     init_rhyme_question()
     init_math_question()
 
-# --- SIDEBAR NAVIGATION ---
+# --- SIDEBAR & NAVIGATION ---
 st.sidebar.title("🎒 Navigation & Profile")
 st.session_state.student_name = st.sidebar.text_input("Student Name:", value=st.session_state.student_name)
 
@@ -242,7 +249,6 @@ nav_options = [
     "🗂️ Sight Word Test"
 ]
 
-# Preserve selected tab across form submissions
 st.session_state.active_nav = st.sidebar.radio(
     "Choose Learning Area:", 
     nav_options, 
@@ -271,11 +277,11 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# MODULE 1: RHYME QUEST
+# MODULE 1: RHYME QUEST (WITH ANSWER AUDIO)
 # ==========================================
 if st.session_state.active_nav == "🎵 Rhyme Quest":
     st.subheader(f"Level {st.session_state.level} Rhyme Quest")
-    st.markdown('<div class="instruction-box">👉 <b>Instructions for Kindergartener:</b> Listen to the target word. Click on the word that rhymes (ends with the same sound), then click <b>Submit Rhyme</b>!</div>', unsafe_allow_html=True)
+    st.markdown('<div class="instruction-box">👉 <b>Instructions for Kindergartener:</b> Click the sound button under each word to hear how it sounds! Then pick the word that rhymes with the target word and click <b>Submit Rhyme</b>!</div>', unsafe_allow_html=True)
     
     q = st.session_state.current_rhyme
     col1, col2 = st.columns([1, 2])
@@ -284,6 +290,13 @@ if st.session_state.active_nav == "🎵 Rhyme Quest":
         speak_button(q['target'], label=f"🔊 Say '{q['target']}'")
     
     with col2:
+        st.markdown("#### Listen to the choices:")
+        opt_cols = st.columns(len(q["options"]))
+        for i, opt in enumerate(q["options"]):
+            with opt_cols[i]:
+                st.markdown(f"**{opt.upper()}**")
+                speak_button(opt, label=f"🔊 {opt}")
+
         with st.form("rhyme_form_locked", clear_on_submit=False):
             selected_rhyme = st.radio("Which word rhymes?", q["options"], key="rhyme_radio_fixed")
             submit_rhyme = st.form_submit_button("Submit Rhyme 🎯")
@@ -294,7 +307,8 @@ if st.session_state.active_nav == "🎵 Rhyme Quest":
                     st.session_state.streak += 1
                     st.session_state.xp += 50
                     log_milestone(st.session_state.student_name, "Rhyme Quest", f"Correct: {q['target']}->{selected_rhyme}")
-                    st.success(f"🎉 Correct! **{q['target']}** rhymes with **{selected_rhyme}**! (+50 XP, +1 ⭐)")
+                    st.balloons()
+                    st.success(f"🎉 AMAZING! **{q['target']}** rhymes with **{selected_rhyme}**! (+50 XP, +1 ⭐)")
                     init_rhyme_question()
                     st.rerun()
                 else:
@@ -303,12 +317,11 @@ if st.session_state.active_nav == "🎵 Rhyme Quest":
                     st.error(f"❌ Not quite! Listen closely to the ending sound of **{q['target']}** and try again.")
 
 # ==========================================
-# MODULE 2: TEN-FRAME MATH (COUNT / ADD / SUBTRACT)
+# MODULE 2: TEN-FRAME MATH LAB
 # ==========================================
 elif st.session_state.active_nav == "🔢 Ten-Frame Math":
     st.subheader(f"Level {st.session_state.level} Ten-Frame Math Lab")
     
-    # Adaptive instructions & display based on Level
     if st.session_state.level == 1:
         st.markdown('<div class="instruction-box">👉 <b>Instructions:</b> Count how many <b>yellow counters (🟡)</b> are in the 10-frame. Type your number and click <b>Check Count</b>!</div>', unsafe_allow_html=True)
         target = st.session_state.current_math_target
@@ -332,11 +345,10 @@ elif st.session_state.active_nav == "🔢 Ten-Frame Math":
             if i < target:
                 cells.append("🟡")
             elif i < st.session_state.sub_start:
-                cells.append("❌")  # Crossed out counters
+                cells.append("❌")
             else:
                 cells.append("⬜")
 
-    # Render Frame Grid
     r1 = "".join([f"<div class='ten-frame-cell'>{c}</div>" for c in cells[:5]])
     r2 = "".join([f"<div class='ten-frame-cell'>{c}</div>" for c in cells[5:]])
     st.markdown(f"<div class='ten-frame-grid'>{r1}{r2}</div>", unsafe_allow_html=True)
@@ -351,7 +363,8 @@ elif st.session_state.active_nav == "🔢 Ten-Frame Math":
                 st.session_state.streak += 1
                 st.session_state.xp += 50
                 log_milestone(st.session_state.student_name, "Ten-Frame Math", f"Correct Answer: {target}")
-                st.success(f"🎉 Correct! The answer is **{target}**! (+50 XP, +1 ⭐)")
+                st.balloons()
+                st.success(f"🎉 SUPERSTAR! The answer is **{target}**! (+50 XP, +1 ⭐)")
                 init_math_question()
                 st.rerun()
             else:
@@ -360,36 +373,46 @@ elif st.session_state.active_nav == "🔢 Ten-Frame Math":
                 st.error("❌ Not quite! Recount the active yellow dots (🟡) and try again!")
 
 # ==========================================
-# MODULE 3: LETTER MATCH
+# MODULE 3: LETTER MATCH (WITH AUDIO OPTIONS)
 # ==========================================
 elif st.session_state.active_nav == "🔤 Letter Match":
     st.subheader(f"Level {st.session_state.level} Uppercase to Lowercase Match")
-    st.markdown('<div class="instruction-box">👉 <b>Instructions:</b> Look at the BIG uppercase letter. Type its small lowercase partner in the box and click <b>Check Letter</b>!</div>', unsafe_allow_html=True)
+    st.markdown('<div class="instruction-box">👉 <b>Instructions:</b> Look at the BIG uppercase letter. Listen to the small lowercase choices below, select the matching partner, and click <b>Check Letter</b>!</div>', unsafe_allow_html=True)
     
-    pair = st.session_state.current_letter_pair
+    target_pair = st.session_state.current_letter_target
+    options = st.session_state.current_letter_options
+    
     col1, col2 = st.columns([1, 2])
     with col1:
-        st.markdown(f'<div class="letter-card">{pair[0]}</div>', unsafe_allow_html=True)
-        speak_button(f"Uppercase letter {pair[0]}", label=f"🔊 Hear Letter '{pair[0]}'")
+        st.markdown(f'<div class="letter-card">{target_pair[0]}</div>', unsafe_allow_html=True)
+        speak_button(f"Uppercase letter {target_pair[0]}", label=f"🔊 Say '{target_pair[0]}'")
     
     with col2:
-        with st.form("letter_form_locked", clear_on_submit=True):
-            user_char = st.text_input("Type the matching lowercase letter:", max_chars=1)
+        st.markdown("#### Listen to the lowercase options:")
+        opt_cols = st.columns(len(options))
+        for i, opt in enumerate(options):
+            with opt_cols[i]:
+                st.markdown(f"<div style='font-size:1.8rem; font-weight:bold; color:#38bdf8;'>{opt}</div>", unsafe_allow_html=True)
+                speak_button(f"Lowercase {opt}", label=f"🔊 {opt}")
+
+        with st.form("letter_form_locked", clear_on_submit=False):
+            user_char = st.radio("Which lowercase letter matches?", options, horizontal=True, key="letter_radio_opt")
             submit_let = st.form_submit_button("Check Letter 🔤")
             
             if submit_let:
-                if user_char.strip().lower() == pair[1]:
+                if user_char == target_pair[1]:
                     st.session_state.stars += 1
                     st.session_state.streak += 1
                     st.session_state.xp += 50
-                    log_milestone(st.session_state.student_name, "Letter Match", f"Matched: {pair[0]}->{pair[1]}")
-                    st.success(f"🎉 Perfect match! Big **{pair[0]}** pairs with little **{pair[1]}**! (+50 XP, +1 ⭐)")
+                    log_milestone(st.session_state.student_name, "Letter Match", f"Matched: {target_pair[0]}->{target_pair[1]}")
+                    st.balloons()
+                    st.success(f"🎉 PERFECT MATCH! Big **{target_pair[0]}** pairs with little **{target_pair[1]}**! (+50 XP, +1 ⭐)")
                     init_letter_question()
                     st.rerun()
                 else:
                     st.session_state.streak = 0
-                    log_milestone(st.session_state.student_name, "Letter Match", f"Missed: {pair[0]} got {user_char}")
-                    st.error(f"❌ Not quite! Uppercase **{pair[0]}** matches with lowercase **{pair[1]}**. Try another one!")
+                    log_milestone(st.session_state.student_name, "Letter Match", f"Missed: {target_pair[0]} picked {user_char}")
+                    st.error(f"❌ Look closely! Big **{target_pair[0]}** pairs with lowercase **{target_pair[1]}**. Let's try another one!")
 
 # ==========================================
 # MODULE 4: VOWEL HUNTER LAB
@@ -427,7 +450,7 @@ elif st.session_state.active_nav == "📖 Decodable Story Builder":
         <ol>
             <li>Pick <b>Heart Words</b> (words to memorize by sight, like <i>the, was, to</i>).</li>
             <li>Pick <b>Decodable Words</b> (words you can sound out with phonics, like <i>can, sit, man</i>).</li>
-            <li>Choose a fun monthly theme, then click <b>Build Story</b> to generate a custom reading page you can read and listen to!</li>
+            <li>Choose a monthly theme, then click <b>Build Story</b> to generate a custom story with full read-aloud audio!</li>
         </ol>
     </div>
     """, unsafe_allow_html=True)
@@ -454,7 +477,7 @@ elif st.session_state.active_nav == "📖 Decodable Story Builder":
         speak_button(story_text, label="🔊 Read Entire Story Aloud")
 
 # ==========================================
-# MODULE 6: SOUND WALL LAB (WITH VOICE)
+# MODULE 6: SOUND WALL LAB
 # ==========================================
 elif st.session_state.active_nav == "🗣️ Sound Wall Lab":
     st.subheader("🗣️ Kindergarten Personal Sound Wall & Articulation Guide")
