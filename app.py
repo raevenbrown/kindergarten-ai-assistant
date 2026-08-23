@@ -39,17 +39,17 @@ def speak_button(text_to_speak, label="🔊 Listen"):
     """
     components.html(html_code, height=50)
 
-# Browser Speech Recognition Component with Live Balloon Confetti Engine & Homophone Mapping
+# Browser Speech Recognition Component with Expanded Frame Height
 def mic_checker_component(target_word):
     clean_target = target_word.replace("'", "").replace(".", "").replace("!", "").strip().lower()
     html_code = f"""
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <div style="background: rgba(255,255,255,0.05); border: 2px solid rgba(56,189,248,0.4); border-radius: 12px; padding: 14px; min-height: 125px;">
-        <button id="micBtn" style="background: #ef4444; color: #ffffff; font-weight: bold; font-size: 1.05rem; border: none; border-radius: 10px; padding: 10px 18px; cursor: pointer;" onclick="runSpeechRec()">
+    <div style="background: rgba(255,255,255,0.05); border: 2px solid rgba(56,189,248,0.4); border-radius: 12px; padding: 16px; box-sizing: border-box; width: 100%;">
+        <button id="micBtn" style="background: #ef4444; color: #ffffff; font-weight: bold; font-size: 1.05rem; border: none; border-radius: 10px; padding: 12px 20px; cursor: pointer;" onclick="runSpeechRec()">
             🎙️ Tap to Speak
         </button>
-        <div id="heardText" style="margin-top: 8px; font-size: 1.05rem; font-weight: 700; color: #38bdf8;"></div>
-        <div id="resultBanner" style="margin-top: 8px; font-size: 1.05rem; font-weight: 800;"></div>
+        <div id="heardText" style="margin-top: 10px; font-size: 1.1rem; font-weight: 700; color: #38bdf8;"></div>
+        <div id="resultBanner" style="margin-top: 10px; font-size: 1.1rem; font-weight: 800;"></div>
     </div>
 
     <script>
@@ -123,12 +123,12 @@ def mic_checker_component(target_word):
             }}
             
             if (isMatch) {{
-                banner.innerHTML = '<div style="background: rgba(34,197,94,0.25); border: 2px solid #22c55e; color: #4ade80; padding: 10px; border-radius: 8px;">🎉 YOU SAID IT CORRECTLY! Awesome job! ⭐🎈</div>';
+                banner.innerHTML = '<div style="background: rgba(34,197,94,0.25); border: 2px solid #22c55e; color: #4ade80; padding: 12px; border-radius: 8px;">🎉 YOU SAID IT CORRECTLY! Awesome job! ⭐🎈</div>';
                 triggerBalloonsAndConfetti();
                 let audio = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
                 audio.play();
             }} else {{
-                banner.innerHTML = '<div style="background: rgba(239,68,68,0.25); border: 2px solid #ef4444; color: #f87171; padding: 10px; border-radius: 8px;">❌ Not quite! Try saying it again clearly.</div>';
+                banner.innerHTML = '<div style="background: rgba(239,68,68,0.25); border: 2px solid #ef4444; color: #f87171; padding: 12px; border-radius: 8px;">❌ Not quite! Try saying it again clearly.</div>';
             }}
 
             btn.style.background = '#ef4444';
@@ -147,7 +147,7 @@ def mic_checker_component(target_word):
     }}
     </script>
     """
-    components.html(html_code, height=140)
+    components.html(html_code, height=240)
 
 # --- SUPABASE CONFIGURATION ---
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
