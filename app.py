@@ -16,6 +16,7 @@ st.markdown("""
     .sub-text { font-size: 1rem; color: #a89f91; margin-bottom: 20px; }
     .card-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(245,158,11,0.25); padding: 18px; border-radius: 12px; margin-bottom: 15px; }
     .instruction-box { background: rgba(56, 189, 248, 0.08); border-left: 4px solid #38bdf8; padding: 12px 16px; border-radius: 6px; margin-bottom: 18px; color: #e0f2fe; }
+    .explain-card { background: rgba(34, 197, 94, 0.1); border: 2px solid #22c55e; border-radius: 12px; padding: 18px; margin-top: 15px; margin-bottom: 15px; }
     .ten-frame-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 320px; margin: 12px 0; }
     .ten-frame-cell { border: 2px solid #f59e0b; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 6px; background: rgba(255,255,255,0.02); }
     .letter-card { font-size: 3.5rem; font-weight: 800; color: #f59e0b; text-align: center; padding: 15px; border: 2px dashed rgba(245,158,11,0.4); border-radius: 12px; margin-bottom: 10px; background: rgba(0,0,0,0.2); width: 120px; }
@@ -81,6 +82,10 @@ if "prev_nav" not in st.session_state:
     st.session_state.prev_nav = "🎵 Rhyme Quest"
 if "feedback" not in st.session_state:
     st.session_state.feedback = None
+if "vowel_submitted" not in st.session_state:
+    st.session_state.vowel_submitted = False
+if "vowel_explanation" not in st.session_state:
+    st.session_state.vowel_explanation = None
 
 # --- DATASETS ---
 LEVEL_WORDS = {
@@ -110,16 +115,66 @@ ALPHABET_PAIRS = [
 ]
 
 VOWEL_GAME_WORDS = [
-    {"word": "GRACYN", "vowels": ["A", "Y"], "y_rule": "In GRACYN, Y is a vowel because it makes the short /ih/ or /ee/ vowel sound in the second syllable!"},
-    {"word": "SKY", "vowels": ["Y"], "y_rule": "In SKY, Y is the only vowel sound and makes the long /I/ sound!"},
-    {"word": "HAPPY", "vowels": ["A", "Y"], "y_rule": "In HAPPY, Y makes the long /E/ vowel sound at the end!"},
-    {"word": "YELLOW", "vowels": ["E", "O"], "y_rule": "In YELLOW, Y is a CONSONANT because it starts the word with the /y/ sound!"},
-    {"word": "FROG", "vowels": ["O"], "y_rule": None},
-    {"word": "SUN", "vowels": ["U"], "y_rule": None},
-    {"word": "APPLE", "vowels": ["A", "E"], "y_rule": None},
-    {"word": "TIGER", "vowels": ["I", "E"], "y_rule": None},
-    {"word": "CANDY", "vowels": ["A", "Y"], "y_rule": "In CANDY, Y makes the long /E/ sound at the end, so it acts as a vowel!"},
-    {"word": "YARN", "vowels": ["A"], "y_rule": "In YARN, Y is a CONSONANT because it begins the word making the /y/ sound!"}
+    {
+        "word": "GRACYN",
+        "vowels": ["A", "Y"],
+        "breakdown": "• **A**: Standard vowel in the first syllable ('GRA-').<br>• **Y**: Acts as a **vowel** because it makes the short /ih/ or /ee/ sound in '-CYN'.",
+        "why_y": "Y makes a vowel sound in this word, so it counts as a vowel!"
+    },
+    {
+        "word": "SKY",
+        "vowels": ["Y"],
+        "breakdown": "• **Y**: Acts as the **only vowel** in the word, making the long /I/ sound!",
+        "why_y": "Every word needs a vowel. In SKY, Y is the vowel sound!"
+    },
+    {
+        "word": "HAPPY",
+        "vowels": ["A", "Y"],
+        "breakdown": "• **A**: Standard short /a/ vowel in 'HAP-'.<br>• **Y**: Acts as a **vowel** making the long /E/ sound at the end of '-PY'.",
+        "why_y": "At the end of happy words, Y makes the 'ee' vowel sound!"
+    },
+    {
+        "word": "YELLOW",
+        "vowels": ["E", "O"],
+        "breakdown": "• **E**: Standard short /e/ vowel in 'YEL-'.<br>• **O**: Standard long /o/ vowel in '-LOW'.<br>• **Y**: Acts as a **CONSONANT** because it begins the word with the /y/ sound!",
+        "why_y": "Y is NOT a vowel here because it is at the start of the word making its consonant sound."
+    },
+    {
+        "word": "FROG",
+        "vowels": ["O"],
+        "breakdown": "• **O**: Standard short /o/ vowel in the middle of the word.",
+        "why_y": None
+    },
+    {
+        "word": "SUN",
+        "vowels": ["U"],
+        "breakdown": "• **U**: Standard short /u/ vowel in the middle of the word.",
+        "why_y": None
+    },
+    {
+        "word": "APPLE",
+        "vowels": ["A", "E"],
+        "breakdown": "• **A**: Standard short /a/ vowel at the beginning.<br>• **E**: Silent vowel at the end.",
+        "why_y": None
+    },
+    {
+        "word": "TIGER",
+        "vowels": ["I", "E"],
+        "breakdown": "• **I**: Standard long /i/ vowel in 'TI-'.<br>• **E**: Standard vowel in '-GER'.",
+        "why_y": None
+    },
+    {
+        "word": "CANDY",
+        "vowels": ["A", "Y"],
+        "breakdown": "• **A**: Standard short /a/ vowel in 'CAN-'.<br>• **Y**: Acts as a **vowel** making the long /E/ sound at the end of '-DY'.",
+        "why_y": "Y is a vowel here because it makes the 'ee' sound at the end!"
+    },
+    {
+        "word": "YARN",
+        "vowels": ["A"],
+        "breakdown": "• **A**: Standard vowel sound in the middle.<br>• **Y**: Acts as a **CONSONANT** because it starts the word with the /y/ sound.",
+        "why_y": "Y is NOT a vowel here because it begins the word making its consonant sound."
+    }
 ]
 
 HEART_WORDS_LIST = ["a", "to", "is", "the", "do", "was", "as", "I", "you"]
@@ -225,6 +280,8 @@ def init_letter_question():
 
 def init_vowel_word_game():
     st.session_state.current_vowel_game = random.choice(VOWEL_GAME_WORDS)
+    st.session_state.vowel_submitted = False
+    st.session_state.vowel_explanation = None
 
 def init_sight_word_test():
     letter = random.choice(list(SIGHT_WORDS_WALL.keys()))
@@ -480,7 +537,7 @@ elif st.session_state.active_nav == "🔤 Letter Match":
                     st.rerun()
 
 # ==========================================
-# MODULE 4: VOWEL HUNTER LAB (UPGRADED WITH Y-RULES & CHECKBOX GAME)
+# MODULE 4: VOWEL HUNTER LAB (WITH FULL PHONICS EXPLANATION BEFORE NEXT)
 # ==========================================
 elif st.session_state.active_nav == "🍎 Vowel Hunter":
     st.subheader("🍎 Interactive Vowel Hunter Lab")
@@ -489,25 +546,25 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
         👉 <b>What are Vowels?</b> The vowels are <b>A, E, I, O, U</b> — and <b>SOMETIMES Y</b>!
         <br>💡 <b>When is Y a Vowel?</b>
         <ul>
-            <li><b>Y is a VOWEL</b> when it is at the end of a word or makes an <i>'ee'</i> or <i>'eye'</i> sound (like in <b>GRACYN</b>, <b>RUBY</b>, or <b>SKY</b>).</li>
-            <li><b>Y is a CONSONANT</b> when it is at the start of a word making the <i>/y/</i> sound (like in <b>YELLOW</b> or <b>YOYO</b>).</li>
+            <li><b>Y is a VOWEL</b> when it is in the middle or end of a word making a vowel sound like <i>'ee'</i> or <i>'eye'</i> (such as in <b>GRACYN</b>, <b>RUBY</b>, or <b>SKY</b>).</li>
+            <li><b>Y is a CONSONANT</b> when it begins a word or syllable making the <i>/y/</i> sound (such as in <b>YELLOW</b> or <b>YOYO</b>).</li>
         </ul>
     </div>
     """, unsafe_allow_html=True)
 
     v_game_tab, v_name_tab, v_audio_tab = st.tabs([
-        "🎮 Checkbox Vowel Hunt Game", 
-        "👧 Analyze My Name (Gracyn / Skylar)", 
+        "🎮 Vowel Hunt Game & Explanation", 
+        "👧 Analyze My Name (Gracyn)", 
         "🔊 Short vs. Long Vowel Sounds"
     ])
     
-    # 1. Interactive Checkbox Game
+    # 1. Interactive Checkbox Game with Detailed Explanations
     with v_game_tab:
         vg = st.session_state.current_vowel_game
         st.markdown(f'<div class="word-card">{vg["word"]}</div>', unsafe_allow_html=True)
-        speak_button(f"The word is {vg['word']}", label=f"🔊 Listen to '{vg['word']}'")
+        speak_button(f"The word is {vg['word']}", label=f"🔊 Hear '{vg['word']}'")
         
-        st.markdown("#### Check ALL the vowels that are inside this word:")
+        st.markdown("#### Check ALL the vowels inside this word:")
         
         with st.form("vowel_hunt_form", clear_on_submit=False):
             c_a, c_e, c_i, c_o, c_u, c_y = st.columns(6)
@@ -518,7 +575,7 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
             check_u = c_u.checkbox("U")
             check_y = c_y.checkbox("Y (Sometimes)")
             
-            submit_vowels = st.form_submit_button("Check Vowels 🎯")
+            submit_vowels = st.form_submit_button("Check Vowels & Explain 🎯")
             
             if submit_vowels:
                 user_selected = []
@@ -532,29 +589,49 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
                 correct_vowels = sorted(vg["vowels"])
                 user_selected_sorted = sorted(user_selected)
                 
-                if user_selected_sorted == correct_vowels:
+                st.session_state.vowel_submitted = True
+                is_correct = (user_selected_sorted == correct_vowels)
+                
+                if is_correct:
                     st.session_state.stars += 1
                     st.session_state.streak += 1
                     st.session_state.xp += 50
                     log_milestone(st.session_state.student_name, "Vowel Hunt", f"Found vowels in: {vg['word']}")
-                    
-                    rule_msg = f"<br>💡 <i>{vg['y_rule']}</i>" if vg.get("y_rule") else ""
-                    st.session_state.feedback = {
-                        "type": "success",
-                        "msg": f"🎉 VOWEL DETECTIVE! You found all vowels in {vg['word']} ({', '.join(correct_vowels)})! (+50 XP, +1 ⭐){rule_msg}",
-                        "celebrate": True
+                    st.session_state.vowel_explanation = {
+                        "status": "correct",
+                        "title": f"🎉 SPOT ON! The vowels in {vg['word']} are: {', '.join(correct_vowels)}!",
+                        "breakdown": vg["breakdown"],
+                        "why_y": vg.get("why_y")
                     }
-                    init_vowel_word_game()
-                    st.rerun()
                 else:
                     st.session_state.streak = 0
                     log_milestone(st.session_state.student_name, "Vowel Hunt", f"Missed vowels in: {vg['word']}")
-                    st.session_state.feedback = {
-                        "type": "error",
-                        "msg": f"❌ Not quite! In **{vg['word']}**, the correct vowels are: **{', '.join(correct_vowels)}**. {vg.get('y_rule', '')}",
-                        "celebrate": False
+                    st.session_state.vowel_explanation = {
+                        "status": "incorrect",
+                        "title": f"💡 Let's Learn: The vowels in {vg['word']} are actually: {', '.join(correct_vowels)}!",
+                        "breakdown": vg["breakdown"],
+                        "why_y": vg.get("why_y")
                     }
-                    st.rerun()
+                st.rerun()
+
+        # Render Phonics Explanation Card and "Next Word" Button
+        if st.session_state.vowel_submitted and st.session_state.vowel_explanation:
+            exp = st.session_state.vowel_explanation
+            if exp["status"] == "correct":
+                st.balloons()
+            
+            st.markdown(f"""
+            <div class="explain-card">
+                <h3>{exp['title']}</h3>
+                <h4>📖 Phonics Explanation:</h4>
+                <p>{exp['breakdown']}</p>
+                {f"<p><b>🌟 The 'Y' Rule for this word:</b> {exp['why_y']}</p>" if exp.get('why_y') else ""}
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("➡️ Next Vowel Word 🎯"):
+                init_vowel_word_game()
+                st.rerun()
 
     # 2. Name & Custom Word Analyzer
     with v_name_tab:
@@ -568,7 +645,7 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
         
         if has_y:
             if not name_clean.startswith("Y"):
-                st.success(f"⭐ **Y is acting as a VOWEL in {name_clean}!** Because it is inside or at the end of the name making a vowel sound, **{name_clean} has {len(found_standard) + name_clean.count('Y')} total vowels**: `{' + '.join(set(found_standard + ['Y']))}`!")
+                st.success(f"⭐ **Y is acting as a VOWEL in {name_clean}!** Because it is inside the name making the short /ih/ or /ee/ sound, **{name_clean} has {len(found_standard) + name_clean.count('Y')} total vowels**: `{' + '.join(set(found_standard + ['Y']))}`!")
             else:
                 st.info(f"In **{name_clean}**, Y starts the name, so it functions as a **consonant**.")
         else:
@@ -749,3 +826,4 @@ elif st.session_state.active_nav == "🗂️ Sight Word Test":
                 st.session_state.feedback = None
                 init_sight_word_test()
                 st.rerun()
+                
