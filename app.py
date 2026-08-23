@@ -20,7 +20,6 @@ st.markdown("""
     .ten-frame-cell { border: 2px solid #f59e0b; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 6px; background: rgba(255,255,255,0.02); }
     .letter-card { font-size: 3.5rem; font-weight: 800; color: #f59e0b; text-align: center; padding: 15px; border: 2px dashed rgba(245,158,11,0.4); border-radius: 12px; margin-bottom: 10px; background: rgba(0,0,0,0.2); width: 120px; }
     .audio-btn { background: #38bdf8; color: #000; font-weight: bold; border-radius: 8px; border: none; padding: 6px 12px; cursor: pointer; }
-    .option-card { background: rgba(255,255,255,0.05); border: 2px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 12px; text-align: center; margin-bottom: 8px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -77,6 +76,8 @@ if "student_name" not in st.session_state:
     st.session_state.student_name = "Skylar"
 if "active_nav" not in st.session_state:
     st.session_state.active_nav = "🎵 Rhyme Quest"
+if "feedback" not in st.session_state:
+    st.session_state.feedback = None
 
 # --- DATASETS ---
 LEVEL_WORDS = {
@@ -223,17 +224,17 @@ if "current_sight_word" not in st.session_state:
 if st.session_state.stars >= 5 and st.session_state.level == 1:
     st.session_state.level = 2
     log_milestone(st.session_state.student_name, "Level Promotion", "Reached Level 2 (Addition Unlocked)")
-    st.balloons()
+    st.session_state.feedback = {"type": "success", "msg": "🚀 LEVEL UP! You reached Level 2 (Addition Unlocked)!", "celebrate": True}
     init_rhyme_question()
     init_math_question()
 elif st.session_state.stars >= 12 and st.session_state.level == 2:
     st.session_state.level = 3
     log_milestone(st.session_state.student_name, "Level Promotion", "Reached Level 3 (Subtraction Unlocked)")
-    st.snow()
+    st.session_state.feedback = {"type": "success", "msg": "👑 MASTER LEVEL! You reached Level 3 (Subtraction Unlocked)!", "celebrate": True}
     init_rhyme_question()
     init_math_question()
 
-# --- SIDEBAR & NAVIGATION ---
+# --- SIDEBAR NAVIGATION ---
 st.sidebar.title("🎒 Navigation & Profile")
 st.session_state.student_name = st.sidebar.text_input("Student Name:", value=st.session_state.student_name)
 
@@ -260,6 +261,7 @@ if st.sidebar.button("🔄 Reset All Progress"):
     st.session_state.streak = 0
     st.session_state.level = 1
     st.session_state.stars = 0
+    st.session_state.feedback = None
     init_rhyme_question()
     init_math_question()
     init_letter_question()
@@ -276,8 +278,17 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+# Persistent Feedback & Balloon Banner
+if st.session_state.feedback:
+    if st.session_state.feedback.get("celebrate"):
+        st.balloons()
+    if st.session_state.feedback["type"] == "success":
+        st.success(st.session_state.feedback["msg"])
+    else:
+        st.error(st.session_state.feedback["msg"])
+
 # ==========================================
-# MODULE 1: RHYME QUEST (WITH ANSWER AUDIO)
+# MODULE 1: RHYME QUEST
 # ==========================================
 if st.session_state.active_nav == "🎵 Rhyme Quest":
     st.subheader(f"Level {st.session_state.level} Rhyme Quest")
@@ -307,14 +318,22 @@ if st.session_state.active_nav == "🎵 Rhyme Quest":
                     st.session_state.streak += 1
                     st.session_state.xp += 50
                     log_milestone(st.session_state.student_name, "Rhyme Quest", f"Correct: {q['target']}->{selected_rhyme}")
-                    st.balloons()
-                    st.success(f"🎉 AMAZING! **{q['target']}** rhymes with **{selected_rhyme}**! (+50 XP, +1 ⭐)")
+                    st.session_state.feedback = {
+                        "type": "success",
+                        "msg": f"🎉 AWESOME JOB! '{q['target']}' and '{selected_rhyme}' rhyme! (+50 XP, +1 ⭐) Here is your next question:",
+                        "celebrate": True
+                    }
                     init_rhyme_question()
                     st.rerun()
                 else:
                     st.session_state.streak = 0
                     log_milestone(st.session_state.student_name, "Rhyme Quest", f"Missed: {q['target']}->{selected_rhyme}")
-                    st.error(f"❌ Not quite! Listen closely to the ending sound of **{q['target']}** and try again.")
+                    st.session_state.feedback = {
+                        "type": "error",
+                        "msg": f"❌ Not quite! Listen closely to the ending sound of '{q['target']}' and try again.",
+                        "celebrate": False
+                    }
+                    st.rerun()
 
 # ==========================================
 # MODULE 2: TEN-FRAME MATH LAB
@@ -363,17 +382,25 @@ elif st.session_state.active_nav == "🔢 Ten-Frame Math":
                 st.session_state.streak += 1
                 st.session_state.xp += 50
                 log_milestone(st.session_state.student_name, "Ten-Frame Math", f"Correct Answer: {target}")
-                st.balloons()
-                st.success(f"🎉 SUPERSTAR! The answer is **{target}**! (+50 XP, +1 ⭐)")
+                st.session_state.feedback = {
+                    "type": "success",
+                    "msg": f"🎉 SPOT ON! The answer is {target}! (+50 XP, +1 ⭐) Here is your next math puzzle:",
+                    "celebrate": True
+                }
                 init_math_question()
                 st.rerun()
             else:
                 st.session_state.streak = 0
                 log_milestone(st.session_state.student_name, "Ten-Frame Math", f"Missed Math: expected {target} got {user_num}")
-                st.error("❌ Not quite! Recount the active yellow dots (🟡) and try again!")
+                st.session_state.feedback = {
+                    "type": "error",
+                    "msg": "❌ Not quite! Recount the active yellow dots (🟡) and try again.",
+                    "celebrate": False
+                }
+                st.rerun()
 
 # ==========================================
-# MODULE 3: LETTER MATCH (WITH AUDIO OPTIONS)
+# MODULE 3: LETTER MATCH
 # ==========================================
 elif st.session_state.active_nav == "🔤 Letter Match":
     st.subheader(f"Level {st.session_state.level} Uppercase to Lowercase Match")
@@ -405,14 +432,22 @@ elif st.session_state.active_nav == "🔤 Letter Match":
                     st.session_state.streak += 1
                     st.session_state.xp += 50
                     log_milestone(st.session_state.student_name, "Letter Match", f"Matched: {target_pair[0]}->{target_pair[1]}")
-                    st.balloons()
-                    st.success(f"🎉 PERFECT MATCH! Big **{target_pair[0]}** pairs with little **{target_pair[1]}**! (+50 XP, +1 ⭐)")
+                    st.session_state.feedback = {
+                        "type": "success",
+                        "msg": f"🎉 PERFECT! Big '{target_pair[0]}' pairs with little '{target_pair[1]}'! (+50 XP, +1 ⭐) Ready for the next letter:",
+                        "celebrate": True
+                    }
                     init_letter_question()
                     st.rerun()
                 else:
                     st.session_state.streak = 0
                     log_milestone(st.session_state.student_name, "Letter Match", f"Missed: {target_pair[0]} picked {user_char}")
-                    st.error(f"❌ Look closely! Big **{target_pair[0]}** pairs with lowercase **{target_pair[1]}**. Let's try another one!")
+                    st.session_state.feedback = {
+                        "type": "error",
+                        "msg": f"❌ Look closely! Big '{target_pair[0]}' pairs with lowercase '{target_pair[1]}'. Try another one!",
+                        "celebrate": False
+                    }
+                    st.rerun()
 
 # ==========================================
 # MODULE 4: VOWEL HUNTER LAB
@@ -580,10 +615,15 @@ elif st.session_state.active_nav == "🗂️ Sight Word Test":
                 st.session_state.streak += 1
                 st.session_state.xp += 50
                 log_milestone(st.session_state.student_name, "Sight Word Test", f"Mastered: {sw}")
-                st.balloons()
+                st.session_state.feedback = {
+                    "type": "success",
+                    "msg": f"🎉 AWESOME! You read '{sw}' correctly! (+50 XP, +1 ⭐)",
+                    "celebrate": True
+                }
                 init_sight_word_test()
                 st.rerun()
         with c_next:
             if st.button("➡️ Next Word"):
+                st.session_state.feedback = None
                 init_sight_word_test()
                 st.rerun()
