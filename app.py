@@ -26,7 +26,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Helper HTML5 Natural Speech / Phonics Audio Component
+# Helper HTML5 Natural Speech Audio Component
 def speak_button(text_to_speak, label="🔊 Listen"):
     html_code = f"""
     <button class="audio-btn" onclick="
@@ -39,76 +39,13 @@ def speak_button(text_to_speak, label="🔊 Listen"):
     """
     components.html(html_code, height=45)
 
-# True Science of Reading Acoustic Phonics Sound-Out Component
-def phonics_blender_component(target_word, phoneme_tokens, whole_word):
-    tokens_js = str(phoneme_tokens)
-    html_code = f"""
-    <style>
-        .blend-wrap {{ display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }}
-        .sound-bubble {{ width: 55px; height: 55px; border-radius: 50%; background: #38bdf8; color: #000; font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.1s; }}
-        .sound-bubble:active {{ transform: scale(0.92); }}
-        .blend-all-btn {{ background: #f59e0b; color: #000; font-size: 1rem; font-weight: 800; border: none; border-radius: 10px; padding: 10px 18px; cursor: pointer; }}
-        .blend-all-btn:hover {{ background: #fbbf24; }}
-    </style>
-    <div style="background: rgba(255,255,255,0.03); border: 2px solid rgba(245,158,11,0.4); border-radius: 12px; padding: 15px; margin-top: 10px;">
-        <div style="font-weight: 700; color: #fef08a; margin-bottom: 8px;">👉 Tap each sound dot to stretch it out, or click "Blend Word"!</div>
-        <div class="blend-wrap">
-    """
-    for item in phoneme_tokens:
-        char_label = item["letter"]
-        spoken_sound = item["phoneme_audio"]
-        html_code += f"""
-            <div class="sound-bubble" onclick="playSound('{spoken_sound}')">{char_label}</div>
-        """
-    
-    html_code += f"""
-            <span style="font-size: 1.5rem; font-weight: 800; color: #f59e0b;">➔</span>
-            <button class="blend-all-btn" onclick="soundOutAndBlend()">🧩 Sound It Out & Blend: '{whole_word.upper()}'</button>
-        </div>
-    </div>
-
-    <script>
-    function playSound(txt) {{
-        window.speechSynthesis.cancel();
-        let utter = new SpeechSynthesisUtterance(txt);
-        utter.rate = 0.75;
-        utter.pitch = 1.2;
-        window.speechSynthesis.speak(utter);
-    }}
-
-    function soundOutAndBlend() {{
-        window.speechSynthesis.cancel();
-        const tokens = {tokens_js};
-        let delay = 0;
-        
-        tokens.forEach((item, index) => {{
-            setTimeout(() => {{
-                let u = new SpeechSynthesisUtterance(item.phoneme_audio);
-                u.rate = 0.7;
-                u.pitch = 1.2;
-                window.speechSynthesis.speak(u);
-            }}, delay);
-            delay += 850;
-        }});
-
-        setTimeout(() => {{
-            let uWhole = new SpeechSynthesisUtterance("{whole_word}");
-            uWhole.rate = 0.85;
-            uWhole.pitch = 1.1;
-            window.speechSynthesis.speak(uWhole);
-        }}, delay + 200);
-    }}
-    </script>
-    """
-    components.html(html_code, height=130)
-
 # Helper HTML5 Live Speech-To-Text Recognition Component
 def mic_reading_component(target_phrase):
     clean_target = target_phrase.replace("'", "").replace(".", "").replace("!", "").strip().lower()
     html_code = f"""
     <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(56,189,248,0.3); border-radius: 10px; padding: 12px; margin-top: 10px;">
         <button id="micBtn" style="background: #ef4444; color: #fff; font-weight: bold; border: none; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-size: 1rem;" onclick="startListening()">
-            🎙️ Tap to Speak (Read Phrase Aloud)
+            🎙️ Tap to Speak (Say the Word)
         </button>
         <span id="status" style="color: #94a3b8; margin-left: 12px; font-size: 0.95rem;">Click mic to start</span>
         <div id="heardBox" style="margin-top: 10px; color: #38bdf8; font-weight: bold; font-size: 1.1rem;"></div>
@@ -131,7 +68,7 @@ def mic_reading_component(target_phrase):
         const heardBox = document.getElementById('heardBox');
 
         btn.style.background = '#22c55e';
-        btn.innerText = '🔴 Listening... Speak clearly!';
+        btn.innerText = '🔴 Listening... Speak now!';
         status.innerText = 'Listening to student...';
 
         recognition.start();
@@ -143,11 +80,11 @@ def mic_reading_component(target_phrase):
             heardBox.innerHTML = '🗣️ You said: "' + transcript + '"';
             
             if (transcript.includes(target) || target.includes(transcript)) {{
-                status.innerHTML = '<b style="color: #22c55e;">🎉 PERFECT PRONUNCIATION! Click "Verified! Next Step" below to collect stars!</b>';
+                status.innerHTML = '<b style="color: #22c55e;">🎉 PERFECT! You said the word correctly!</b>';
                 let audio = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
                 audio.play();
             }} else {{
-                status.innerHTML = '<b style="color: #f87171;">❌ Try sounding it out again!</b>';
+                status.innerHTML = '<b style="color: #f87171;">❌ Let\'s try saying it again!</b>';
             }}
             btn.style.background = '#ef4444';
             btn.innerText = '🎙️ Tap to Speak Again';
@@ -341,103 +278,46 @@ LADDER_STORIES = {
     ]
 }
 
-# Accurate Science of Reading Sound Wall Definitions with Discrete Sound Tokens
-SOUND_WALL_DATA = {
+SOUND_WALL_WORDS = {
     "/p/ (Lips together, unvoiced)": {
-        "letter": "P",
         "word": "pan",
-        "phoneme_sound": "p",
         "voice": "OFF (Unvoiced air burst)",
-        "tip": "Press lips together and release a crisp puff of air without vibrating your voice box.",
-        "tokens": [
-            {"letter": "p", "phoneme_audio": "p"},
-            {"letter": "a", "phoneme_audio": "ah"},
-            {"letter": "n", "phoneme_audio": "nnn"}
-        ]
+        "tip": "Press lips together and release a crisp puff of air without vibrating your voice box."
     },
     "/b/ (Lips together, voiced)": {
-        "letter": "B",
         "word": "bat",
-        "phoneme_sound": "b",
         "voice": "ON (Voiced vibration)",
-        "tip": "Press lips together and turn your voice box ON so your throat vibrates.",
-        "tokens": [
-            {"letter": "b", "phoneme_audio": "b"},
-            {"letter": "a", "phoneme_audio": "ah"},
-            {"letter": "t", "phoneme_audio": "t"}
-        ]
+        "tip": "Press lips together and turn your voice box ON so your throat vibrates."
     },
     "/t/ (Tongue tap, unvoiced)": {
-        "letter": "T",
         "word": "top",
-        "phoneme_sound": "t",
         "voice": "OFF (Unvoiced tap)",
-        "tip": "Tap the tip of your tongue behind your top front teeth with a puff of air.",
-        "tokens": [
-            {"letter": "t", "phoneme_audio": "t"},
-            {"letter": "o", "phoneme_audio": "ah"},
-            {"letter": "p", "phoneme_audio": "p"}
-        ]
+        "tip": "Tap the tip of your tongue behind your top front teeth with a puff of air."
     },
     "/d/ (Tongue tap, voiced)": {
-        "letter": "D",
         "word": "duck",
-        "phoneme_sound": "d",
         "voice": "ON (Voiced tap)",
-        "tip": "Tap the tip of your tongue behind your front teeth with your voice box buzzing.",
-        "tokens": [
-            {"letter": "d", "phoneme_audio": "d"},
-            {"letter": "u", "phoneme_audio": "uh"},
-            {"letter": "ck", "phoneme_audio": "k"}
-        ]
+        "tip": "Tap the tip of your tongue behind your front teeth with your voice box buzzing."
     },
     "/k/ (Back of tongue, unvoiced)": {
-        "letter": "K",
         "word": "kite",
-        "phoneme_sound": "k",
         "voice": "OFF (Unvoiced)",
-        "tip": "Push the back of your tongue against the roof of your mouth and release air.",
-        "tokens": [
-            {"letter": "k", "phoneme_audio": "k"},
-            {"letter": "i", "phoneme_audio": "eye"},
-            {"letter": "t", "phoneme_audio": "t"}
-        ]
+        "tip": "Push the back of your tongue against the roof of your mouth and release air."
     },
     "/m/ (Lips closed, nasal hum)": {
-        "letter": "M",
         "word": "map",
-        "phoneme_sound": "mmm",
         "voice": "ON (Nasal Humming)",
-        "tip": "Keep your lips closed and hum gently through your nose.",
-        "tokens": [
-            {"letter": "m", "phoneme_audio": "mmm"},
-            {"letter": "a", "phoneme_audio": "ah"},
-            {"letter": "p", "phoneme_audio": "p"}
-        ]
+        "tip": "Keep your lips closed and hum gently through your nose."
     },
     "/s/ (Air hiss, unvoiced)": {
-        "letter": "S",
         "word": "sun",
-        "phoneme_sound": "sss",
         "voice": "OFF (Unvoiced)",
-        "tip": "Close your teeth lightly and hiss continuous air out like a friendly snake.",
-        "tokens": [
-            {"letter": "s", "phoneme_audio": "sss"},
-            {"letter": "u", "phoneme_audio": "uh"},
-            {"letter": "n", "phoneme_audio": "nnn"}
-        ]
+        "tip": "Close your teeth lightly and hiss continuous air out like a friendly snake."
     },
     "/sh/ (Rounded lips air)": {
-        "letter": "SH",
         "word": "ship",
-        "phoneme_sound": "shhh",
         "voice": "OFF (Unvoiced)",
-        "tip": "Round your lips forward into a circle and push gentle air through your teeth.",
-        "tokens": [
-            {"letter": "sh", "phoneme_audio": "shhh"},
-            {"letter": "i", "phoneme_audio": "ih"},
-            {"letter": "p", "phoneme_audio": "p"}
-        ]
+        "tip": "Round your lips forward into a circle and push gentle air through your teeth."
     }
 }
 
@@ -927,7 +807,7 @@ elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
     <div class="instruction-box">
         👉 <b>How to Practice:</b> 
         1. Look at the ladder step shown below. 
-        2. Click <b>🔊 Listen</b> if you need help hearing it first. 
+        2. Click <b>🔊 Listen</b> to hear it read naturally. 
         3. Click the <b>🎙️ Tap to Speak</b> button and read the phrase into your mic! 
         4. When verified, click <b>⭐ Verified! Next Step (+50 XP)</b> to pop balloons and climb the ladder!
     </div>
@@ -986,31 +866,37 @@ elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
             st.rerun()
 
 # ==========================================
-# MODULE 6: SOUND WALL LAB (UPGRADED WITH INTERACTIVE PHONICS BLENDER)
+# MODULE 6: SOUND WALL LAB (STREAMLINED PRONUNCIATION & LIVE SPEECH CHECK)
 # ==========================================
 elif st.session_state.active_nav == "🗣️ Sound Wall Lab":
-    st.subheader("🗣️ Kindergarten Personal Sound Wall & Articulation Guide")
+    st.subheader("🗣️ Kindergarten Personal Sound Wall & Speech Lab")
     st.markdown("""
     <div class="instruction-box">
-        👉 <b>Science of Reading Phonics Guide:</b> 
-        1. <b>Voice Box Check:</b> Place hand on your throat to feel if voice cords vibrate.
-        2. <b>Phonics Bubbles:</b> Tap individual letter bubbles to hear clean, unvoiced phonemes.
-        3. <b>Sound It Out & Blend:</b> Stretches out each sound cleanly and blends them into the target word!
+        👉 <b>How to Practice:</b> 
+        1. <b>Hear Word:</b> Click the blue button to hear the target word pronounced cleanly. 
+        2. <b>Say It:</b> Tap the red <b>🎙️ Tap to Speak</b> button and say the word into your microphone to verify!
     </div>
     """, unsafe_allow_html=True)
 
-    choice = st.selectbox("Select Target Phoneme Sound:", list(SOUND_WALL_DATA.keys()))
-    s_info = SOUND_WALL_DATA[choice]
+    choice = st.selectbox("Select Target Sound:", list(SOUND_WALL_WORDS.keys()))
+    s_info = SOUND_WALL_WORDS[choice]
 
-    st.markdown(f"""
-    <div class="card-box">
-        <h4>👄 Target Phoneme: <code>{choice.split()[0]}</code> (Word: <b style="color:#38bdf8;">{s_info['word'].upper()}</b>)</h4>
-        <p><b>Voice Box Status:</b> <code>{s_info['voice']}</code></p>
-        <p><b>Mouth Gesture Tip:</b> {s_info['tip']}</p>
-    </div>
-    """, unsafe_allow_html=True)
+    col_profile, col_audio = st.columns([1, 1])
+    with col_profile:
+        st.markdown(f"""
+        <div class="card-box">
+            <h4>👄 Sound Profile: <code>{choice.split()[0]}</code></h4>
+            <p><b>Target Word:</b> ✨ <b style="font-size: 1.8rem; color: #38bdf8;">{s_info['word'].upper()}</b></p>
+            <p><b>Voice Box Status:</b> <code>{s_info['voice']}</code></p>
+            <p><b>Mouth Gesture Tip:</b> {s_info['tip']}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        speak_button(s_info['word'], label=f"🔊 Say Word '{s_info['word'].upper()}'")
 
-    phonics_blender_component(s_info["word"], s_info["tokens"], s_info["word"])
+    with col_audio:
+        st.markdown("#### 🎙️ Student Speaking Test:")
+        st.write(f"Say **'{s_info['word'].upper()}'** into your microphone:")
+        mic_reading_component(s_info["word"])
 
 # ==========================================
 # MODULE 7: WRITING SCAFFOLDS
