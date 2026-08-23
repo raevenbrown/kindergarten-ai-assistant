@@ -39,12 +39,12 @@ def speak_button(text_to_speak, label="🔊 Listen"):
     """
     components.html(html_code, height=50)
 
-# Browser Speech Recognition Component with Live Balloon Confetti Engine
+# Browser Speech Recognition Component with Live Balloon Confetti Engine & Homophone Mapping
 def mic_checker_component(target_word):
     clean_target = target_word.replace("'", "").replace(".", "").replace("!", "").strip().lower()
     html_code = f"""
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <div style="background: rgba(255,255,255,0.05); border: 2px solid rgba(56,189,248,0.4); border-radius: 12px; padding: 14px;">
+    <div style="background: rgba(255,255,255,0.05); border: 2px solid rgba(56,189,248,0.4); border-radius: 12px; padding: 14px; min-height: 125px;">
         <button id="micBtn" style="background: #ef4444; color: #ffffff; font-weight: bold; font-size: 1.05rem; border: none; border-radius: 10px; padding: 10px 18px; cursor: pointer;" onclick="runSpeechRec()">
             🎙️ Tap to Speak
         </button>
@@ -104,7 +104,25 @@ def mic_checker_component(target_word):
             
             heard.innerHTML = '🗣️ You said: <u>"' + said + '"</u>';
             
-            if (said.includes(expected) || expected.includes(said)) {{
+            // Homophone mapping table for kindergarten speech transcription
+            const homophones = {{
+                "for": ["for", "four", "4", "fore", "fur"],
+                "to": ["to", "two", "too", "2"],
+                "i": ["i", "eye", "aye"],
+                "in": ["in", "inn"],
+                "see": ["see", "sea", "c"],
+                "be": ["be", "bee"],
+                "one": ["one", "1", "won"],
+                "we": ["we", "wee"],
+                "no": ["no", "know"]
+            }};
+
+            let isMatch = (said.includes(expected) || expected.includes(said));
+            if (homophones[expected] && homophones[expected].includes(said)) {{
+                isMatch = true;
+            }}
+            
+            if (isMatch) {{
                 banner.innerHTML = '<div style="background: rgba(34,197,94,0.25); border: 2px solid #22c55e; color: #4ade80; padding: 10px; border-radius: 8px;">🎉 YOU SAID IT CORRECTLY! Awesome job! ⭐🎈</div>';
                 triggerBalloonsAndConfetti();
                 let audio = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
@@ -201,7 +219,7 @@ LEVEL_WORDS = {
 }
 
 ALPHABET_PAIRS = [
-    ("A", "a"), ("B", "b"), ("C", "c"), ("D", "d"), ("E", "e"), ("F", "f"),
+    ("A", "a"), ("B", "b"), ("C", "d"), ("D", "d"), ("E", "e"), ("F", "f"),
     ("G", "g"), ("H", "h"), ("I", "i"), ("J", "j"), ("K", "k"), ("L", "l"),
     ("M", "m"), ("N", "n"), ("O", "o"), ("P", "p"), ("Q", "q"), ("R", "r"),
     ("S", "s"), ("T", "t"), ("U", "u"), ("V", "v"), ("W", "w"), ("X", "x"),
@@ -352,19 +370,13 @@ SOUND_WALL_WORDS = {
     }
 }
 
-# --- STRUCTURED KINDERGARTEN SIGHT WORD LISTS (1 & 2 FIRST) ---
+# --- NEWTON COUNTY HIGH FREQUENCY VOCABULARY LISTS (EXACT CURRICULUM) ---
 SIGHT_WORD_LISTS = {
-    "⭐ List 1 (Kindergarten Core)": [
-        "the", "to", "and", "a", "I", "you", "it", "in", "said", "for"
+    "⭐ Newton County List 1 (19 Words)": [
+        "am", "at", "can", "go", "I", "on", "is", "like", "me", "see", "the", "to", "we", "dad", "in", "it", "mom", "my", "up"
     ],
-    "🌟 List 2 (Kindergarten Core)": [
-        "up", "look", "is", "go", "we", "little", "down", "can", "see", "not"
-    ],
-    "🚀 List 3 (Advanced)": [
-        "one", "my", "me", "big", "come", "blue", "red", "where", "jump", "away"
-    ],
-    "💎 List 4 (Advanced)": [
-        "here", "help", "make", "yellow", "two", "play", "run", "find", "three", "funny"
+    "🌟 Newton County List 2 (20 Words)": [
+        "he", "look", "and", "are", "come", "for", "got", "here", "not", "play", "said", "you", "day", "down", "into", "she", "they", "where", "went", "will"
     ]
 }
 
@@ -812,7 +824,7 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
         speak_button(f"The letter {v_letter}. Short sound is {v_letter} like apple. Long sound is {v_letter} like acorn.", label=f"🔊 Listen to Vowel '{v_letter}' Sounds")
 
 # ==========================================
-# MODULE 5: SENTENCE LADDER FLUENCY WITH COMPACT MIC CHECKER
+# MODULE 5: SENTENCE LADDER FLUENCY
 # ==========================================
 elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
     st.subheader("🪜 Sentence Ladder Fluency Reader")
@@ -879,7 +891,7 @@ elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
             st.rerun()
 
 # ==========================================
-# MODULE 6: SOUND WALL LAB (COMPACT SPEECH BOX)
+# MODULE 6: SOUND WALL LAB
 # ==========================================
 elif st.session_state.active_nav == "🗣️ Sound Wall Lab":
     st.subheader("🗣️ Kindergarten Personal Sound Wall & Speech Lab")
@@ -968,14 +980,14 @@ elif st.session_state.active_nav == "🦸 Super Synonyms":
             speak_button(f"Instead of {base}, we can say {s}.", label=f"🔊 {s}")
 
 # ==========================================
-# MODULE 9: SIGHT WORD TEST (LIST 1 & LIST 2 FIRST)
+# MODULE 9: SIGHT WORD TEST (NEWTON COUNTY HIGH FREQUENCY VOCABULARY)
 # ==========================================
 elif st.session_state.active_nav == "🗂️ Sight Word Test":
-    st.subheader("🗂️ Kindergarten Sight Word Reading Test")
+    st.subheader("🗂️ Newton County Sight Word Reading Test")
     st.markdown("""
     <div class="instruction-box">
-        👉 <b>Instructions:</b> We start with <b>List 1 and List 2</b> (Core Kindergarten Words). 
-        Look at the word, click <b>🎙️ Tap to Speak</b> and read it into your microphone!
+        👉 <b>Instructions:</b> Practicing <b>Newton County High Frequency Vocabulary</b>. 
+        Look at the word on the card, click <b>🎙️ Tap to Speak</b> and read it into your microphone!
     </div>
     """, unsafe_allow_html=True)
 
@@ -988,7 +1000,7 @@ elif st.session_state.active_nav == "🗂️ Sight Word Test":
     sw = st.session_state.current_sight_word
     col_x, col_y = st.columns([1, 2])
     with col_x:
-        st.markdown(f'<div class="letter-card" style="font-size:2.8rem; width:220px; color:#fbbf24;">{sw}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="letter-card" style="font-size:3.2rem; width:220px; color:#fbbf24;">{sw}</div>', unsafe_allow_html=True)
         speak_button(sw, label=f"🔊 Pronounce '{sw}'")
 
     with col_y:
