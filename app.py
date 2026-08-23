@@ -23,16 +23,19 @@ st.markdown("""
     .letter-card { font-size: 3.5rem; font-weight: 800; color: #f59e0b; text-align: center; padding: 15px; border: 2px dashed rgba(245,158,11,0.4); border-radius: 12px; margin-bottom: 10px; background: rgba(0,0,0,0.2); width: 120px; }
     .word-card { font-size: 2.8rem; font-weight: 800; color: #38bdf8; letter-spacing: 4px; text-align: center; padding: 15px; border: 2px solid #38bdf8; border-radius: 12px; margin-bottom: 15px; background: rgba(0,0,0,0.2); }
     .audio-btn { background: #38bdf8; color: #000; font-weight: bold; border-radius: 8px; border: none; padding: 6px 12px; cursor: pointer; }
+    .audio-btn-blend { background: #f59e0b; color: #000; font-weight: bold; border-radius: 8px; border: none; padding: 6px 12px; cursor: pointer; }
 </style>
 """, unsafe_allow_html=True)
 
 # Helper HTML5 Text-To-Speech Component
-def speak_button(text_to_speak, label="🔊 Listen"):
+def speak_button(text_to_speak, label="🔊 Listen", is_blend=False):
+    btn_class = "audio-btn-blend" if is_blend else "audio-btn"
+    rate = "0.75" if is_blend else "0.85"
     html_code = f"""
-    <button class="audio-btn" onclick="
+    <button class="{btn_class}" onclick="
         window.speechSynthesis.cancel();
         let utter = new SpeechSynthesisUtterance('{text_to_speak}');
-        utter.rate = 0.85;
+        utter.rate = {rate};
         utter.pitch = 1.15;
         window.speechSynthesis.speak(utter);
     ">{label}</button>
@@ -276,6 +279,86 @@ LADDER_STORIES = {
         "The little bug sat",
         "The little bug sat on the big rug."
     ]
+}
+
+SOUND_WALL_DATA = {
+    "/p/ (Lips together, unvoiced)": {
+        "sound_only": "p. p. p.",
+        "word": "pan",
+        "sound_out": "puh. ah. nnn. pan.",
+        "voice": "OFF (Unvoiced)",
+        "tip": "Press your lips together and pop air out without your voice box."
+    },
+    "/b/ (Lips together, voiced)": {
+        "sound_only": "b. b. b.",
+        "word": "bat",
+        "sound_out": "buh. ah. ttt. bat.",
+        "voice": "ON (Voiced)",
+        "tip": "Press your lips together and turn your voice box ON to feel your throat vibrate."
+    },
+    "/t/ (Tongue tap, unvoiced)": {
+        "sound_only": "t. t. t.",
+        "word": "top",
+        "sound_out": "t. ah. puh. top.",
+        "voice": "OFF (Unvoiced)",
+        "tip": "Tap the tip of your tongue behind your top front teeth."
+    },
+    "/d/ (Tongue tap, voiced)": {
+        "sound_only": "d. d. d.",
+        "word": "duck",
+        "sound_out": "duh. uh. kkk. duck.",
+        "voice": "ON (Voiced)",
+        "tip": "Tap the tip of your tongue behind your teeth with your voice box ON."
+    },
+    "/k/ (Back of tongue, unvoiced)": {
+        "sound_only": "k. k. k.",
+        "word": "kite",
+        "sound_out": "k. eye. t. kite.",
+        "voice": "OFF (Unvoiced)",
+        "tip": "Push the back of your tongue against the roof of your mouth and release air."
+    },
+    "/g/ (Back of tongue, voiced)": {
+        "sound_only": "g. g. g.",
+        "word": "gum",
+        "sound_out": "guh. uh. mmm. gum.",
+        "voice": "ON (Voiced)",
+        "tip": "Push the back of your tongue up with your voice box vibrating."
+    },
+    "/m/ (Lips together, nasal humming)": {
+        "sound_only": "mmm. mmm.",
+        "word": "map",
+        "sound_out": "mmm. ah. puh. map.",
+        "voice": "ON (Nasal)",
+        "tip": "Keep your lips closed and let sound hum gently through your nose."
+    },
+    "/n/ (Tongue up, nasal)": {
+        "sound_only": "nnn. nnn.",
+        "word": "nut",
+        "sound_out": "nnn. uh. ttt. nut.",
+        "voice": "ON (Nasal)",
+        "tip": "Touch the roof of your mouth with your tongue and hum through your nose."
+    },
+    "/s/ (Air hiss, unvoiced)": {
+        "sound_only": "sss. sss.",
+        "word": "sun",
+        "sound_out": "sss. uh. nnn. sun.",
+        "voice": "OFF (Unvoiced)",
+        "tip": "Close your teeth lightly and hiss continuous air out like a snake."
+    },
+    "/sh/ (Rounded lips air)": {
+        "sound_only": "shhh. shhh.",
+        "word": "ship",
+        "sound_out": "shhh. ih. puh. ship.",
+        "voice": "OFF (Unvoiced)",
+        "tip": "Round your lips forward like you are telling someone to be quiet."
+    },
+    "/ch/ (Stop and push)": {
+        "sound_only": "ch. ch. ch.",
+        "word": "chip",
+        "sound_out": "ch. ih. puh. chip.",
+        "voice": "OFF (Unvoiced)",
+        "tip": "Touch your tongue to the roof of your mouth and pop air forward."
+    }
 }
 
 SYNONYMS_DATA = {
@@ -756,7 +839,7 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
         speak_button(f"The letter {v_letter}. Short sound is {v_letter} like apple. Long sound is {v_letter} like acorn.", label=f"🔊 Listen to Vowel '{v_letter}' Sounds")
 
 # ==========================================
-# MODULE 5: SENTENCE LADDER FLUENCY WITH LIVE MIC VALIDATION & BALLOONS
+# MODULE 5: SENTENCE LADDER FLUENCY WITH LIVE MIC VALIDATION
 # ==========================================
 elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
     st.subheader("🪜 Sentence Ladder Fluency Reader (With Speech Recognition)")
@@ -787,7 +870,6 @@ elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
 
     st.write("---")
     
-    # Progress Controls with Instant Balloon & XP Promotion
     c_verify, c_restart, _ = st.columns([2, 1, 2])
     with c_verify:
         if current_idx < max_step - 1:
@@ -824,42 +906,43 @@ elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
             st.rerun()
 
 # ==========================================
-# MODULE 6: SOUND WALL LAB
+# MODULE 6: SOUND WALL LAB (UPGRADED WITH PHONICS SOUND-IT-OUT AUDIO)
 # ==========================================
 elif st.session_state.active_nav == "🗣️ Sound Wall Lab":
     st.subheader("🗣️ Kindergarten Personal Sound Wall & Articulation Guide")
     st.markdown("""
     <div class="instruction-box">
-        👉 <b>Instructions for Students & Parents:</b> 
-        Look at how your lips and mouth move when making each sound. Click the sound button to hear the sound pronounced clearly!
+        👉 <b>Instructions:</b> 
+        1. <b>Hear Isolated Sound (🔵):</b> Hear the raw phoneme sound repeated.
+        2. <b>Sound It Out / Blend (🟡):</b> Hear the word stretched out sound-by-sound and blended together!
+        3. <b>Say Whole Word (🔵):</b> Hear the full natural word.
     </div>
     """, unsafe_allow_html=True)
 
-    sound_list = {
-        "/p/ (Lips together, unvoiced - pan)": ("p", "pan", "Put lips together and pop air out without your voice box."),
-        "/b/ (Lips together, voiced - bat)": ("b", "bat", "Put lips together and turn your voice box ON."),
-        "/t/ (Tongue tap, unvoiced - taco)": ("t", "taco", "Tap the tip of your tongue behind your top teeth."),
-        "/d/ (Tongue tap, voiced - duck)": ("d", "duck", "Tap your tongue behind your teeth with voice ON."),
-        "/s/ (Air hiss, unvoiced - sun)": ("s", "sun", "Hiss air through your teeth like a snake."),
-        "/sh/ (Rounded lips air - shark)": ("sh", "shark", "Round your lips like you are telling someone to be quiet."),
-        "/ch/ (Stop and push - cherry)": ("ch", "cherry", "Touch your tongue to the roof of your mouth and push out air.")
-    }
+    choice = st.selectbox("Select Target Phoneme Sound:", list(SOUND_WALL_DATA.keys()))
+    s_info = SOUND_WALL_DATA[choice]
 
-    choice = st.selectbox("Select Target Phoneme Sound:", list(sound_list.keys()))
-    char, word_ex, tip = sound_list[choice]
-
-    col_a, col_b = st.columns([2, 1])
-    with col_a:
+    col_profile, col_actions = st.columns([3, 2])
+    with col_profile:
         st.markdown(f"""
         <div class="card-box">
             <h4>👄 Sound Profile: <code>{choice.split()[0]}</code></h4>
-            <p><b>Example Word:</b> ✨ <b>{word_ex.upper()}</b></p>
-            <p><b>Mouth Gesture Tip:</b> {tip}</p>
+            <p><b>Target Word:</b> ✨ <b style="font-size:1.5rem; color:#38bdf8;">{s_info['word'].upper()}</b></p>
+            <p><b>Voice Box:</b> <code>{s_info['voice']}</code> <i>(Place hand on throat to feel vibration)</i></p>
+            <p><b>Mouth Gesture Tip:</b> {s_info['tip']}</p>
         </div>
         """, unsafe_allow_html=True)
-    with col_b:
-        st.write("Hear Sound & Word:")
-        speak_button(f"The sound is {char}. As in {word_ex}.", label=f"🔊 Hear {choice.split()[0]} Sound")
+    
+    with col_actions:
+        st.markdown("#### 🎧 Phonics Audio Controls:")
+        st.write("1. **Isolated Sound:**")
+        speak_button(s_info["sound_only"], label=f"🔊 Say Sound {choice.split()[0]}")
+        
+        st.write("2. **Sound-It-Out & Blend:**")
+        speak_button(s_info["sound_out"], label=f"🧩 Sound Out '{s_info['word']}'", is_blend=True)
+        
+        st.write("3. **Whole Word:**")
+        speak_button(s_info["word"], label=f"🗣️ Say '{s_info['word']}'")
 
 # ==========================================
 # MODULE 7: WRITING SCAFFOLDS
