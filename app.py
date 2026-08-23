@@ -17,6 +17,7 @@ st.markdown("""
     .card-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(245,158,11,0.25); padding: 18px; border-radius: 12px; margin-bottom: 15px; }
     .instruction-box { background: rgba(56, 189, 248, 0.08); border-left: 4px solid #38bdf8; padding: 12px 16px; border-radius: 6px; margin-bottom: 18px; color: #e0f2fe; }
     .explain-card { background: rgba(34, 197, 94, 0.1); border: 2px solid #22c55e; border-radius: 12px; padding: 18px; margin-top: 15px; margin-bottom: 15px; }
+    .ladder-card { background: rgba(245, 158, 11, 0.08); border-left: 5px solid #f59e0b; border-radius: 8px; padding: 12px 18px; margin-bottom: 10px; font-size: 1.4rem; font-weight: 700; color: #fef08a; display: flex; justify-content: space-between; align-items: center; }
     .ten-frame-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 320px; margin: 12px 0; }
     .ten-frame-cell { border: 2px solid #f59e0b; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 6px; background: rgba(255,255,255,0.02); }
     .letter-card { font-size: 3.5rem; font-weight: 800; color: #f59e0b; text-align: center; padding: 15px; border: 2px dashed rgba(245,158,11,0.4); border-radius: 12px; margin-bottom: 10px; background: rgba(0,0,0,0.2); width: 120px; }
@@ -86,6 +87,8 @@ if "vowel_submitted" not in st.session_state:
     st.session_state.vowel_submitted = False
 if "vowel_explanation" not in st.session_state:
     st.session_state.vowel_explanation = None
+if "ladder_step" not in st.session_state:
+    st.session_state.ladder_step = 1
 
 # --- DATASETS ---
 LEVEL_WORDS = {
@@ -177,20 +180,63 @@ VOWEL_GAME_WORDS = [
     }
 ]
 
-HEART_WORDS_LIST = ["a", "to", "is", "the", "do", "was", "as", "I", "you"]
-DECODABLE_WORDS_LIST = ["am", "man", "did", "at", "in", "sit", "an", "it", "can"]
-
-MONTHLY_VOCAB = {
-    "August": ["pencil", "crayons", "lemonade", "apple", "school"],
-    "September": ["backpack", "pumpkin", "bus", "leaf", "apple tree"],
-    "October": ["jack-o-lantern", "acorn", "candy corn", "scarecrow"],
-    "November": ["corn", "poppy", "sun", "turkey"],
-    "December": ["mitten", "peppermint", "hot chocolate", "snow globe"],
-    "January": ["snowman", "ice skate", "penguin", "snowflake"],
-    "February": ["groundhog", "heart", "Valentine"],
-    "March": ["rainbow", "shamrock", "kite", "butterfly"],
-    "April": ["rainboots", "rain", "earth", "umbrella"],
-    "May": ["seeds", "watering can", "horse", "flower"]
+# --- LADDER READING DATASET ---
+LADDER_STORIES = {
+    "🐱 The Fat Cat": {
+        "heart_words": ["This", "is", "the", "a"],
+        "decodable_words": ["cat", "fat", "mat", "sat"],
+        "ladder": [
+            "This",
+            "This is",
+            "This is a cat.",
+            "This is a fat cat.",
+            "This fat cat sat on the mat!"
+        ]
+    },
+    "🐷 The Big Pig": {
+        "heart_words": ["I", "see", "the", "in"],
+        "decodable_words": ["big", "pig", "mud", "dig"],
+        "ladder": [
+            "I",
+            "I see",
+            "I see a pig.",
+            "I see a big pig.",
+            "I see the big pig dig in mud!"
+        ]
+    },
+    "🐔 The Red Hen": {
+        "heart_words": ["Look", "at", "the", "has"],
+        "decodable_words": ["red", "hen", "ten", "pen"],
+        "ladder": [
+            "Look",
+            "Look at",
+            "Look at the hen.",
+            "Look at the red hen.",
+            "The red hen has ten eggs in the pen!"
+        ]
+    },
+    "☀️ The Hot Sun": {
+        "heart_words": ["The", "is", "we", "can"],
+        "decodable_words": ["sun", "hot", "run", "fun"],
+        "ladder": [
+            "The",
+            "The sun",
+            "The sun is hot.",
+            "The hot sun is out.",
+            "We can run and have fun in the sun!"
+        ]
+    },
+    "🐛 The Little Bug": {
+        "heart_words": ["He", "is", "on", "a"],
+        "decodable_words": ["bug", "big", "rug", "hug"],
+        "ladder": [
+            "He",
+            "He is",
+            "He is a bug.",
+            "He is a little bug.",
+            "The little bug sat on the rug!"
+        ]
+    }
 }
 
 SYNONYMS_DATA = {
@@ -321,7 +367,7 @@ nav_options = [
     "🔢 Ten-Frame Math", 
     "🔤 Letter Match",
     "🍎 Vowel Hunter",
-    "📖 Decodable Story Builder",
+    "🪜 Sentence Ladder Fluency",
     "🗣️ Sound Wall Lab",
     "📝 Sentence Scaffolds",
     "🦸 Super Synonyms",
@@ -346,6 +392,7 @@ if st.sidebar.button("🔄 Reset All Progress"):
     st.session_state.level = 1
     st.session_state.stars = 0
     st.session_state.feedback = None
+    st.session_state.ladder_step = 1
     init_rhyme_question()
     init_math_question()
     init_letter_question()
@@ -537,7 +584,7 @@ elif st.session_state.active_nav == "🔤 Letter Match":
                     st.rerun()
 
 # ==========================================
-# MODULE 4: VOWEL HUNTER LAB (WITH FULL PHONICS EXPLANATION BEFORE NEXT)
+# MODULE 4: VOWEL HUNTER LAB
 # ==========================================
 elif st.session_state.active_nav == "🍎 Vowel Hunter":
     st.subheader("🍎 Interactive Vowel Hunter Lab")
@@ -558,7 +605,6 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
         "🔊 Short vs. Long Vowel Sounds"
     ])
     
-    # 1. Interactive Checkbox Game with Detailed Explanations
     with v_game_tab:
         vg = st.session_state.current_vowel_game
         st.markdown(f'<div class="word-card">{vg["word"]}</div>', unsafe_allow_html=True)
@@ -614,7 +660,6 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
                     }
                 st.rerun()
 
-        # Render Phonics Explanation Card and "Next Word" Button
         if st.session_state.vowel_submitted and st.session_state.vowel_explanation:
             exp = st.session_state.vowel_explanation
             if exp["status"] == "correct":
@@ -633,7 +678,6 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
                 init_vowel_word_game()
                 st.rerun()
 
-    # 2. Name & Custom Word Analyzer
     with v_name_tab:
         st.markdown(f"### 🔍 Vowel Breakdown for: **{st.session_state.student_name}**")
         name_clean = st.session_state.student_name.upper().strip()
@@ -667,48 +711,73 @@ elif st.session_state.active_nav == "🍎 Vowel Hunter":
                 st.write(f"• Y included as vowel: `{'No (Consonant position)' if cw.startswith('Y') else 'No Y in word'}`")
                 st.success(f"Total vowels in **{cw}**: **{len(cw_std)}**")
 
-    # 3. Audio Guide
     with v_audio_tab:
         vowel_choice = st.selectbox("Select a Vowel:", ["A (Short: Apple | Long: Acorn)", "E (Short: Egg | Long: Eagle)", "I (Short: Igloo | Long: Ice)", "O (Short: Octopus | Long: Ocean)", "U (Short: Umbrella | Long: Unicorn)", "Y (Vowel sound: Sky & Happy)"])
         v_letter = vowel_choice[0]
         speak_button(f"The letter {v_letter}. Short sound is {v_letter} like apple. Long sound is {v_letter} like acorn.", label=f"🔊 Listen to Vowel '{v_letter}' Sounds")
 
 # ==========================================
-# MODULE 5: DECODABLE STORY BUILDER
+# MODULE 5: SENTENCE LADDER FLUENCY (NEW SCIENCE OF READING BUILDER)
 # ==========================================
-elif st.session_state.active_nav == "📖 Decodable Story Builder":
-    st.subheader("📖 Decodable & Heart Word Story Builder")
+elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
+    st.subheader("🪜 Decodable Sentence Ladder Reader (Pyramid Reading)")
     st.markdown("""
     <div class="instruction-box">
-        👉 <b>What to do:</b> 
-        <ol>
-            <li>Pick <b>Heart Words</b> (words to memorize by sight, like <i>the, was, to</i>).</li>
-            <li>Pick <b>Decodable Words</b> (words you can sound out with phonics, like <i>can, sit, man</i>).</li>
-            <li>Choose a monthly theme, then click <b>Build Story</b> to generate a custom story with full read-aloud audio!</li>
-        </ol>
+        👉 <b>What is a Sentence Ladder?</b> 
+        We start with <b>1 word</b> and add <b>one new word on each step</b>. This helps kindergartners practice the same words repeatedly to build smooth reading fluency!
+        <br>❤️ <b>Heart Words:</b> Memorize by sight! | 🟢 <b>Decodable Words:</b> Tap and sound them out!
     </div>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        hw = st.multiselect("1. Heart Words (Sight):", HEART_WORDS_LIST, default=["the", "was", "to"])
-    with col2:
-        dw = st.multiselect("2. Decodable Words (Phonics):", DECODABLE_WORDS_LIST, default=["can", "sit", "man"])
-    with col3:
-        month = st.selectbox("3. Monthly Theme:", list(MONTHLY_VOCAB.keys()), index=1)
+    ladder_choice = st.selectbox("Choose a Sentence Ladder Story:", list(LADDER_STORIES.keys()))
+    story_data = LADDER_STORIES[ladder_choice]
 
-    if st.button("✨ Build Story Practice Sheet"):
-        item1 = random.choice(MONTHLY_VOCAB[month])
-        item2 = random.choice(MONTHLY_VOCAB[month])
-        
-        story_text = f"{st.session_state.student_name} saw {hw[0] if hw else 'the'} {item1} by the school path. " \
-                     f"{hw[1] if len(hw) > 1 else 'I'} {dw[0] if dw else 'can'} see a little friend {dw[1] if len(dw) > 1 else 'sit'} nearby. " \
-                     f"It {hw[2] if len(hw) > 2 else 'was'} a fun time to look at the {item2}. " \
-                     f"{st.session_state.student_name} will smile and enjoy the {month} day!"
-        
-        st.markdown(f"### 📄 {st.session_state.student_name}'s {month} Story")
-        st.info(story_text)
-        speak_button(story_text, label="🔊 Read Entire Story Aloud")
+    col_words1, col_words2 = st.columns(2)
+    with col_words1:
+        st.markdown("**❤️ Heart Words in this story:** " + " • ".join([f"`{w}`" for w in story_data["heart_words"]]))
+    with col_words2:
+        st.markdown("**🟢 Decodable Words to sound out:** " + " • ".join([f"`{w}`" for w in story_data["decodable_words"]]))
+
+    st.write("---")
+    st.markdown("### 🪜 Climb the Reading Ladder:")
+
+    # Interactive Step-by-Step Revealer
+    max_steps = len(story_data["ladder"])
+    current_step = st.session_state.ladder_step
+
+    for idx in range(min(current_step, max_steps)):
+        line = story_data["ladder"][idx]
+        col_text, col_audio = st.columns([4, 1])
+        with col_text:
+            st.markdown(f'<div class="ladder-card"><span>Step {idx+1}: {line}</span></div>', unsafe_allow_html=True)
+        with col_audio:
+            speak_button(line, label=f"🔊 Step {idx+1}")
+
+    c_btn1, c_btn2, c_btn3 = st.columns([1, 1, 2])
+    with c_btn1:
+        if current_step < max_steps:
+            if st.button("🪜 Next Step (+1 Word)"):
+                st.session_state.ladder_step += 1
+                st.rerun()
+    with c_btn2:
+        if st.button("🔄 Restart Ladder"):
+            st.session_state.ladder_step = 1
+            st.rerun()
+    with c_btn3:
+        if current_step >= max_steps:
+            if st.button("🎉 I Read the Whole Ladder! (+50 XP, +1 ⭐)"):
+                st.session_state.stars += 1
+                st.session_state.streak += 1
+                st.session_state.xp += 50
+                log_milestone(st.session_state.student_name, "Sentence Ladder", f"Completed ladder: {ladder_choice}")
+                st.balloons()
+                st.session_state.feedback = {
+                    "type": "success",
+                    "msg": f"🎉 INCREDIBLE READING! You climbed the full '{ladder_choice}' ladder!",
+                    "celebrate": True
+                }
+                st.session_state.ladder_step = 1
+                st.rerun()
 
 # ==========================================
 # MODULE 6: SOUND WALL LAB
@@ -826,4 +895,3 @@ elif st.session_state.active_nav == "🗂️ Sight Word Test":
                 st.session_state.feedback = None
                 init_sight_word_test()
                 st.rerun()
-                
