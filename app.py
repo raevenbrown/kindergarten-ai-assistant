@@ -11,18 +11,17 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- KID ARCADE / HATCH THEMED STYLING (FIXES ALL DARK DROPDOWNS & CONTRAST) ---
+# --- KID ARCADE / HATCH THEMED STYLING ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;800&family=Quicksand:wght@600;700;800&display=swap');
 
-    /* Global Arcade Gradient */
     .stApp {
         background: linear-gradient(180deg, #38bdf8 0%, #6ee7b7 55%, #fef08a 100%) !important;
         font-family: 'Fredoka', 'Quicksand', cursive, sans-serif !important;
     }
 
-    /* Fix Streamlit Select Boxes into High-Contrast White Cards */
+    /* High-contrast dropdown cards */
     div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         border: 3.5px solid #0284c7 !important;
@@ -80,6 +79,16 @@ st.markdown("""
         margin-bottom: 16px;
         text-align: center;
     }
+
+    .choice-card-img {
+        background: #ffffff;
+        border: 3.5px solid #93c5fd;
+        border-radius: 24px;
+        padding: 12px;
+        text-align: center;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        margin-bottom: 8px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -114,7 +123,7 @@ def speak(text, sfx="pop"):
     """
     components.html(js, height=0)
 
-# --- IPAD FINGER TRACING BOX ---
+# --- FINGER TRACING PAD (FIXED: ONLY DRAWS ON ACTIVE MOUSE CLICK / FINGER TOUCH DOWN) ---
 def tracing_box(word):
     html = f"""
     <div style="background:#f8fafc; border:4px dashed #0284c7; border-radius:26px; padding:14px; text-align:center;">
@@ -129,32 +138,73 @@ def tracing_box(word):
     <script>
         const cvs = document.getElementById('cPad');
         const ctx = cvs.getContext('2d');
-        let drawing = false;
+        let isPressing = false;
 
-        function start(e) {{ drawing = true; draw(e); }}
-        function end() {{ drawing = false; ctx.beginPath(); }}
-        function draw(e) {{
-            if(!drawing) return;
+        function getCoordinates(e) {{
+            const rect = cvs.getBoundingClientRect();
+            if (e.touches && e.touches.length > 0) {{
+                return {{
+                    x: e.touches[0].clientX - rect.left,
+                    y: e.touches[0].clientY - rect.top
+                }};
+            }}
+            return {{
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            }};
+        }}
+
+        function handlePointerDown(e) {{
+            // Mouse button check: Only draw on primary left-click
+            if (e.type === 'mousedown' && e.button !== 0) return;
             e.preventDefault();
-            const r = cvs.getBoundingClientRect();
-            const x = (e.clientX || (e.touches && e.touches[0].clientX)) - r.left;
-            const y = (e.clientY || (e.touches && e.touches[0].clientY)) - r.top;
+            isPressing = true;
+            const pt = getCoordinates(e);
+            ctx.beginPath();
+            ctx.moveTo(pt.x, pt.y);
             ctx.lineWidth = 10;
             ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
             ctx.strokeStyle = '#ec4899';
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
         }}
-        cvs.addEventListener('mousedown', start);
-        cvs.addEventListener('mouseup', end);
-        cvs.addEventListener('mousemove', draw);
-        cvs.addEventListener('touchstart', start, {{ passive: false }});
-        cvs.addEventListener('touchend', end, {{ passive: false }});
-        cvs.addEventListener('touchmove', draw, {{ passive: false }});
 
-        function clearPad() {{ ctx.clearRect(0, 0, cvs.width, cvs.height); document.getElementById('cMsg').innerText = ''; }}
+        function handlePointerMove(e) {{
+            if (!isPressing) return;
+            e.preventDefault();
+            // Mouse safety fallback: if buttons are 0, user released mouse outside
+            if (e.type === 'mousemove' && e.buttons === 0) {{
+                isPressing = false;
+                ctx.beginPath();
+                return;
+            }}
+            const pt = getCoordinates(e);
+            ctx.lineTo(pt.x, pt.y);
+            ctx.stroke();
+        }}
+
+        function handlePointerUp(e) {{
+            if (isPressing) {{
+                isPressing = false;
+                ctx.beginPath();
+            }}
+        }}
+
+        // Mouse listeners
+        cvs.addEventListener('mousedown', handlePointerDown);
+        cvs.addEventListener('mousemove', handlePointerMove);
+        window.addEventListener('mouseup', handlePointerUp);
+
+        // Touch listeners for iPad
+        cvs.addEventListener('touchstart', handlePointerDown, {{ passive: false }});
+        cvs.addEventListener('touchmove', handlePointerMove, {{ passive: false }});
+        window.addEventListener('touchend', handlePointerUp, {{ passive: false }});
+        window.addEventListener('touchcancel', handlePointerUp, {{ passive: false }});
+
+        function clearPad() {{
+            ctx.clearRect(0, 0, cvs.width, cvs.height);
+            document.getElementById('cMsg').innerText = '';
+        }}
+
         function checkTrace() {{
             confetti({{ particleCount: 90, spread: 75, origin: {{ y: 0.75 }} }});
             document.getElementById('cMsg').innerText = "🌟 WOW Gracyn! Great handwriting!";
@@ -453,7 +503,6 @@ if active_game == "📖 Sight Words":
 
     word = st.session_state.current_sw
 
-    # Auto-read instructions ONLY (DO NOT pronounce the target word)
     if "last_sw_spoken" not in st.session_state or st.session_state.last_sw_spoken != word:
         speak("Read this word! Tap the orange button to say your word into the microphone, then trace it with your finger and tap the green button!")
         st.session_state.last_sw_spoken = word
@@ -496,13 +545,13 @@ if active_game == "📖 Sight Words":
                 st.rerun()
 
 # ==========================================
-# 2. VISUAL PARTS OF A BOOK
+# 2. VISUAL PARTS OF A BOOK (WITH PICTURE CHOICES)
 # ==========================================
 elif active_game == "📚 Parts of a Book":
     st.markdown("""
     <div class="instruction-card">
         <div style="font-size:1.7rem; font-weight:900; color:#1e40af;">📚 Interactive Book Detective</div>
-        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Look at where the yellow bouncy arrow points and listen carefully!</div>
+        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Look at where the yellow bouncy arrow points, look at the picture choices, and tap the right answer!</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -510,32 +559,62 @@ elif active_game == "📚 Parts of a Book":
         {
             "target": "Front Cover", "highlight": "cover",
             "q": "Look at the front of the book! What do we call this protective front part?",
-            "wrong_exp": "The front cover protects the book and welcomes you to the story! Try clicking Front Cover.",
-            "correct": "Front Cover", "opts": ["Front Cover", "The Spine", "Back Cover", "Page Numbers"]
+            "wrong_exp": "The front cover protects the book and welcomes you to the story! Look for the Front Cover card.",
+            "correct": "Front Cover",
+            "opts": [
+                {"name": "Front Cover", "img": "📕", "sub": "Whole Front Cover with Picture"},
+                {"name": "The Spine", "img": "📏", "sub": "Side Edge Backbone"},
+                {"name": "Back Cover", "img": "📘", "sub": "Back with Barcode"},
+                {"name": "Page Numbers", "img": "📄", "sub": "Bottom Corner Numbers"}
+            ]
         },
         {
             "target": "Title", "highlight": "title",
             "q": "The yellow arrow is pointing to THE BRAVE PUPPY. What is the name of a book called?",
-            "wrong_exp": "The title is the name of the book! Try clicking The Title.",
-            "correct": "The Title", "opts": ["The Title", "The Author", "The Spine", "The Illustrator"]
+            "wrong_exp": "The title is the big name of the story! Look for The Title card.",
+            "correct": "The Title",
+            "opts": [
+                {"name": "The Title", "img": "🏷️", "sub": "Name of the Book"},
+                {"name": "The Author", "img": "✍️", "sub": "Writer of Words"},
+                {"name": "The Spine", "img": "📏", "sub": "Side Edge Backbone"},
+                {"name": "The Illustrator", "img": "🎨", "sub": "Picture Painter"}
+            ]
         },
         {
             "target": "Author", "highlight": "author",
             "q": "The arrow points to By Raeven Brown. Who writes the words in the book?",
-            "wrong_exp": "The author is the person who writes all the words! Try clicking The Author.",
-            "correct": "The Author", "opts": ["The Author", "The Illustrator", "The Character", "The Reader"]
+            "wrong_exp": "The author is the person who writes all the words! Look for The Author card.",
+            "correct": "The Author",
+            "opts": [
+                {"name": "The Author", "img": "✍️", "sub": "Writes the Words"},
+                {"name": "The Illustrator", "img": "🎨", "sub": "Draws Pictures"},
+                {"name": "Front Cover", "img": "📕", "sub": "Front of Book"},
+                {"name": "Page Numbers", "img": "📄", "sub": "Bottom Corner Numbers"}
+            ]
         },
         {
             "target": "Illustrator", "highlight": "illustrator",
             "q": "The arrow points to Art by Gracyn. Who draws all the colorful pictures in the book?",
-            "wrong_exp": "The illustrator draws all the beautiful pictures! Try clicking The Illustrator.",
-            "correct": "The Illustrator", "opts": ["The Illustrator", "The Author", "The Teacher", "The Library"]
+            "wrong_exp": "The illustrator draws all the beautiful pictures! Look for The Illustrator card.",
+            "correct": "The Illustrator",
+            "opts": [
+                {"name": "The Illustrator", "img": "🎨", "sub": "Draws Pictures"},
+                {"name": "The Author", "img": "✍️", "sub": "Writes Words"},
+                {"name": "The Title", "img": "🏷️", "sub": "Name of the Book"},
+                {"name": "The Spine", "img": "📏", "sub": "Side Edge Backbone"}
+            ]
         },
         {
             "target": "Spine", "highlight": "spine",
             "q": "The yellow arrow points to the side edge. What holds all the pages together like a backbone?",
-            "wrong_exp": "The spine holds the pages tightly together like your backbone! Try clicking The Spine.",
-            "correct": "The Spine", "opts": ["The Spine", "The Cover", "The Bookmark", "The Pages"]
+            "wrong_exp": "The spine holds the pages tightly together like your backbone! Look for The Spine card.",
+            "correct": "The Spine",
+            "opts": [
+                {"name": "The Spine", "img": "📏", "sub": "Holds Pages Together"},
+                {"name": "Front Cover", "img": "📕", "sub": "Protects Front"},
+                {"name": "Back Cover", "img": "📘", "sub": "Back with Barcode"},
+                {"name": "The Title", "img": "🏷️", "sub": "Name of the Book"}
+            ]
         }
     ]
 
@@ -581,19 +660,30 @@ elif active_game == "📚 Parts of a Book":
     </div>
     """, unsafe_allow_html=True)
 
-    bcols = st.columns(2)
-    for i, opt in enumerate(curr_q["opts"]):
-        with bcols[i % 2]:
-            if st.button(f"👉 {opt}", key=f"bk_{opt}_{st.session_state.bq_idx}", use_container_width=True):
-                if opt == curr_q["correct"]:
+    # 4 Visual Picture Choices with Illustrated Cards
+    bcols_top = st.columns(2)
+    bcols_bot = st.columns(2)
+    all_bcols = [bcols_top[0], bcols_top[1], bcols_bot[0], bcols_bot[1]]
+
+    for i, choice in enumerate(curr_q["opts"]):
+        with all_bcols[i]:
+            st.markdown(f"""
+            <div class="choice-card-img">
+                <div style="font-size:3.5rem; margin-bottom:4px;">{choice['img']}</div>
+                <div style="font-size:1.35rem; font-weight:900; color:#0f172a;">{choice['name']}</div>
+                <div style="font-size:1.05rem; font-weight:700; color:#64748b;">{choice['sub']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button(f"👉 Select {choice['name']}", key=f"bk_opt_{choice['name']}_{st.session_state.bq_idx}", use_container_width=True):
+                if choice["name"] == curr_q["correct"]:
                     st.balloons()
-                    speak(f"Yes! Awesome job Gracyn! That is {opt}!", "cheer")
-                    award_score("Parts of a Book", f"Correct on {opt}")
+                    speak(f"Yes! Awesome job Gracyn! That is {choice['name']}!", "cheer")
+                    award_score("Parts of a Book", f"Correct on {choice['name']}")
                     st.session_state.bq_idx += 1
                     st.rerun()
                 else:
                     speak(f"Not quite. {curr_q['wrong_exp']}", "tryagain")
-                    track_performance("Parts of a Book", False, f"Chose {opt}")
+                    track_performance("Parts of a Book", False, f"Chose {choice['name']}")
 
 # ==========================================
 # 3. NUMBER DETECTIVE: 18 & BEYOND
