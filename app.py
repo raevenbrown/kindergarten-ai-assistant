@@ -433,33 +433,66 @@ elif st.session_state.screen == "adventure_trail":
             st.session_state.screen = "profile_select"
             st.rerun()
 
-    speak(f"Welcome to your adventure trail {user}! Tap any unlocked level along your winding path to play!")
+    speak(f"Welcome to your adventure trail {user}! Tap any unlocked level inside the learning house to play!")
 
     # STATION DEFINITIONS (ALL 8 LEVELS)
     trail_stations = [
-        {"level": 1, "id": "sight_words", "title": "Level 1: Sight Words", "icon": "📖"},
-        {"level": 2, "id": "book_parts", "title": "Level 2: Book Parts", "icon": "📚"},
-        {"level": 3, "id": "numbers", "title": "Level 3: Numbers", "icon": "🕵️"},
-        {"level": 4, "id": "spelling", "title": "Level 4: Word Family", "icon": "🔤"},
-        {"level": 5, "id": "ispy", "title": "Level 5: Letter I-Spy", "icon": "🔍"},
-        {"level": 6, "id": "seasons", "title": "Level 6: Seasons", "icon": "🍁"},
-        {"level": 7, "id": "math", "title": "Level 7: Cool Math", "icon": "➕"},
-        {"level": 8, "id": "parent_portal", "title": "Level 8: Parent Portal", "icon": "📊"}
+        {"level": 1, "id": "sight_words", "title": "1. Sight Words", "icon": "📖"},
+        {"level": 2, "id": "book_parts", "title": "2. Book Detective", "icon": "📚"},
+        {"level": 3, "id": "numbers", "title": "3. Number Detective", "icon": "🕵️"},
+        {"level": 4, "id": "spelling", "title": "4. Word Family", "icon": "🔤"},
+        {"level": 5, "id": "ispy", "title": "5. Letter I-Spy", "icon": "🔍"},
+        {"level": 6, "id": "seasons", "title": "6. Seasons", "icon": "🍁"},
+        {"level": 7, "id": "math", "title": "7. Cool Math", "icon": "➕"},
+        {"level": 8, "id": "parent_portal", "title": "8. Parent Portal", "icon": "📊"}
     ]
 
-    # BUILD INTERACTIVE HTML/SVG MAP CONTAINER MATCHING REFERENCE IMAGE EXACTLY
-    # Each node along the winding path is a clickable SVG/HTML element that triggers the specific level.
-    
-    # We will use Streamlit form or buttons neatly overlaying or integrated
-    st.markdown("""
-    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:24px; box-shadow:0 16px 32px rgba(0,0,0,0.12); margin-bottom:10px; text-align:center;">
-        <div style="font-size:1.4rem; font-weight:900; color:#0369a1; margin-bottom:14px;">
-            🗺️ Follow the Winding Path & Tap Your Level to Play!
+    # KHAN KIDS HOUSE CONTAINER HOLDING ONLY THE WINDING PATH & HOUSE (NO BUTTONS BELOW)
+    map_container_html = f"""
+    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:24px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; overflow:hidden; margin-bottom:12px;">
+        <svg width="100%" height="240" viewBox="0 0 900 240" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 40 160 Q 180 60 320 150 Q 480 240 620 110" fill="none" stroke="#64748b" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+            
+            <g transform="translate(60, 110)">
+                <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="#0284c7" stroke-width="4"/>
+                <text x="55" y="42" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#0369a1" text-anchor="middle">📖 Level 1</text>
+            </g>
+
+            <g transform="translate(230, 85)">
+                <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="{'#10b981' if unlocked_lvl >= 2 else '#94a3b8'}" stroke-width="4"/>
+                <text x="55" y="42" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="{'#047857' if unlocked_lvl >= 2 else '#94a3b8'}" text-anchor="middle">{'📚 Level 2' if unlocked_lvl >= 2 else '🔒 Locked'}</text>
+            </g>
+
+            <g transform="translate(410, 140)">
+                <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="{'#f59e0b' if unlocked_lvl >= 3 else '#94a3b8'}" stroke-width="4"/>
+                <text x="55" y="42" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="{'#b45309' if unlocked_lvl >= 3 else '#94a3b8'}" text-anchor="middle">{'🕵️ Level 3' if unlocked_lvl >= 3 else '🔒 Locked'}</text>
+            </g>
+
+            <g transform="translate(640, 15)">
+                <polygon points="100,10 20,80 180,80" fill="#991b1b"/>
+                <rect x="35" y="80" width="130" height="110" fill="#f8fafc" stroke="#475569" stroke-width="4"/>
+                <rect x="80" y="125" width="40" height="65" rx="6" fill="#78350f"/>
+                <circle cx="100" cy="115" r="32" fill="#14b8a6" stroke="#ffffff" stroke-width="4"/>
+                <polygon points="90,100 90,130 118,115" fill="#ffffff"/>
+            </g>
+        </svg>
+
+        <div style="display:flex; justify-content:center; gap:35px; align-items:flex-end; margin-top:10px;">
+            <div style="font-size:3rem;">🐘</div>
+            <div style="font-size:3rem;">🦊</div>
+            <div style="font-size:2.6rem;">🦜</div>
+            <div style="font-size:3rem;">🦭</div>
         </div>
     </div>
+    """
+    components.html(map_container_html, height=330)
+
+    # RENDER THE LEVEL BUTTONS INSIDE THE HOUSE CONTAINER BOX (NO EXTRA BUTTONS BELOW)
+    st.markdown("""
+    <div style="background:#ffffff; border:4px solid #38bdf8; border-radius:28px; padding:18px; box-shadow:0 12px 24px rgba(0,0,0,0.08); margin-bottom:10px;">
+        <h3 style="color:#0369a1; text-align:center; margin-top:0;">🎮 Select an Unlocked Level to Play:</h3>
     """, unsafe_allow_html=True)
 
-    # Render Level Buttons inside 2 clean rows that map directly to the winding road milestones
     r1 = st.columns(4)
     for idx in range(4):
         node = trail_stations[idx]
@@ -467,15 +500,17 @@ elif st.session_state.screen == "adventure_trail":
         is_unlocked = lvl <= unlocked_lvl
         with r1[idx]:
             if is_unlocked:
-                if st.button(f"{node['icon']} {node['title']}", key=f"map_lvl_{lvl}", use_container_width=True):
+                if st.button(f"{node['icon']} {node['title']}", key=f"house_btn_{node['id']}", use_container_width=True):
                     st.session_state.active_activity = node['id']
                     st.session_state.current_level_num = lvl
                     st.session_state.screen = "station_play"
                     st.rerun()
             else:
-                if st.button(f"🔒 Level {lvl} (Locked)", key=f"map_lock_{lvl}", use_container_width=True):
+                if st.button(f"🔒 Level {lvl} (Locked)", key=f"house_lock_{node['id']}", use_container_width=True):
                     speak(f"Level {lvl} is locked! Complete the previous level first!")
                     st.warning(f"🔒 **Level {lvl} Locked**")
+
+    st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
 
     r2 = st.columns(4)
     for idx in range(4, 8):
@@ -484,25 +519,17 @@ elif st.session_state.screen == "adventure_trail":
         is_unlocked = lvl <= unlocked_lvl
         with r2[idx - 4]:
             if is_unlocked:
-                if st.button(f"{node['icon']} {node['title']}", key=f"map_lvl_{lvl}", use_container_width=True):
+                if st.button(f"{node['icon']} {node['title']}", key=f"house_btn_{node['id']}", use_container_width=True):
                     st.session_state.active_activity = node['id']
                     st.session_state.current_level_num = lvl
                     st.session_state.screen = "station_play"
                     st.rerun()
             else:
-                if st.button(f"🔒 Level {lvl} (Locked)", key=f"map_lock_{lvl}", use_container_width=True):
+                if st.button(f"🔒 Level {lvl} (Locked)", key=f"house_lock_{node['id']}", use_container_width=True):
                     speak(f"Level {lvl} is locked! Complete the previous level first!")
                     st.warning(f"🔒 **Level {lvl} Locked**")
 
-    # Companion Animals banner at bottom of trail
-    st.markdown("""
-    <div style="display:flex; justify-content:center; gap:35px; align-items:flex-end; margin-top:20px;">
-        <div style="font-size:3rem;">🐘</div>
-        <div style="font-size:3rem;">🦊</div>
-        <div style="font-size:2.6rem;">🦜</div>
-        <div style="font-size:3rem;">🦭</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
 # SCREEN 4: INDIVIDUAL STATION PLAY ARENA
