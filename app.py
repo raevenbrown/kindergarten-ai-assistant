@@ -21,7 +21,7 @@ st.markdown("""
         font-family: 'Fredoka', 'Quicksand', cursive, sans-serif;
     }
 
-    /* iPad Friendly Large Tap Targets */
+    /* iPad-Friendly Large Tap Targets */
     .stButton > button {
         border-radius: 24px !important;
         font-size: 1.3rem !important;
@@ -113,12 +113,10 @@ def play_sound_and_speak(text, sound_type="cheer"):
 
     html_code = f"""
     <script>
-        // SFX
         let sfx = new Audio("{sound_fx}");
         sfx.volume = 0.6;
         sfx.play().catch(e => console.log(e));
 
-        // Kid-friendly slow voice
         window.speechSynthesis.cancel();
         let msg = new SpeechSynthesisUtterance("{text}");
         msg.rate = 0.82;
@@ -127,12 +125,6 @@ def play_sound_and_speak(text, sound_type="cheer"):
     </script>
     """
     components.html(html_code, height=0)
-
-def kid_button(label, sound_text="", key=None):
-    btn = st.button(label, key=key, use_container_width=True)
-    if btn and sound_text:
-        play_sound_and_speak(sound_text)
-    return btn
 
 # --- IPAD DRAWING PAD FOR TRACING & HEART WORDS ---
 def kid_canvas(target_word):
@@ -260,7 +252,17 @@ def log_progress(activity, result):
         except Exception:
             pass
 
-# --- SESSION STATE SETUP ---
+# --- EXACT CURRICULUM SIGHT WORD LISTS ---
+SIGHT_WORD_LISTS = {
+    "⭐ List 1 (12 Words)": [
+        "a", "at", "do", "was", "the", "as", "I", "you", "am", "to", "is", "an"
+    ],
+    "🌟 List 2 (12 Words)": [
+        "man", "did", "of", "your", "in", "sit", "for", "said", "it", "can", "from", "all"
+    ]
+}
+
+# --- SESSION STATE INITIALIZATION ---
 if "stars" not in st.session_state: st.session_state.stars = 0
 if "coins" not in st.session_state: st.session_state.coins = 50
 if "streak" not in st.session_state: st.session_state.streak = 0
@@ -271,14 +273,8 @@ if "current_game" not in st.session_state: st.session_state.current_game = "📖
 if "avatar_head" not in st.session_state: st.session_state.avatar_head = "👑"
 if "avatar_pet" not in st.session_state: st.session_state.avatar_pet = "🐥"
 if "avatar_bg" not in st.session_state: st.session_state.avatar_bg = "#ecfeff"
-
-# CURRICULUM VOCABULARY LISTS (Core List 1 & List 2)
-HEART_WORDS_LIST = [
-    "a", "the", "am", "at", "as", "to", "do", "I", "is", "was", "you", "and", 
-    "man", "in", "it", "did", "sit", "can", "of", "for", "from", "your", "said", "all",
-    "go", "like", "me", "see", "we", "dad", "mom", "my", "up", "he", "look", "are", 
-    "come", "got", "here", "not", "play", "day", "down", "into", "she", "they", "where", "went", "will"
-]
+if "selected_hw_list" not in st.session_state:
+    st.session_state.selected_hw_list = "⭐ List 1 (12 Words)"
 
 def award_win(points=10, stars=1):
     st.session_state.coins += points
@@ -287,9 +283,6 @@ def award_win(points=10, stars=1):
     st.session_state.questions_done += 1
     if st.session_state.questions_done % 10 == 0:
         st.session_state.unlocked_treasure = True
-        st.session_state.celebrate_text = "🎉 10 QUESTIONS COMPLETE! TREASURE BOX UNLOCKED! 🎁"
-    else:
-        st.session_state.celebrate_text = f"🌟 AWESOME JOB! +{points} Coins, +{stars} Star!"
     st.rerun()
 
 # --- TOP HUD HEADER ---
@@ -319,7 +312,7 @@ with hud_col3:
 
 if st.session_state.unlocked_treasure:
     st.balloons()
-    st.success("🎁 TREASURE BOX OPEN! Head to the Avatar Closet to spend your coins!")
+    st.success("🎁 TREASURE BOX OPEN! Head to the Treasure Closet to spend your coins!")
 
 # --- GAME SELECTOR TABS ---
 st.markdown("---")
@@ -342,21 +335,46 @@ if active_game == "📖 Heart Words":
     st.markdown("""
     <div class="game-board">
         <div class="game-title">💖 Heart Word Explorer</div>
-        <div class="game-subtitle">Sight words you have to know by heart! Read it, trace it, write it, and say it loud!</div>
+        <div class="game-subtitle">Sight words you have to know by heart! Pick your list, read it, trace it, write it, and say it loud!</div>
     </div>
     """, unsafe_allow_html=True)
 
-    if "current_hw" not in st.session_state:
-        st.session_state.current_hw = random.choice(HEART_WORDS_LIST)
+    col_list, col_pick = st.columns([1.2, 1])
+    with col_list:
+        chosen_list_name = st.selectbox(
+            "📚 Choose Sight Word List to Practice:",
+            list(SIGHT_WORD_LISTS.keys()),
+            index=list(SIGHT_WORD_LISTS.keys()).index(st.session_state.selected_hw_list)
+        )
+        if chosen_list_name != st.session_state.selected_hw_list:
+            st.session_state.selected_hw_list = chosen_list_name
+            st.session_state.current_hw = SIGHT_WORD_LISTS[chosen_list_name][0]
+            st.rerun()
+
+    active_bank = SIGHT_WORD_LISTS[st.session_state.selected_hw_list]
+
+    if "current_hw" not in st.session_state or st.session_state.current_hw not in active_bank:
+        st.session_state.current_hw = active_bank[0]
+
+    with col_pick:
+        picked_word = st.selectbox(
+            "🎯 Pick a Specific Word (or use Next):",
+            active_bank,
+            index=active_bank.index(st.session_state.current_hw)
+        )
+        if picked_word != st.session_state.current_hw:
+            st.session_state.current_hw = picked_word
+            st.rerun()
 
     word = st.session_state.current_hw
     col_w1, col_w2 = st.columns([1, 1.2])
 
     with col_w1:
         st.markdown(f"""
-        <div style="background:#fef2f2; border:5px solid #f87171; border-radius:30px; padding:30px; text-align:center; margin-bottom:15px;">
-            <div style="font-size:1.8rem; color:#ef4444; font-weight:800;">❤️ HEART WORD:</div>
-            <div style="font-size:5rem; font-weight:900; color:#dc2626; letter-spacing:6px;">{word.upper()}</div>
+        <div style="background:#fef2f2; border:5px solid #f87171; border-radius:30px; padding:25px; text-align:center; margin-bottom:15px;">
+            <div style="font-size:1.4rem; color:#ef4444; font-weight:800;">❤️ {st.session_state.selected_hw_list.split('(')[0].strip()}</div>
+            <div style="font-size:5.5rem; font-weight:900; color:#dc2626; letter-spacing:6px; margin: 10px 0;">{word.upper()}</div>
+            <div style="font-size:1.1rem; color:#6b7280; font-weight:600;">Word {active_bank.index(word) + 1} of {len(active_bank)}</div>
         </div>
         """, unsafe_allow_html=True)
         mic_speaker_box(word)
@@ -367,13 +385,16 @@ if active_game == "📖 Heart Words":
         
         c1, c2 = st.columns(2)
         with c1:
-            if st.button("🌟 I Mastered This Word! (+10 🪙)", use_container_width=True):
-                log_progress("Heart Word", f"Mastered {word}")
-                st.session_state.current_hw = random.choice(HEART_WORDS_LIST)
+            if st.button("🌟 Mastered! (+10 🪙)", use_container_width=True):
+                log_progress("Heart Word", f"Mastered [{st.session_state.selected_hw_list}]: {word}")
+                curr_idx = active_bank.index(word)
+                next_idx = (curr_idx + 1) % len(active_bank)
+                st.session_state.current_hw = active_bank[next_idx]
                 award_win(10, 1)
         with c2:
-            if st.button("➡️ Next Word 🎲", use_container_width=True):
-                st.session_state.current_hw = random.choice(HEART_WORDS_LIST)
+            if st.button("➡️ Next Word in List 🎲", use_container_width=True):
+                remaining = [w for w in active_bank if w != word]
+                st.session_state.current_hw = random.choice(remaining) if remaining else word
                 st.rerun()
 
 # ==========================================
@@ -436,7 +457,6 @@ elif active_game == "🕵️ Number Detective (18 & Beyond)":
     </div>
     """, unsafe_allow_html=True)
 
-    # 4 Cards for Gracyn to inspect
     c1, c2 = st.columns(2)
     c3, c4 = st.columns(2)
 
@@ -518,7 +538,6 @@ elif active_game == "🔤 Letter I-Spy":
     </div>
     """, unsafe_allow_html=True)
 
-    # Distractors
     other_letters = [l for _, l in pairs if l != small]
     choices = random.sample(other_letters, 3) + [small]
     random.shuffle(choices)
@@ -589,7 +608,6 @@ elif active_game == "➕ Kumon Math Challenge":
     """, unsafe_allow_html=True)
 
     if "math_q" not in st.session_state:
-        # Generate addition or subtraction beyond 10
         is_add = random.choice([True, False])
         if is_add:
             a = random.randint(7, 12)
@@ -608,7 +626,6 @@ elif active_game == "➕ Kumon Math Challenge":
     </div>
     """, unsafe_allow_html=True)
 
-    # Visual aids
     if mq["op"] == "+":
         st.markdown(f"<div style='text-align:center; font-size:1.5rem; margin-bottom:15px;'>{'🟦 ' * mq['a']} + {'🟨 ' * mq['b']}</div>", unsafe_allow_html=True)
     else:
@@ -655,7 +672,7 @@ elif active_game == "🎁 Treasure Closet":
     t_tab1, t_tab2, t_tab3 = st.tabs(["👑 Hats & Crowns", "🐾 Pet Companions", "🎨 Stage Colors"])
 
     with t_tab1:
-        st.markdown("#### Pick Your Crown / Hat (Free with your earned points!):")
+        st.markdown("#### Pick Your Crown / Hat:")
         h_cols = st.columns(4)
         hats = ["👑 Crown", "🎀 Bow", "🎓 Scholar", "🦄 Unicorn", "🌸 Flower", "🤠 Cowgirl", "🎩 Top Hat", "🦸 Superhero"]
         for idx, h in enumerate(hats):
