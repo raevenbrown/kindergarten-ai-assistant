@@ -243,7 +243,8 @@ if "profiles" not in st.session_state:
             },
             "stars": 14,
             "streak": 3,
-            "unlocked_level": 3,
+            "unlocked_level": 1,
+            "level_progress": {"level_1_step": 0, "level_2_step": 0, "level_3_step": 0},
             "daily_log": []
         },
         "Jaxson": {
@@ -258,6 +259,7 @@ if "profiles" not in st.session_state:
             "stars": 8,
             "streak": 2,
             "unlocked_level": 1,
+            "level_progress": {"level_1_step": 0, "level_2_step": 0, "level_3_step": 0},
             "daily_log": []
         }
     }
@@ -270,21 +272,6 @@ if "screen" not in st.session_state:
 
 if "active_activity" not in st.session_state:
     st.session_state.active_activity = "sight_words"
-
-def record_event(activity, is_correct, detail, level_num):
-    user = st.session_state.active_user
-    prof = st.session_state.profiles[user]
-    if is_correct:
-        prof["stars"] += 1
-        prof["streak"] += 1
-        if level_num >= prof["unlocked_level"] and prof["unlocked_level"] < 8:
-            prof["unlocked_level"] = level_num + 1
-    prof["daily_log"].append({
-        "time": datetime.now().strftime("%I:%M:%S %p"),
-        "activity": activity,
-        "detail": detail,
-        "result": "Passed (+1 Star)" if is_correct else "Gentle Hint Used"
-    })
 
 # =========================================================
 # SCREEN 1: PROFILE HUB
@@ -310,7 +297,7 @@ if st.session_state.screen == "profile_select":
             if st.button(f"Play as {name}", key=f"prof_{name}", use_container_width=True):
                 st.session_state.active_user = name
                 st.session_state.screen = "adventure_trail"
-                speak(f"Welcome back {name}! Tap Level 1, 2, or 3 on your learning path to play!")
+                speak(f"Welcome back {name}! Complete all questions in each level to advance!")
                 st.rerun()
 
     with cols[-1]:
@@ -359,6 +346,7 @@ elif st.session_state.screen == "buddy_dressup":
                 "stars": 10,
                 "streak": 1,
                 "unlocked_level": 1,
+                "level_progress": {"level_1_step": 0, "level_2_step": 0, "level_3_step": 0},
                 "daily_log": []
             }
             st.session_state.active_user = clean_name
@@ -398,7 +386,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: KINDERGARTEN ROAD MAP (FULL UNCLIPPED BOX & NATIVE CLICKABLE LEVELS)
+# SCREEN 3: KINDERGARTEN ROAD MAP (UNCLIPPED FULL CONTAINER)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -406,7 +394,6 @@ elif st.session_state.screen == "adventure_trail":
     b = pdata["buddy"]
     unlocked_lvl = pdata.get("unlocked_level", 1)
 
-    # Top Header matching your exact request ("Kindergarten Road Map", Library, Switch Profile)
     col_lib, col_title, col_prof = st.columns([1, 3, 1])
     with col_lib:
         if st.button("📚 Library"):
@@ -421,32 +408,20 @@ elif st.session_state.screen == "adventure_trail":
             st.session_state.screen = "profile_select"
             st.rerun()
 
-    speak(f"Welcome to your Kindergarten Road Map {user}! Click on Level 1, Level 2, or Level 3 buttons below to play!")
+    speak(f"Welcome to your Kindergarten Road Map {user}! Complete all mastery tasks in each level to advance down the road!")
 
-    # STATION DEFINITIONS (ALL 8 LEVELS)
-    trail_stations = [
-        {"level": 1, "id": "sight_words", "title": "Level 1: Sight Words"},
-        {"level": 2, "id": "book_parts", "title": "Level 2: Book Parts"},
-        {"level": 3, "id": "numbers", "title": "Level 3: Numbers"},
-        {"level": 4, "id": "spelling", "title": "Level 4: Word Family"},
-        {"level": 5, "id": "ispy", "title": "Level 5: Letter I-Spy"},
-        {"level": 6, "id": "seasons", "title": "Level 6: Seasons"},
-        {"level": 7, "id": "math", "title": "Level 7: Cool Math"},
-        {"level": 8, "id": "parent_portal", "title": "Level 8: Parent Portal"}
-    ]
-
-    # FULL UNCLIPPED CONTAINER WITH GENEROUS HEIGHT (NO TRUNCATION, COMPLETE BORDER ALL AROUND)
+    # UNCLIPPED FULL MAP CONTAINER WITH 520px HEIGHT
     map_container_html = f"""
     <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:35px 30px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; margin:20px auto; width:100%; box-sizing:border-box;">
         <svg width="100%" height="320" viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
             <!-- Winding Path Road -->
-            <path d="M 50 200 Q 220 50 450 180 Q 680 310 820 120" fill="none" stroke="#64748b" stroke-width="22" stroke-linecap="round" opacity="0.6"/>
+            <path d="M 50 200 Q 220 50 450 180 Q 680 310 820 160" fill="none" stroke="#64748b" stroke-width="22" stroke-linecap="round" opacity="0.6"/>
             
             <!-- LEVEL 1 CARD -->
             <g transform="translate(80, 110)">
                 <rect x="0" y="0" width="130" height="85" rx="16" fill="#ffffff" stroke="#0284c7" stroke-width="5"/>
                 <text x="65" y="35" font-family="'Fredoka', sans-serif" font-size="15" font-weight="900" fill="#0369a1" text-anchor="middle">📖 Sight Words</text>
-                <text x="65" y="60" font-family="'Fredoka', sans-serif" font-size="14" font-weight="800" fill="#1e293b" text-anchor="middle">Level 1</text>
+                <text x="65" y="60" font-family="'Fredoka', sans-serif" font-size="14" font-weight="800" fill="#1e293b" text-anchor="middle">Level 1 (Active)</text>
             </g>
 
             <!-- LEVEL 2 CARD -->
@@ -485,7 +460,7 @@ elif st.session_state.screen == "adventure_trail":
     components.html(map_container_html, height=520)
 
     # NATIVE, 100% RELIABLE CLICKABLE LEVEL BUTTONS RIGHT BELOW THE FULL BOX
-    st.markdown("### 🚀 Click a Level to Play on the Road Map:", unsafe_allow_html=True)
+    st.markdown("### 🚀 Click a Level to Complete Mastery:", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     
     with c1:
@@ -504,8 +479,8 @@ elif st.session_state.screen == "adventure_trail":
                 st.rerun()
         else:
             if st.button("🔒 Level 2 (Locked)", use_container_width=True):
-                speak("Level 2 is locked! Complete Level 1 first!")
-                st.warning("🔒 Level 2 is locked! Complete Level 1 first.")
+                speak("Level 2 is locked! Complete all 3 questions in Level 1 first!")
+                st.warning("🔒 Level 2 is locked! Complete Level 1 mastery first.")
 
     with c3:
         if unlocked_lvl >= 3:
@@ -517,16 +492,22 @@ elif st.session_state.screen == "adventure_trail":
         else:
             if st.button("🔒 Level 3 (Locked)", use_container_width=True):
                 speak("Level 3 is locked! Complete Level 2 first!")
-                st.warning("🔒 Level 3 is locked! Complete Level 2 first.")
+                st.warning("🔒 Level 3 is locked! Complete Level 2 mastery first.")
 
 # =========================================================
-# SCREEN 4: INDIVIDUAL STATION PLAY ARENA
+# SCREEN 4: INDIVIDUAL STATION PLAY ARENA (MULTI-QUESTION MASTERY LOOP)
 # =========================================================
 elif st.session_state.screen == "station_play":
     user = st.session_state.active_user
     pdata = st.session_state.profiles[user]
     act = st.session_state.active_activity
     lvl_num = st.session_state.get("current_level_num", 1)
+
+    if "level_progress" not in pdata:
+        pdata["level_progress"] = {"level_1_step": 0, "level_2_step": 0, "level_3_step": 0}
+
+    step_key = f"level_{lvl_num}_step"
+    current_step = pdata["level_progress"].get(step_key, 0)
 
     # Top Navigation Bar
     b1, b2, b3 = st.columns([1, 1, 1])
@@ -543,111 +524,155 @@ elif st.session_state.screen == "station_play":
 
     st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
 
-    # 1. SIGHT WORDS
+    # ---------------------------------------------------------
+    # LEVEL 1: SIGHT WORDS (3 Mastery Questions)
+    # ---------------------------------------------------------
     if act == "sight_words":
-        words_pool = ["THE", "AND", "YOU", "SEE", "CAN", "WAS"]
-        if "sw_current" not in st.session_state: st.session_state.sw_current = "THE"
-        speak(f"Read this word out loud, then trace it: {st.session_state.sw_current}")
+        q_list = [
+            {"word": "THE", "correct": "the", "opts": ["the", "and", "was"], "hint": "Starts with T!"},
+            {"word": "AND", "correct": "and", "opts": ["you", "and", "see"], "hint": "Starts with A!"},
+            {"word": "YOU", "correct": "you", "opts": ["can", "was", "you"], "hint": "Starts with Y!"}
+        ]
 
-        st.markdown(f"""
-        <div class="game-card">
-            <h3 style="color:#ef4444; font-size:1.6rem; margin:0;">SIGHT WORD EXPLORER (Level 1)</h3>
-            <div style="font-size:5.5rem; font-weight:900; color:#dc2626; letter-spacing:8px; margin: 10px 0;">
-                {st.session_state.sw_current}
-            </div>
-            <p style="font-size:1.2rem; font-weight:800; color:#64748b;">Read the word, then trace it below with your finger!</p>
-        </div>
-        """, unsafe_allow_html=True)
+        if current_step < len(q_list):
+            q = q_list[current_step]
+            speak(f"Mastery Question {current_step + 1} of 3: Which word says {q['word']}?")
 
-        col_pad, col_check = st.columns([2, 1])
-        with col_pad:
-            trace_html = """
-            <div style="background:#f8fafc; border:4px dashed #0284c7; border-radius:24px; padding:10px; text-align:center;">
-                <canvas id="c" width="460" height="170" style="background:#ffffff; border-radius:18px; touch-action:none; cursor:crosshair; border:2px solid #cbd5e1;"></canvas>
-                <div style="margin-top:8px;">
-                    <button onclick="c.getContext('2d').clearRect(0,0,c.width,c.height)" style="background:#ef4444; color:#fff; font-size:1.1rem; font-weight:800; border:none; border-radius:14px; padding:8px 20px; cursor:pointer;">Clear Writing</button>
+            st.markdown(f"""
+            <div class="game-card">
+                <h3 style="color:#ef4444; font-size:1.6rem; margin:0;">SIGHT WORD MASTERY (Level 1 — Question {current_step + 1} / 3)</h3>
+                <div style="font-size:5rem; font-weight:900; color:#dc2626; letter-spacing:6px; margin: 10px 0;">
+                    {q['word']}
                 </div>
+                <p style="font-size:1.2rem; font-weight:800; color:#64748b;">Complete all 3 questions correctly to master Level 1 and unlock Level 2!</p>
             </div>
-            <script>
-                const c = document.getElementById('c');
-                const ctx = c.getContext('2d');
-                let d = false;
-                function gp(e){ const r=c.getBoundingClientRect(); return {x:(e.touches?e.touches[0].clientX:e.clientX)-r.left, y:(e.touches?e.touches[0].clientY:e.clientY)-r.top}; }
-                c.addEventListener('mousedown', (e)=>{ d=true; const p=gp(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineWidth=9; ctx.lineCap='round'; ctx.strokeStyle='#ec4899'; });
-                c.addEventListener('mousemove', (e)=>{ if(!d)return; const p=gp(e); ctx.lineTo(p.x,p.y); ctx.stroke(); });
-                window.addEventListener('mouseup', ()=>d=false);
-                c.addEventListener('touchstart', (e)=>{ e.preventDefault(); d=true; const p=gp(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineWidth=9; ctx.lineCap='round'; ctx.strokeStyle='#ec4899'; }, {passive:false});
-                c.addEventListener('touchmove', (e)=>{ e.preventDefault(); if(!d)return; const p=gp(e); ctx.lineTo(p.x,p.y); ctx.stroke(); }, {passive:false});
-                window.addEventListener('touchend', ()=>d=false);
-            </script>
-            """
-            components.html(trace_html, height=250)
+            """, unsafe_allow_html=True)
 
-        with col_check:
-            if st.button("I Read It! (+1 Star & Unlock Level 2)", use_container_width=True):
-                st.balloons()
-                speak(f"Awesome reading! Level 2 is now unlocked!")
-                record_event("Sight Words", True, f"Mastered {st.session_state.sw_current}", level_num=1)
-                st.session_state.sw_current = random.choice([w for w in words_pool if w != st.session_state.sw_current])
-                st.rerun()
-            if st.button("Next Word", use_container_width=True):
-                st.session_state.sw_current = random.choice([w for w in words_pool if w != st.session_state.sw_current])
+            c1, c2, c3 = st.columns(3)
+            for i, opt in enumerate(q["opts"]):
+                with [c1, c2, c3][i]:
+                    if st.button(f"👉 {opt}", key=f"l1_opt_{current_step}_{opt}", use_container_width=True):
+                        if opt == q["correct"]:
+                            pdata["level_progress"][step_key] += 1
+                            pdata["stars"] += 1
+                            st.balloons()
+                            speak("Correct mastery answer!")
+                            if pdata["level_progress"][step_key] >= len(q_list):
+                                if pdata["unlocked_level"] < 2:
+                                    pdata["unlocked_level"] = 2
+                                speak("Fantastic! Level 1 fully mastered! Level 2 is now unlocked!")
+                                st.success("🎉 **Level 1 Fully Mastered!** Level 2 is now Unlocked!")
+                            st.rerun()
+                        else:
+                            speak(f"Not quite! Remember: {q['hint']}")
+                            st.warning(f"💡 Hint: {q['hint']}")
+        else:
+            st.markdown("""
+            <div class="game-card" style="background:#dcfce7; border-color:#22c55e;">
+                <h2 style="color:#166534;">🎉 Level 1 Fully Mastered!</h2>
+                <p style="font-size:1.3rem; font-weight:800; color:#14532d;">You have successfully completed all mastery questions for Level 1. Level 2 is unlocked!</p>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("🗺️ Return to Road Map & Play Level 2", use_container_width=True):
+                st.session_state.screen = "adventure_trail"
                 st.rerun()
 
-    # 2. BOOK PARTS
+    # ---------------------------------------------------------
+    # LEVEL 2: BOOK PARTS (3 Mastery Questions)
+    # ---------------------------------------------------------
     elif act == "book_parts":
-        st.markdown("""
-        <div class="game-card">
-            <h3 style="color:#1d4ed8; font-size:1.8rem; margin:0;">INTERACTIVE BOOK DETECTIVE (Level 2)</h3>
-            <p style="color:#475569; font-size:1.2rem; font-weight:700;">Look at the book graphic and identify the highlighted part!</p>
-        </div>
-        """, unsafe_allow_html=True)
-        b_img, b_quiz = st.columns([1.2, 1.4])
-        with b_img:
-            render_book_diagram(part="spine")
-        with b_quiz:
-            speak("What is the side edge called that holds all the pages together like your backbone?")
-            st.markdown("#### What is the side edge called that holds all the pages together?")
-            p1, p2 = st.columns(2)
-            if p1.button("The Spine", use_container_width=True):
-                st.balloons()
-                speak("Yes! The spine holds the pages together and unlocks Level 3!")
-                record_event("Parts of a Book", True, "Identified Spine", level_num=2)
-                st.success("Correct! Level 3 Unlocked!")
-            if p2.button("Front Cover", use_container_width=True):
-                speak("Almost! The front cover is on the front. Look at the side edge!")
-                record_event("Parts of a Book", False, "Guessed Cover", level_num=2)
-                st.info("Hint: The spine is the backbone on the side edge!")
+        b_list = [
+            {"q": "What is the side edge called that holds all the pages together?", "correct": "spine", "opts": ["spine", "cover", "title"], "hint": "It's like your backbone!"},
+            {"q": "Where is the title and author displayed first?", "correct": "front cover", "opts": ["back cover", "front cover", "page 5"], "hint": "The very front of the book!"},
+            {"q": "What do we turn gently to read the next page?", "correct": "page", "opts": ["spine", "page", "table"], "hint": "Thin paper sheet inside!"}
+        ]
 
-    # 3. NUMBERS
+        if current_step < len(b_list):
+            q = b_list[current_step]
+            speak(f"Mastery Question {current_step + 1} of 3: {q['q']}")
+
+            st.markdown(f"""
+            <div class="game-card">
+                <h3 style="color:#1d4ed8; font-size:1.6rem; margin:0;">BOOK DETECTIVE MASTERY (Level 2 — Question {current_step + 1} / 3)</h3>
+                <p style="font-size:1.4rem; font-weight:800; color:#1e293b; margin:15px 0;">{q['q']}</p>
+                <p style="font-size:1.1rem; font-weight:700; color:#64748b;">Complete all 3 questions correctly to master Level 2 and unlock Level 3!</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            c1, c2, c3 = st.columns(3)
+            for i, opt in enumerate(q["opts"]):
+                with [c1, c2, c3][i]:
+                    if st.button(f"👉 {opt.title()}", key=f"l2_opt_{current_step}_{opt}", use_container_width=True):
+                        if opt == q["correct"]:
+                            pdata["level_progress"][step_key] += 1
+                            pdata["stars"] += 1
+                            st.balloons()
+                            speak("Correct mastery answer!")
+                            if pdata["level_progress"][step_key] >= len(b_list):
+                                if pdata["unlocked_level"] < 3:
+                                    pdata["unlocked_level"] = 3
+                                speak("Fantastic! Level 2 fully mastered! Level 3 is now unlocked!")
+                                st.success("🎉 **Level 2 Fully Mastered!** Level 3 is now Unlocked!")
+                            st.rerun()
+                        else:
+                            speak(f"Not quite! Hint: {q['hint']}")
+                            st.warning(f"💡 Hint: {q['hint']}")
+        else:
+            st.markdown("""
+            <div class="game-card" style="background:#dcfce7; border-color:#22c55e;">
+                <h2 style="color:#166534;">🎉 Level 2 Fully Mastered!</h2>
+                <p style="font-size:1.3rem; font-weight:800; color:#14532d;">You have successfully completed all mastery questions for Level 2. Level 3 is unlocked!</p>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("🗺️ Return to Road Map & Play Level 3", use_container_width=True):
+                st.session_state.screen = "adventure_trail"
+                st.rerun()
+
+    # ---------------------------------------------------------
+    # LEVEL 3: NUMBERS (3 Mastery Questions)
+    # ---------------------------------------------------------
     elif act == "numbers":
-        st.markdown("""
-        <div class="game-card">
-            <h3 style="color:#b45309; font-size:1.8rem; margin:0;">CANDY SHOP NUMBER DETECTIVE (Level 3)</h3>
-            <p style="color:#475569; font-size:1.2rem; font-weight:700;">Count the jellybeans in each jar! Which card shows exactly 18?</p>
-        </div>
-        """, unsafe_allow_html=True)
-        j1, j2 = st.columns(2)
-        with j1:
-            st.markdown("""
-            <div style="background:#ffffff; border:4px solid #38bdf8; border-radius:26px; padding:12px; text-align:center;">
-                <h4 style="color:#0369a1; font-size:1.3rem; margin:0 0 6px 0;">Jar 1 (10) + Jar 2 (8)</h4>
+        n_list = [
+            {"q": "Count the beans: 10 red + 8 green. How many total?", "correct": "18", "opts": ["14", "18", "20"], "hint": "10 plus 8 equals 18!"},
+            {"q": "What number comes right after 15?", "correct": "16", "opts": ["14", "16", "17"], "hint": "15... 16!"},
+            {"q": "Which number is greater: 12 or 19?", "correct": "19", "opts": ["12", "19", "Both equal"], "hint": "19 is bigger than 12!"}
+        ]
+
+        if current_step < len(n_list):
+            q = n_list[current_step]
+            speak(f"Mastery Question {current_step + 1} of 3: {q['q']}")
+
+            st.markdown(f"""
+            <div class="game-card">
+                <h3 style="color:#b45309; font-size:1.6rem; margin:0;">NUMBER DETECTIVE MASTERY (Level 3 — Question {current_step + 1} / 3)</h3>
+                <p style="font-size:1.4rem; font-weight:800; color:#1e293b; margin:15px 0;">{q['q']}</p>
+                <p style="font-size:1.1rem; font-weight:700; color:#64748b;">Complete all 3 questions correctly to master Level 3!</p>
             </div>
             """, unsafe_allow_html=True)
-            render_candy_jars(10, 8)
-            if st.button("This shows 18 Beans!", key="j_c", use_container_width=True):
-                st.balloons()
-                speak("Yes! Ten plus eight makes 18!")
-                record_event("Number Detective", True, "10+8=18", level_num=3)
-                st.success("Correct!")
-        with j2:
+
+            c1, c2, c3 = st.columns(3)
+            for i, opt in enumerate(q["opts"]):
+                with [c1, c2, c3][i]:
+                    if st.button(f"👉 {opt}", key=f"l3_opt_{current_step}_{opt}", use_container_width=True):
+                        if opt == q["correct"]:
+                            pdata["level_progress"][step_key] += 1
+                            pdata["stars"] += 1
+                            st.balloons()
+                            speak("Correct mastery answer!")
+                            if pdata["level_progress"][step_key] >= len(n_list):
+                                speak("Fantastic! Level 3 fully mastered!")
+                                st.success("🎉 **Level 3 Fully Mastered!** Amazing job completing all levels!")
+                            st.rerun()
+                        else:
+                            speak(f"Not quite! Hint: {q['hint']}")
+                            st.warning(f"💡 Hint: {q['hint']}")
+        else:
             st.markdown("""
-            <div style="background:#ffffff; border:4px solid #f87171; border-radius:26px; padding:12px; text-align:center;">
-                <h4 style="color:#dc2626; font-size:1.3rem; margin:0 0 6px 0;">Jar 1 (10) + Jar 2 (4)</h4>
+            <div class="game-card" style="background:#dcfce7; border-color:#22c55e;">
+                <h2 style="color:#166534;">🎉 Level 3 Fully Mastered!</h2>
+                <p style="font-size:1.3rem; font-weight:800; color:#14532d;">You have successfully completed all mastery questions for Level 3. You are a Kindergarten Math Star!</p>
             </div>
             """, unsafe_allow_html=True)
-            render_candy_jars(10, 4)
-            if st.button("Is this 18?", key="j_w", use_container_width=True):
-                speak("Count carefully! Ten plus four is 14, not 18!")
-                record_event("Number Detective", False, "Guessed 14", level_num=3)
-                st.info("Hint: 10 plus 4 is 14. Look for 18!")
+            if st.button("🗺️ Return to Road Map", use_container_width=True):
+                st.session_state.screen = "adventure_trail"
+                st.rerun()
