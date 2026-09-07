@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- KID ARCADE / LUCAS & FRIENDS THEMED STYLING ---
+# --- KID ARCADE / HATCH THEMED STYLING ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;800&family=Quicksand:wght@600;700;800&display=swap');
@@ -21,7 +21,6 @@ st.markdown("""
         font-family: 'Fredoka', 'Quicksand', cursive, sans-serif !important;
     }
 
-    /* High-contrast dropdown cards */
     div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         border: 3.5px solid #0284c7 !important;
@@ -42,7 +41,6 @@ st.markdown("""
         text-shadow: 0 1px 2px rgba(255,255,255,0.8);
     }
 
-    /* Big Tactile Touch Buttons for iPad */
     .stButton > button {
         border-radius: 28px !important;
         font-size: 1.35rem !important;
@@ -70,7 +68,6 @@ st.markdown("""
         border: 2.5px solid #facc15;
     }
 
-    /* Animated Mascot Stage */
     .mascot-container {
         display: flex;
         align-items: center;
@@ -144,7 +141,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- IPAD NATIVE WEBAUDIO UNFREEZER & SPEECH DISPATCHER ---
+# --- DIRECT UNIVERSAL AUTOPLAY AUDIO & SPEECH ENGINE ---
 def speak(text, sfx="pop"):
     sound_url = {
         "pop": "https://cdn.freesound.org/previews/536/536108_11565331-lq.mp3",
@@ -157,52 +154,44 @@ def speak(text, sfx="pop"):
     js = f"""
     <script>
         (function() {{
-            // 1. Play SFX
             try {{
                 let snd = new Audio("{sound_url}");
                 snd.volume = 0.55;
                 snd.play().catch(() => {{}});
             }} catch(e) {{}}
 
-            // 2. Reliable Multi-Target Speech Engine (Unblocks iOS WebKit Queue)
-            function executeVoice() {{
-                const targetSynth = window.speechSynthesis || (window.top && window.top.speechSynthesis) || (window.parent && window.parent.speechSynthesis);
-                if (!targetSynth) return;
+            function triggerSpeech() {{
+                const synth = (window.parent && window.parent.speechSynthesis) 
+                    ? window.parent.speechSynthesis 
+                    : window.speechSynthesis;
+                if (!synth) return;
 
-                // iOS Safari Queue Unfreezer
                 try {{
-                    if (targetSynth.speaking || targetSynth.pending) {{
-                        targetSynth.cancel();
-                    }}
-                    if (targetSynth.paused) {{
-                        targetSynth.resume();
-                    }}
-                }} catch(err) {{}}
+                    synth.cancel();
+                    if (synth.paused) synth.resume();
+                }} catch(e) {{}}
 
-                const msg = new SpeechSynthesisUtterance("{clean_text}");
-                msg.rate = 0.83;
-                msg.pitch = 1.25;
-                msg.lang = 'en-US';
+                const utter = new SpeechSynthesisUtterance("{clean_text}");
+                utter.rate = 0.84;
+                utter.pitch = 1.22;
+                utter.lang = 'en-US';
 
-                // Force voice selection
-                const voices = targetSynth.getVoices();
+                const voices = synth.getVoices();
                 if (voices && voices.length > 0) {{
-                    const preferred = voices.find(v => (v.name.includes("Samantha") || v.name.includes("Victoria") || v.name.includes("Karen") || v.lang === "en-US") && !v.name.includes("Bad"));
-                    if (preferred) msg.voice = preferred;
+                    const preferred = voices.find(v => (v.name.includes("Samantha") || v.name.includes("Victoria") || v.lang === "en-US") && !v.name.includes("Bad"));
+                    if (preferred) utter.voice = preferred;
                 }}
 
-                targetSynth.speak(msg);
+                synth.speak(utter);
             }}
 
-            // Run immediately and queue a safety re-dispatch for Safari
-            executeVoice();
-            setTimeout(executeVoice, 180);
+            triggerSpeech();
+            setTimeout(triggerSpeech, 250);
         }})();
     </script>
     """
     components.html(js, height=0)
 
-# --- MASCOT DISPLAY HELPER ---
 def show_mascot(speech_text, character_name="Chickie", character_emoji="🐥"):
     st.markdown(f"""
     <div class="mascot-container">
@@ -549,6 +538,7 @@ if active_game != st.session_state.current_game:
 if active_game == "📖 Sight Words":
     mascot_msg = "Hey Gracyn! Look at the big card. Read your word, tap the orange button to say it, and trace it with your finger!"
     show_mascot(mascot_msg, "Chickie", "🐥")
+    speak(mascot_msg)
 
     sel_col1, sel_col2 = st.columns([1.2, 1])
     with sel_col1:
@@ -581,10 +571,6 @@ if active_game == "📖 Sight Words":
             st.rerun()
 
     word = st.session_state.current_sw
-
-    if "last_sw_spoken" not in st.session_state or st.session_state.last_sw_spoken != word:
-        speak(mascot_msg)
-        st.session_state.last_sw_spoken = word
 
     st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
@@ -633,9 +619,7 @@ elif active_game == "📚 Parts of a Book & Story Time":
     with book_tab1:
         mascot_msg_step1 = "Welcome to book school Gracyn! Tap each glowing part of the book below so I can show you what it does!"
         show_mascot(mascot_msg_step1, "Bella", "🐶")
-        if "spoken_book_step1" not in st.session_state:
-            speak(mascot_msg_step1)
-            st.session_state.spoken_book_step1 = True
+        speak(mascot_msg_step1)
 
         st.markdown("#### 👇 Tap any book part to inspect it:")
         p_c1, p_c2, p_c3 = st.columns(3)
@@ -670,6 +654,7 @@ elif active_game == "📚 Parts of a Book & Story Time":
     with book_tab2:
         mascot_story = "Gracyn, listen to our mini story about Bella the Pup! Pay close attention to what happens!"
         show_mascot(mascot_story, "Oliver Owl", "🦉")
+        speak(mascot_story)
 
         st.markdown("""
         <div style="background:#ffffff; border:4px solid #38bdf8; border-radius:28px; padding:22px; text-align:center; box-shadow:0 8px 22px rgba(0,0,0,0.08); margin-bottom:18px;">
@@ -769,9 +754,7 @@ elif active_game == "📚 Parts of a Book & Story Time":
         curr_q = book_questions[st.session_state.bq_idx % len(book_questions)]
 
         show_mascot(f"Gracyn! {curr_q['q']}", "Chickie", "🐥")
-        if "last_bq_spoken" not in st.session_state or st.session_state.last_bq_spoken != curr_q["q"]:
-            speak(f"Gracyn! {curr_q['q']}")
-            st.session_state.last_bq_spoken = curr_q["q"]
+        speak(f"Gracyn! {curr_q['q']}")
 
         t_key = curr_q["highlight"]
         html_book = f"""
@@ -832,10 +815,7 @@ elif active_game == "📚 Parts of a Book & Story Time":
 elif active_game == "🕵️ Number Detective (20 & Under)":
     mascot_num = "Gracyn! We are looking for the number 18! Count the jelly beans in the glass jars and the tallies!"
     show_mascot(mascot_num, "Chickie", "🐥")
-
-    if "last_num_spoken" not in st.session_state:
-        speak(mascot_num)
-        st.session_state.last_num_spoken = True
+    speak(mascot_num)
 
     c1, c2 = st.columns(2)
     c3, c4 = st.columns(2)
@@ -934,10 +914,7 @@ elif active_game == "🔤 Word Family Spelling Lab":
 
     mascot_sp = f"Let's build words in the {ending.upper()} family! Tap a letter below to spell a new rhyming word!"
     show_mascot(mascot_sp, "Chickie", "🐥")
-
-    if "last_spelling_spoken" not in st.session_state or st.session_state.last_spelling_spoken != ending:
-        speak(mascot_sp)
-        st.session_state.last_spelling_spoken = ending
+    speak(mascot_sp)
 
     st.markdown(f"""
     <div style="background:#faf5ff; border:5px solid #a855f7; border-radius:28px; padding:22px; text-align:center; margin-bottom:18px;">
@@ -970,10 +947,7 @@ elif active_game == "🔍 Letter I-Spy Safari":
     t_let = st.session_state.target_letter
     mascot_ispy = f"Gracyn! I spy the letter {t_let}! Tap and pop all the bubbles that match {t_let}!"
     show_mascot(mascot_ispy, "Oliver Owl", "🦉")
-
-    if "last_ispy_spoken" not in st.session_state or st.session_state.last_ispy_spoken != t_let:
-        speak(mascot_ispy)
-        st.session_state.last_ispy_spoken = t_let
+    speak(mascot_ispy)
 
     st.markdown(f"""
     <div style="background:#ffffff; border:4px dashed #ec4899; border-radius:24px; padding:14px; text-align:center; font-size:1.8rem; font-weight:900; color:#db2777; margin-bottom:15px; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
@@ -1064,10 +1038,7 @@ elif active_game == "🍁 Seasons & Nature Quest":
 
     mascot_season = f"Look at the weather clue: {curr_sc['q']} What season is it?"
     show_mascot(mascot_season, "Bella", "🐶")
-
-    if "last_season_spoken" not in st.session_state or st.session_state.last_season_spoken != curr_sc["season"]:
-        speak(mascot_season)
-        st.session_state.last_season_spoken = curr_sc["season"]
+    speak(mascot_season)
 
     sc_top = st.columns(2)
     sc_bot = st.columns(2)
@@ -1110,10 +1081,7 @@ elif active_game == "➕ Cool Math (10 and Under)":
     m = st.session_state.km_math
     mascot_math = f"Gracyn! What is {m['a']} {m['op']} {m['b']}? Count the apples to find the answer!"
     show_mascot(mascot_math, "Chickie", "🐥")
-
-    if "last_math_spoken" not in st.session_state or st.session_state.last_math_spoken != str(m):
-        speak(mascot_math)
-        st.session_state.last_math_spoken = str(m)
+    speak(mascot_math)
 
     st.markdown(f"""
     <div style="background:#ffffff; border:5px solid #a855f7; border-radius:28px; padding:20px; text-align:center; font-size:4.2rem; font-weight:900; color:#7e22ce; margin-bottom:15px; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
