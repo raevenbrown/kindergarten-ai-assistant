@@ -5,28 +5,50 @@ from datetime import datetime
 from supabase import create_client, Client
 
 st.set_page_config(
-    page_title="Gracyn's Hatch Learning Studio",
+    page_title="Gracyn's Learning Adventure Studio",
     page_icon="🐣",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- INJECT HATCH IGNITE ARCADE THEME ---
+# --- KID ARCADE / HATCH THEMED STYLING (FIXES ALL DARK DROPDOWNS & CONTRAST) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;800&family=Quicksand:wght@600;700;800&display=swap');
 
+    /* Global Arcade Gradient */
     .stApp {
-        background: linear-gradient(180deg, #38bdf8 0%, #6ee7b7 55%, #fef08a 100%);
-        font-family: 'Fredoka', 'Quicksand', cursive, sans-serif;
+        background: linear-gradient(180deg, #38bdf8 0%, #6ee7b7 55%, #fef08a 100%) !important;
+        font-family: 'Fredoka', 'Quicksand', cursive, sans-serif !important;
     }
 
-    /* iPad High-Sensitivity Big Touch Targets */
+    /* FIX STREAMLIT DEFAULT DROPDOWNS TO MATCH KID THEME */
+    div[data-baseweb="select"] > div {
+        background-color: #ffffff !important;
+        border: 3.5px solid #0284c7 !important;
+        border-radius: 22px !important;
+        color: #0f172a !important;
+        font-size: 1.25rem !important;
+        font-weight: 800 !important;
+        box-shadow: 0 6px 0 rgba(0,0,0,0.12) !important;
+    }
+    div[data-baseweb="select"] * {
+        color: #0f172a !important;
+        font-weight: 800 !important;
+    }
+    label[data-testid="stWidgetLabel"] p {
+        color: #0c4a6e !important;
+        font-size: 1.2rem !important;
+        font-weight: 800 !important;
+        text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+    }
+
+    /* Big Tactile Touch Buttons */
     .stButton > button {
         border-radius: 28px !important;
         font-size: 1.35rem !important;
         font-weight: 800 !important;
-        padding: 16px 26px !important;
+        padding: 14px 26px !important;
         box-shadow: 0 8px 0 rgba(0,0,0,0.18) !important;
         transition: transform 0.08s ease !important;
         border: 3.5px solid #ffffff !important;
@@ -36,25 +58,25 @@ st.markdown("""
         box-shadow: 0 2px 0 rgba(0,0,0,0.18) !important;
     }
 
-    /* Top HUD Ribbon */
-    .hud-ribbon {
+    /* Clean Card Framing */
+    .game-banner {
         background: #ffffff;
-        border-radius: 30px;
-        padding: 14px 22px;
+        border-radius: 28px;
+        padding: 16px 24px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+        border: 4px solid #38bdf8;
         margin-bottom: 18px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border: 4px solid #facc15;
     }
 
-    .badge-pill {
+    .hud-chip {
         background: #fef08a;
         color: #854d0e;
-        padding: 8px 18px;
+        padding: 8px 20px;
         border-radius: 22px;
-        font-size: 1.25rem;
+        font-size: 1.3rem;
         font-weight: 800;
         display: inline-flex;
         align-items: center;
@@ -62,29 +84,19 @@ st.markdown("""
         border: 2.5px solid #facc15;
     }
 
-    .game-card {
+    .instruction-card {
         background: #ffffff;
-        border-radius: 34px;
-        padding: 24px;
-        box-shadow: 0 16px 36px rgba(0,0,0,0.1);
-        border: 5px solid #38bdf8;
+        border-radius: 26px;
+        padding: 14px 20px;
+        border: 3.5px solid #60a5fa;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        margin-bottom: 16px;
         text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .popup-box {
-        background: #fffbeb;
-        border: 6px dashed #f59e0b;
-        border-radius: 32px;
-        padding: 24px;
-        text-align: center;
-        margin-bottom: 25px;
-        box-shadow: 0 12px 30px rgba(0,0,0,0.15);
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- AUTOPLAY SOUND & VOICE SYNTHESIZER ---
+# --- WEB SPEECH SYNTHESIS ENGINE ---
 def speak(text, sfx="pop"):
     sound_url = {
         "pop": "https://cdn.freesound.org/previews/536/536108_11565331-lq.mp3",
@@ -115,16 +127,16 @@ def speak(text, sfx="pop"):
     """
     components.html(js, height=0)
 
-# --- TRACING PAD WITH IN-CANVAS CHEERING ---
+# --- IPAD FINGER TRACING BOX ---
 def tracing_box(word):
     html = f"""
-    <div style="background:#f0f9ff; border:4px dashed #0284c7; border-radius:26px; padding:16px; text-align:center; min-height:360px;">
-        <canvas id="cPad" width="340" height="150" style="background:#ffffff; border-radius:18px; touch-action:none; cursor:crosshair; border:3px solid #93c5fd;"></canvas>
-        <div style="margin-top:14px;">
-            <button onclick="clearPad()" style="background:#ef4444; color:#fff; font-size:1.15rem; font-weight:800; border:none; border-radius:18px; padding:12px 22px; box-shadow:0 4px 0 #b91c1c; cursor:pointer;">🧹 Erase</button>
-            <button onclick="checkTrace()" style="background:#22c55e; color:#fff; font-size:1.15rem; font-weight:800; border:none; border-radius:18px; padding:12px 22px; box-shadow:0 4px 0 #15803d; margin-left:10px; cursor:pointer;">⭐ Check Writing!</button>
+    <div style="background:#f8fafc; border:4px dashed #0284c7; border-radius:26px; padding:14px; text-align:center;">
+        <canvas id="cPad" width="340" height="155" style="background:#ffffff; border-radius:20px; touch-action:none; cursor:crosshair; border:3px solid #cbd5e1;"></canvas>
+        <div style="margin-top:12px; display:flex; justify-content:center; gap:12px;">
+            <button onclick="clearPad()" style="background:#ef4444; color:#fff; font-size:1.15rem; font-weight:800; border:none; border-radius:18px; padding:10px 22px; box-shadow:0 4px 0 #b91c1c; cursor:pointer;">🧹 Erase</button>
+            <button onclick="checkTrace()" style="background:#22c55e; color:#fff; font-size:1.15rem; font-weight:800; border:none; border-radius:18px; padding:10px 22px; box-shadow:0 4px 0 #15803d; cursor:pointer;">⭐ Check Writing!</button>
         </div>
-        <div id="cMsg" style="font-size:1.4rem; font-weight:800; color:#16a34a; margin-top:14px; min-height:40px;"></div>
+        <div id="cMsg" style="font-size:1.35rem; font-weight:800; color:#16a34a; margin-top:10px; min-height:35px;"></div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
@@ -158,31 +170,31 @@ def tracing_box(word):
         function clearPad() {{ ctx.clearRect(0, 0, cvs.width, cvs.height); document.getElementById('cMsg').innerText = ''; }}
         function checkTrace() {{
             confetti({{ particleCount: 90, spread: 75, origin: {{ y: 0.75 }} }});
-            document.getElementById('cMsg').innerText = "🌟 WOW Gracyn! That writing looks awesome!";
+            document.getElementById('cMsg').innerText = "🌟 WOW Gracyn! Great handwriting!";
             let a = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
             a.play();
         }}
     </script>
     """
-    components.html(html, height=370)
+    components.html(html, height=330)
 
-# --- SPEECH RECOGNITION BOX ---
+# --- MICROPHONE SPEECH BOX ---
 def speech_box(target_word):
     clean_target = target_word.strip().lower()
     html = f"""
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <div style="text-align:center;">
-        <button id="micB" style="background:#f97316; color:#ffffff; font-size:1.35rem; font-weight:800; border:none; border-radius:26px; padding:15px 30px; box-shadow:0 6px 0 #c2410c; cursor:pointer;" onclick="listenNow()">
+    <div style="text-align:center; margin-top:8px;">
+        <button id="micB" style="background:#f97316; color:#ffffff; font-size:1.35rem; font-weight:800; border:none; border-radius:26px; padding:14px 28px; box-shadow:0 6px 0 #c2410c; cursor:pointer;" onclick="listenNow()">
             🎙️ Tap to Say: "{target_word.upper()}"
         </button>
-        <div id="mRes" style="font-size:1.4rem; font-weight:800; margin-top:12px; min-height:35px;"></div>
+        <div id="mRes" style="font-size:1.35rem; font-weight:800; margin-top:10px; min-height:30px;"></div>
     </div>
     <script>
         function listenNow() {{
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             const res = document.getElementById('mRes');
             const btn = document.getElementById('micB');
-            if(!SpeechRec) {{ res.innerHTML = "<span style='color:red;'>Please open in Safari or Chrome for microphone!</span>"; return; }}
+            if(!SpeechRec) {{ res.innerHTML = "<span style='color:red;'>Please open in Safari or Chrome!</span>"; return; }}
             const rec = new SpeechRec();
             rec.lang = 'en-US';
             btn.innerText = "👂 Listening to Gracyn...";
@@ -195,6 +207,7 @@ def speech_box(target_word):
                 if (target === "to" && (heard === "two" || heard === "too" || heard === "2")) match = true;
                 if (target === "for" && (heard === "four" || heard === "4")) match = true;
                 if (target === "i" && (heard === "eye")) match = true;
+                if (target === "see" && (heard === "sea" || heard === "c")) match = true;
                 if (match) {{
                     res.innerHTML = "<span style='color:#15803d;'>🎉 YES! You said it! 🌟🎈</span>";
                     confetti({{ particleCount: 140, spread: 80, origin: {{ y: 0.7 }} }});
@@ -209,12 +222,18 @@ def speech_box(target_word):
             rec.onerror = () => {{
                 btn.innerText = '🎙️ Tap & Say';
                 btn.style.background = "#f97316";
-                res.innerHTML = "<span style='color:#ea580c;'>Speak loud and clear into the microphone!</span>";
+                res.innerHTML = "<span style='color:#ea580c;'>Speak loud and clear!</span>";
             }};
         }}
     </script>
     """
-    components.html(html, height=130)
+    components.html(html, height=125)
+
+# --- EXACT CURRICULUM SIGHT WORD REPOSITORY ---
+SIGHT_WORD_LISTS = {
+    "⭐ List 1 (12 Words)": ["a", "at", "do", "was", "the", "as", "I", "you", "am", "to", "is", "an"],
+    "🌟 List 2 (12 Words)": ["man", "did", "of", "your", "in", "sit", "for", "said", "it", "can", "from", "all"]
+}
 
 # --- SUPABASE & DAILY TELEMETRY TRACKER ---
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
@@ -258,13 +277,7 @@ def track_performance(activity, is_correct, detail=""):
         except Exception:
             pass
 
-# --- SIGHT WORD REPOSITORY ---
-SIGHT_WORD_LISTS = {
-    "⭐ List 1 (12 Words)": ["a", "at", "do", "was", "the", "as", "I", "you", "am", "to", "is", "an"],
-    "🌟 List 2 (12 Words)": ["man", "did", "of", "your", "in", "sit", "for", "said", "it", "can", "from", "all"]
-}
-
-# --- INITIALIZE APP STATE ---
+# --- SESSION STATE INITIALIZATION ---
 if "stars" not in st.session_state: st.session_state.stars = 0
 if "coins" not in st.session_state: st.session_state.coins = 50
 if "streak" not in st.session_state: st.session_state.streak = 0
@@ -273,31 +286,29 @@ if "selected_sw_list" not in st.session_state: st.session_state.selected_sw_list
 if "sw_score_count" not in st.session_state: st.session_state.sw_score_count = 0
 if "trigger_treasure" not in st.session_state: st.session_state.trigger_treasure = False
 
-# Avatar Customization state
+# Avatar State
 if "av_head" not in st.session_state: st.session_state.av_head = "👑"
 if "av_pet" not in st.session_state: st.session_state.av_pet = "🐥"
 if "av_bg" not in st.session_state: st.session_state.av_bg = "#ecfeff"
-if "av_dress" not in st.session_state: st.session_state.av_dress = "👗"
 
-# Helper for scoring
 def award_score(activity, detail, points=10, stars=1):
     st.session_state.coins += points
     st.session_state.stars += stars
     st.session_state.streak += 1
     track_performance(activity, True, detail)
 
-# --- TOP HUD RIBBON & INTERACTIVE AVATAR ---
+# --- TOP HUD RIBBON ---
 hud_c1, hud_c2, hud_c3 = st.columns([1.8, 2.2, 1.4])
 with hud_c1:
     st.markdown(f"""
     <div style="display:flex; align-items:center; gap:12px;">
-        <div style="font-size:3.2rem; background:{st.session_state.av_bg}; border-radius:50%; border:3px solid #38bdf8; width:72px; height:72px; display:flex; align-items:center; justify-content:center; position:relative;">
+        <div style="font-size:3.2rem; background:{st.session_state.av_bg}; border-radius:50%; border:3.5px solid #38bdf8; width:72px; height:72px; display:flex; align-items:center; justify-content:center; position:relative; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
             {st.session_state.av_head}
             <span style="position:absolute; bottom:-6px; right:-6px; font-size:1.6rem;">{st.session_state.av_pet}</span>
         </div>
         <div>
-            <b style="font-size:1.4rem; color:#1e293b;">Gracyn's Quest</b><br>
-            <span style="color:#0284c7; font-weight:800;">Kindergarten Superstar ⭐</span>
+            <b style="font-size:1.4rem; color:#0f172a;">Gracyn's Quest</b><br>
+            <span style="color:#0284c7; font-weight:800; font-size:1.05rem;">Kindergarten Superstar ⭐</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -309,22 +320,22 @@ with hud_c2:
 
 with hud_c3:
     c1, c2 = st.columns(2)
-    c1.markdown(f"<div class='badge-pill'>🪙 {st.session_state.coins}</div>", unsafe_allow_html=True)
-    c2.markdown(f"<div class='badge-pill'>⭐ {st.session_state.stars}</div>", unsafe_allow_html=True)
+    c1.markdown(f"<div class='hud-chip'>🪙 {st.session_state.coins}</div>", unsafe_allow_html=True)
+    c2.markdown(f"<div class='hud-chip'>⭐ {st.session_state.stars}</div>", unsafe_allow_html=True)
 
-# --- POPUP TREASURE BOX MODAL (WHEN SHE HITS 6 WORDS) ---
+# --- TREASURE BOX POPUP MODAL ---
 if st.session_state.trigger_treasure:
     st.markdown("""
-    <div class="popup-box">
+    <div style="background:#fffbeb; border:6px dashed #f59e0b; border-radius:32px; padding:24px; text-align:center; margin-bottom:25px; box-shadow:0 12px 30px rgba(0,0,0,0.15);">
         <div style="font-size:3.5rem;">🎉🎁👑</div>
         <h1 style="color:#b45309; font-size:2.4rem; margin-bottom:6px;">TREASURE BOX UNLOCKED!</h1>
-        <p style="font-size:1.35rem; color:#78350f; font-weight:700;">Amazing job Gracyn! You mastered 6 words! Pick a special prize to dress up your avatar, then we'll finish your list!</p>
+        <p style="font-size:1.35rem; color:#78350f; font-weight:700;">Amazing job Gracyn! You mastered 6 words! Pick a prize to dress up your avatar, then we'll finish your list!</p>
     </div>
     """, unsafe_allow_html=True)
 
     speak("Gracyn! You did it! You mastered six words! Pick a prize from the treasure box to dress up your avatar!", "tada")
 
-    tab_hat, tab_pet, tab_dress = st.tabs(["👑 Hats & Crowns", "🐾 Pet Buddies", "👗 Outfits"])
+    tab_hat, tab_pet = st.tabs(["👑 Hats & Crowns", "🐾 Pet Buddies"])
     with tab_hat:
         hcols = st.columns(4)
         for i, h in enumerate(["👑 Crown", "🎀 Pink Bow", "🎓 Scholar Cap", "🦄 Unicorn", "🌸 Blossom", "🤠 Cowgirl", "🦸 Hero Mask", "🎩 Magician"]):
@@ -343,20 +354,15 @@ if st.session_state.trigger_treasure:
                     st.session_state.av_pet = sym
                     st.session_state.trigger_treasure = False
                     st.rerun()
-    with tab_dress:
-        dcols = st.columns(4)
-        for i, d in enumerate(["👗 Sparkle Dress", "🦹 Cape", "🥋 Karate", "🩰 Ballerina"]):
-            sym = d.split()[0]
-            with dcols[i % 4]:
-                if st.button(d, key=f"p_{sym}", use_container_width=True):
-                    st.session_state.av_dress = sym
-                    st.session_state.trigger_treasure = False
-                    st.rerun()
+    st.stop()
 
-    st.stop()  # Halt screen execution until she picks her prize
+# --- CARD SCAFFOLDED GAME NAVIGATION (CLEAN & BRIGHT) ---
+st.markdown("""
+<div class="instruction-card">
+    <span style="font-size:1.3rem; font-weight:800; color:#0369a1;">🎮 Choose Your Learning Adventure Station:</span>
+</div>
+""", unsafe_allow_html=True)
 
-# --- PRIMARY NAVIGATION (ONE-CLICK RESPONSIVE SELECTOR) ---
-st.markdown("---")
 game_modes = [
     "📖 Sight Words",
     "📚 Parts of a Book",
@@ -366,28 +372,39 @@ game_modes = [
     "➕ Cool Math (10 and Under)",
     "📊 Parent Progress Portal"
 ]
-active_game = st.selectbox("🎮 Choose an Adventure Station:", game_modes, index=game_modes.index(st.session_state.current_game))
+active_game = st.selectbox("", game_modes, index=game_modes.index(st.session_state.current_game), label_visibility="collapsed")
 if active_game != st.session_state.current_game:
     st.session_state.current_game = active_game
     st.rerun()
 
 # ==========================================
-# 1. SIGHT WORDS WITH LIST SELECTOR & 6-WORD MILESTONE
+# 1. SIGHT WORDS WITH REFINED HIGH-CONTRAST UI
 # ==========================================
 if active_game == "📖 Sight Words":
-    st.markdown("""
-    <div class="game-board">
-        <div class="game-title">📖 Sight Word Adventure</div>
-        <div class="game-subtitle">Pick your list! Read the word, trace it, write it, and speak into the mic!</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Instruction Banner with Big Play Sound Button
+    col_title, col_audio = st.columns([3, 1.2])
+    with col_title:
+        st.markdown("""
+        <div style="background:#ffffff; border-radius:22px; padding:12px 20px; border:3.5px solid #38bdf8; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
+            <div style="font-size:1.6rem; font-weight:900; color:#0284c7;">📖 Sight Word Explorer</div>
+            <div style="font-size:1.05rem; font-weight:700; color:#475569;">1. Look at the word  •  2. Trace & Write it  •  3. Say it in the microphone!</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_audio:
+        if st.button("🔊 Hear Directions", use_container_width=True):
+            speak("Hey Gracyn! Read this word out loud, then trace it on your screen, and tap the microphone to say it!")
 
-    col_l, col_p = st.columns([1.2, 1])
-    with col_l:
+    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+
+    # Word List Selectors in Clean White Cards
+    sel_col1, sel_col2 = st.columns([1.2, 1])
+    with sel_col1:
+        st.markdown("<b style='font-size:1.15rem; color:#0c4a6e;'>📚 Choose Word List:</b>", unsafe_allow_html=True)
         chosen_list = st.selectbox(
-            "📚 Choose Sight Word List:",
+            "Word List",
             list(SIGHT_WORD_LISTS.keys()),
-            index=list(SIGHT_WORD_LISTS.keys()).index(st.session_state.selected_sw_list)
+            index=list(SIGHT_WORD_LISTS.keys()).index(st.session_state.selected_sw_list),
+            label_visibility="collapsed"
         )
         if chosen_list != st.session_state.selected_sw_list:
             st.session_state.selected_sw_list = chosen_list
@@ -398,11 +415,13 @@ if active_game == "📖 Sight Words":
     if "current_sw" not in st.session_state or st.session_state.current_sw not in active_bank:
         st.session_state.current_sw = active_bank[0]
 
-    with col_p:
+    with sel_col2:
+        st.markdown("<b style='font-size:1.15rem; color:#0c4a6e;'>🎯 Target Word:</b>", unsafe_allow_html=True)
         picked = st.selectbox(
-            "🎯 Target Word:",
+            "Target Word",
             active_bank,
-            index=active_bank.index(st.session_state.current_sw)
+            index=active_bank.index(st.session_state.current_sw),
+            label_visibility="collapsed"
         )
         if picked != st.session_state.current_sw:
             st.session_state.current_sw = picked
@@ -410,24 +429,31 @@ if active_game == "📖 Sight Words":
 
     word = st.session_state.current_sw
 
-    # Auto-read instruction speech
+    # Auto-read target word
     if "last_sw_spoken" not in st.session_state or st.session_state.last_sw_spoken != word:
-        speak(f"Hey Gracyn! Read this word: {word}. Then say it into the microphone and trace it with your finger!")
+        speak(f"Read this word: {word}!")
         st.session_state.last_sw_spoken = word
 
-    w_col1, w_col2 = st.columns([1, 1.2])
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+
+    # Flashcard & Tracing Station
+    w_col1, w_col2 = st.columns([1, 1.25])
     with w_col1:
         st.markdown(f"""
-        <div style="background:#fef2f2; border:5px solid #f87171; border-radius:30px; padding:25px; text-align:center; margin-bottom:15px;">
-            <div style="font-size:1.3rem; color:#ef4444; font-weight:800;">❤️ {st.session_state.selected_sw_list.split('(')[0].strip()}</div>
-            <div style="font-size:5.5rem; font-weight:900; color:#dc2626; letter-spacing:6px; margin:10px 0;">{word.upper()}</div>
-            <div style="font-size:1.1rem; color:#6b7280; font-weight:700;">Word {active_bank.index(word) + 1} of {len(active_bank)}</div>
+        <div style="background:#ffffff; border:5px solid #f87171; border-radius:32px; padding:22px; text-align:center; box-shadow:0 12px 28px rgba(0,0,0,0.08);">
+            <div style="font-size:1.4rem; color:#ef4444; font-weight:800;">❤️ {st.session_state.selected_sw_list.split('(')[0].strip()}</div>
+            <div style="font-size:5.5rem; font-weight:900; color:#dc2626; letter-spacing:6px; margin:8px 0;">{word.upper()}</div>
+            <div style="font-size:1.1rem; color:#64748b; font-weight:700;">Word {active_bank.index(word) + 1} of {len(active_bank)}</div>
         </div>
         """, unsafe_allow_html=True)
         speech_box(word)
 
     with w_col2:
-        st.markdown("#### ✏️ Trace & Write with Your Finger:")
+        st.markdown("""
+        <div style="background:#ffffff; border-radius:24px; padding:10px 18px; border:3px solid #0284c7; margin-bottom:8px; text-align:center;">
+            <b style="font-size:1.25rem; color:#0369a1;">✏️ Trace & Write with Your Finger:</b>
+        </div>
+        """, unsafe_allow_html=True)
         tracing_box(word.upper())
 
         b1, b2 = st.columns(2)
@@ -447,13 +473,13 @@ if active_game == "📖 Sight Words":
                 st.rerun()
 
 # ==========================================
-# 2. VISUAL PARTS OF A BOOK WITH TALKING FEEDBACK
+# 2. VISUAL PARTS OF A BOOK
 # ==========================================
 elif active_game == "📚 Parts of a Book":
     st.markdown("""
-    <div class="game-board">
-        <div class="game-title">📚 Interactive Book Explorer</div>
-        <div class="game-subtitle">Look at where the yellow bouncy arrow points! Listen carefully to the question!</div>
+    <div class="instruction-card">
+        <div style="font-size:1.7rem; font-weight:900; color:#1e40af;">📚 Interactive Book Detective</div>
+        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Look at where the yellow bouncy arrow points and listen carefully!</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -493,12 +519,10 @@ elif active_game == "📚 Parts of a Book":
     if "bq_idx" not in st.session_state: st.session_state.bq_idx = 0
     curr_q = book_questions[st.session_state.bq_idx % len(book_questions)]
 
-    # Auto-read question aloud
     if "last_bq_spoken" not in st.session_state or st.session_state.last_bq_spoken != curr_q["q"]:
         speak(f"Gracyn! {curr_q['q']}")
         st.session_state.last_bq_spoken = curr_q["q"]
 
-    # 3D Visual Book Rendering
     t_key = curr_q["highlight"]
     html_book = f"""
     <div style="display:flex; justify-content:center; align-items:center; margin:10px 0 20px 0;">
@@ -529,7 +553,7 @@ elif active_game == "📚 Parts of a Book":
     components.html(html_book, height=310)
 
     st.markdown(f"""
-    <div style="background:#eff6ff; border:4px solid #3b82f6; border-radius:24px; padding:18px; text-align:center; font-size:1.6rem; font-weight:800; color:#1e40af; margin-bottom:18px;">
+    <div style="background:#ffffff; border:4px solid #3b82f6; border-radius:24px; padding:18px; text-align:center; font-size:1.6rem; font-weight:800; color:#1e40af; margin-bottom:18px; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
         ❓ {curr_q['q']}
     </div>
     """, unsafe_allow_html=True)
@@ -549,13 +573,13 @@ elif active_game == "📚 Parts of a Book":
                     track_performance("Parts of a Book", False, f"Chose {opt}")
 
 # ==========================================
-# 3. NUMBER DETECTIVE: REPRESENTING 18 VISUALLY
+# 3. NUMBER DETECTIVE: 18 & BEYOND
 # ==========================================
 elif active_game == "🕵️ Number Detective (18 & Beyond)":
     st.markdown("""
-    <div class="game-board">
-        <div class="game-title">🕵️ Number Detective: Target 18!</div>
-        <div class="game-subtitle">Find the pictures that show EXACTLY 18! Count the jelly beans, blocks, and tallies!</div>
+    <div class="instruction-card">
+        <div style="font-size:1.7rem; font-weight:900; color:#b45309;">🕵️ Number Detective: Target 18!</div>
+        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Find and tap the pictures that show EXACTLY 18!</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -568,7 +592,7 @@ elif active_game == "🕵️ Number Detective (18 & Beyond)":
 
     with c1:
         st.markdown("""
-        <div style="background:#fff; border:4px solid #38bdf8; border-radius:22px; padding:16px; text-align:center;">
+        <div style="background:#ffffff; border:4px solid #38bdf8; border-radius:22px; padding:16px; text-align:center; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
             <b style="font-size:1.3rem; color:#0369a1;">🍬 Jelly Bean Jars:</b><br>
             <div style="background:#e0f2fe; border-radius:18px; padding:12px; margin:8px 0; font-size:1.4rem;">
                 Jar 1: 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 (10 Beans)<br>
@@ -584,7 +608,7 @@ elif active_game == "🕵️ Number Detective (18 & Beyond)":
 
     with c2:
         st.markdown("""
-        <div style="background:#fff; border:4px solid #38bdf8; border-radius:22px; padding:16px; text-align:center;">
+        <div style="background:#ffffff; border:4px solid #38bdf8; border-radius:22px; padding:16px; text-align:center; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
             <b style="font-size:1.3rem; color:#0369a1;">🟧 Base-Ten Tower & Cubes:</b><br>
             <div style="background:#e0f2fe; border-radius:18px; padding:12px; margin:8px 0; font-size:1.4rem;">
                 🟦 1 Ten-Stick (10)<br>
@@ -600,7 +624,7 @@ elif active_game == "🕵️ Number Detective (18 & Beyond)":
 
     with c3:
         st.markdown("""
-        <div style="background:#fff; border:4px solid #f87171; border-radius:22px; padding:16px; text-align:center;">
+        <div style="background:#ffffff; border:4px solid #f87171; border-radius:22px; padding:16px; text-align:center; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
             <b style="font-size:1.3rem; color:#dc2626;">🍪 Cookie Jar:</b><br>
             <div style="background:#fee2e2; border-radius:18px; padding:12px; margin:8px 0; font-size:1.4rem;">
                 🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪 (10)<br>
@@ -615,7 +639,7 @@ elif active_game == "🕵️ Number Detective (18 & Beyond)":
 
     with c4:
         st.markdown("""
-        <div style="background:#fff; border:4px solid #38bdf8; border-radius:22px; padding:16px; text-align:center;">
+        <div style="background:#ffffff; border:4px solid #38bdf8; border-radius:22px; padding:16px; text-align:center; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
             <b style="font-size:1.3rem; color:#0369a1;">🥢 Wooden Tallies:</b><br>
             <div style="background:#e0f2fe; border-radius:18px; padding:12px; margin:8px 0; font-size:1.6rem; letter-spacing:4px;">
                 卌 卌 卌 |||<br>
@@ -630,30 +654,28 @@ elif active_game == "🕵️ Number Detective (18 & Beyond)":
             award_score("Number Detective", "Tallies 18")
 
 # ==========================================
-# 4. LETTER I-SPY: 16-BUBBLE SCAVENGER GRID
+# 4. LETTER I-SPY: 16-BUBBLE SAFARI GRID
 # ==========================================
 elif active_game == "🔍 Letter I-Spy Safari":
     st.markdown("""
-    <div class="game-board">
-        <div class="game-title">🔍 Letter I-Spy Safari Grid</div>
-        <div class="game-subtitle">Find and pop all the bubbles matching our target letter!</div>
+    <div class="instruction-card">
+        <div style="font-size:1.7rem; font-weight:900; color:#db2777;">🔍 Letter I-Spy Safari Grid</div>
+        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Find and pop all the bubbles matching our target letter!</div>
     </div>
     """, unsafe_allow_html=True)
 
     if "target_letter" not in st.session_state:
         st.session_state.target_letter = random.choice(["B", "M", "D", "S", "A", "T"])
-        st.session_state.ispy_found = 0
 
     t_let = st.session_state.target_letter
     speak(f"Gracyn! I spy the letter {t_let}! Look at the safari bubbles and pop all the {t_let}'s you see!")
 
     st.markdown(f"""
-    <div style="background:#fdf2f8; border:4px dashed #ec4899; border-radius:24px; padding:14px; text-align:center; font-size:2rem; font-weight:900; color:#db2777; margin-bottom:15px;">
+    <div style="background:#ffffff; border:4px dashed #ec4899; border-radius:24px; padding:14px; text-align:center; font-size:1.8rem; font-weight:900; color:#db2777; margin-bottom:15px; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
         🎯 I-SPY TARGET: <span style="font-size:3.5rem; color:#be185d;">{t_let}</span> or <span style="font-size:3.5rem; color:#be185d;">{t_let.lower()}</span>
     </div>
     """, unsafe_allow_html=True)
 
-    # 16-bubble interactive scavenger grid
     grid_letters = [t_let, t_let.lower(), "m", "P", t_let, "d", "c", t_let.lower(), "r", "O", t_let, "w", "e", t_let.lower(), "k", "L"]
     cols_grid = st.columns(4)
     for idx, char in enumerate(grid_letters):
@@ -671,13 +693,13 @@ elif active_game == "🔍 Letter I-Spy Safari":
         st.rerun()
 
 # ==========================================
-# 5. SEASONS WITH RICH VISUAL SCENES
+# 5. SEASONS WEATHER-CASTER
 # ==========================================
 elif active_game == "🍁 Seasons & Nature Quest":
     st.markdown("""
-    <div class="game-board">
-        <div class="game-title">🍂 Seasons Weather-Caster</div>
-        <div class="game-subtitle">Look at the colorful picture clue and pick the season!</div>
+    <div class="instruction-card">
+        <div style="font-size:1.7rem; font-weight:900; color:#166534;">🍂 Seasons Weather-Caster</div>
+        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Look at the picture clues and tap the right season!</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -714,9 +736,9 @@ elif active_game == "🍁 Seasons & Nature Quest":
     speak(f"Look at the picture clue: {curr_s['clue']} What season is it?")
 
     st.markdown(f"""
-    <div style="background:#f0fdf4; border:4px solid #22c55e; border-radius:28px; padding:20px; text-align:center; margin-bottom:18px;">
-        <div style="font-size:5rem; margin-bottom:10px;">{curr_s['img']}</div>
-        <div style="font-size:1.6rem; font-weight:800; color:#15803d;">{curr_s['clue']}</div>
+    <div style="background:#ffffff; border:4px solid #22c55e; border-radius:28px; padding:20px; text-align:center; margin-bottom:18px; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
+        <div style="font-size:4.8rem; margin-bottom:8px;">{curr_s['img']}</div>
+        <div style="font-size:1.55rem; font-weight:800; color:#15803d;">{curr_s['clue']}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -734,13 +756,13 @@ elif active_game == "🍁 Seasons & Nature Quest":
                     speak("Look at the picture clues again! Think about the weather!", "tryagain")
 
 # ==========================================
-# 6. COOL MATH (KINDERGARTEN BASICS: 10 AND UNDER)
+# 6. COOL MATH (10 AND UNDER)
 # ==========================================
 elif active_game == "➕ Cool Math (10 and Under)":
     st.markdown("""
-    <div class="game-board">
-        <div class="game-title">🧮 Cool Math: 10 and Under!</div>
-        <div class="game-subtitle">Count the delicious apples and solve the problem!</div>
+    <div class="instruction-card">
+        <div style="font-size:1.7rem; font-weight:900; color:#7e22ce;">🧮 Cool Math: 10 and Under!</div>
+        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Count the delicious apples and solve the problem!</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -759,12 +781,11 @@ elif active_game == "➕ Cool Math (10 and Under)":
     speak(f"Gracyn! What is {m['a']} {m['op']} {m['b']}? Count the apples on the screen!")
 
     st.markdown(f"""
-    <div style="background:#faf5ff; border:5px solid #a855f7; border-radius:28px; padding:20px; text-align:center; font-size:4.5rem; font-weight:900; color:#7e22ce; margin-bottom:15px;">
+    <div style="background:#ffffff; border:5px solid #a855f7; border-radius:28px; padding:20px; text-align:center; font-size:4.2rem; font-weight:900; color:#7e22ce; margin-bottom:15px; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
         {m['a']} {m['op']} {m['b']} = ?
     </div>
     """, unsafe_allow_html=True)
 
-    # Kindergarten visual counters
     if m["op"] == "+":
         st.markdown(f"<div style='text-align:center; font-size:2.2rem; margin-bottom:20px;'>{'🍎 ' * m['a']} + {'🍏 ' * m['b']}</div>", unsafe_allow_html=True)
     else:
@@ -787,20 +808,19 @@ elif active_game == "➕ Cool Math (10 and Under)":
                     speak("Count the apples one by one and try again!", "tryagain")
 
 # ==========================================
-# 7. PARENT PROGRESS PORTAL (DATE-STAMPED DASHBOARD)
+# 7. PARENT PROGRESS PORTAL
 # ==========================================
 elif active_game == "📊 Parent Progress Portal":
     st.markdown("""
-    <div class="game-board">
-        <div class="game-title">📊 Gracyn's Daily Learning Telemetry</div>
-        <div class="game-subtitle">Real-time daily accuracy, questions completed, and i-Ready readiness tracking.</div>
+    <div class="instruction-card">
+        <div style="font-size:1.7rem; font-weight:900; color:#0f172a;">📊 Gracyn's Daily Learning Telemetry</div>
+        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Track daily scores, accuracy, and i-Ready proficiency milestones.</div>
     </div>
     """, unsafe_allow_html=True)
 
     today_str = datetime.now().strftime("%A, %B %d, %Y")
     st.markdown(f"### 🗓️ Report for: **{today_str}**")
 
-    # Metrics Row
     d_log = st.session_state.get("daily_log", {}).get(today_str, {"attempts": 0, "correct": 0, "activities": []})
     attempts = d_log["attempts"]
     correct = d_log["correct"]
@@ -813,7 +833,7 @@ elif active_game == "📊 Parent Progress Portal":
     m4.metric("i-Ready Readiness", "On Track ⭐" if acc >= 80 else "Practicing")
 
     st.markdown("---")
-    st.markdown("#### 📝 Today's Detailed Activity Log:")
+    st.markdown("#### 📝 Detailed Practice Log:")
     if d_log["activities"]:
         for act in reversed(d_log["activities"]):
             st.write(f"• **{act['time']}** — [{act['activity']}] {act['detail']} — **{act['result']}**")
