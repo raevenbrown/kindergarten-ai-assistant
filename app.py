@@ -4,7 +4,7 @@ import random
 from datetime import datetime
 
 st.set_page_config(
-    page_title="Adventure Learning Academy",
+    page_title="Kindergarten Road Map",
     page_icon="🌟",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -398,7 +398,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: KHAN ACADEMY KIDS MAP (ONLY THE TRAIL & HOUSE - ZERO BUTTONS BELOW)
+# SCREEN 3: KINDERGARTEN ROAD MAP (CLEAN FULL BOX WITH INTERACTIVE PATH)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -406,16 +406,14 @@ elif st.session_state.screen == "adventure_trail":
     b = pdata["buddy"]
     unlocked_lvl = pdata.get("unlocked_level", 1)
 
-    # Top Header matching your reference image precisely (Switch Profile / Library)
+    # Top Header matching your reference image precisely
     col_lib, col_title, col_prof = st.columns([1, 3, 1])
     with col_lib:
         if st.button("📚 Library"):
-            st.session_state.active_activity = "parent_portal"
-            st.session_state.current_level_num = 8
-            st.session_state.screen = "station_play"
+            st.session_state.screen = "adventure_trail"
             st.rerun()
     with col_title:
-        st.markdown("<h2 style='text-align:center; color:#0f172a; margin:0;'>💚 Khan Academy Kids</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align:center; color:#0f172a; margin:0;'>🌱 Kindergarten Road Map</h2>", unsafe_allow_html=True)
     with col_prof:
         avatar_html = render_avatar(skin=b['skin'], hair_style=b['hair_style'], hair_color=b['hair_color'], glasses=b['glasses'], shirt=b['shirt'], accessory=b['accessory'], size=50)
         components.html(avatar_html, height=60)
@@ -423,9 +421,9 @@ elif st.session_state.screen == "adventure_trail":
             st.session_state.screen = "profile_select"
             st.rerun()
 
-    speak(f"Welcome to your adventure trail {user}! Tap Level 1, Level 2, or Level 3 right on the winding path to play!")
+    speak(f"Welcome to your Kindergarten Road Map {user}! Tap Level 1, 2, or 3 right on the winding path to play!")
 
-    # STATION DEFINITIONS (ALL LEVELS)
+    # STATION DEFINITIONS (ALL 8 LEVELS)
     trail_stations = [
         {"level": 1, "id": "sight_words", "title": "Level 1"},
         {"level": 2, "id": "book_parts", "title": "Level 2"},
@@ -437,16 +435,12 @@ elif st.session_state.screen == "adventure_trail":
         {"level": 8, "id": "parent_portal", "title": "Level 8"}
     ]
 
-    # CHECK IF MAP CARD BUTTONS WERE CLICKED VIA QUERY PARAMS OR SIMULATED VIA CLEAN EMBEDDED INTERACTION
-    # To keep it 100% pure as requested (ONLY the path box, zero buttons underneath), 
-    # we make the preview cards inside the SVG interactive buttons using Streamlit action handling.
-    
-    # We render the SVG map container where clicking Level 1, 2, or 3 triggers the level directly!
-    map_html = f"""
+    # FULL MAP CONTAINER WITH CLICKABLE HTML/SVG NODES ALONG THE ROAD AND HOUSE
+    map_container_html = f"""
     <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:24px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; overflow:hidden;">
         <svg width="100%" height="280" viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
             <!-- Winding Path Road -->
-            <path d="M 40 170 Q 180 60 320 160 Q 480 250 620 110" fill="none" stroke="#64748b" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+            <path d="M 40 170 Q 180 60 320 150 Q 480 250 620 110" fill="none" stroke="#64748b" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
             
             <!-- LEVEL 1 CARD (Clickable) -->
             <g transform="translate(60, 110)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=1'">
