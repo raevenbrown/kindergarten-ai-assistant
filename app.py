@@ -14,7 +14,7 @@ st.set_page_config(
 # 1. VECTOR GRAPHICS ENGINE (AVATARS & BOOKS)
 # =========================================================
 
-def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glasses="gold_round", shirt="#ec4899", accessory="crown", size=160):
+def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glasses="gold_round", shirt="#ec4899", accessory="crown", size=180):
     hair_svg = ""
     if hair_style == "puffs":
         hair_svg = f"""
@@ -302,10 +302,14 @@ if st.session_state.screen == "profile_select":
                 speak(f"Welcome back {name}! Follow your Kindergarten Road Map to learn and grow!")
                 st.rerun()
 
-            # DELETE CHARACTER BUTTON
+            # DELETE PLAYER BUTTON
             if len(st.session_state.profiles) > 1:
                 if st.button(f"🗑️ Delete {name}", key=f"del_{name}", use_container_width=True):
                     del st.session_state.profiles[name]
+                    # If active user was deleted, switch active user to another profile if available
+                    remaining_profiles = list(st.session_state.profiles.keys())
+                    if remaining_profiles:
+                        st.session_state.active_user = remaining_profiles[0]
                     speak(f"Player {name} deleted.")
                     st.success(f"🗑️ Player '{name}' deleted successfully!")
                     st.rerun()
