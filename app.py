@@ -274,13 +274,13 @@ if "active_activity" not in st.session_state:
     st.session_state.active_activity = "sight_words"
 
 # =========================================================
-# SCREEN 1: PROFILE HUB
+# SCREEN 1: PROFILE HUB (WITH DELETE CHARACTER OPTION)
 # =========================================================
 if st.session_state.screen == "profile_select":
     st.markdown("""
     <div style="text-align:center; padding: 18px 0 10px 0;">
         <h1 style="color:#0369a1; font-size:3.2rem; font-weight:900; margin-bottom:4px;">ADVENTURE LEARNING ACADEMY</h1>
-        <p style="font-size:1.5rem; color:#1e293b; font-weight:800;">Who is playing today? Tap your character!</p>
+        <p style="font-size:1.5rem; color:#1e293b; font-weight:800;">Who is playing today? Tap your character or manage profiles!</p>
     </div>
     """, unsafe_allow_html=True)
     speak("Who is playing today? Tap your character or design a new buddy!")
@@ -292,25 +292,34 @@ if st.session_state.screen == "profile_select":
         p_data = st.session_state.profiles[name]
         b = p_data["buddy"]
         with cols[i]:
-            avatar_html = render_avatar(skin=b["skin"], hair_style=b["hair_style"], hair_color=b["hair_color"], glasses=b["glasses"], shirt=b["shirt"], accessory=b["accessory"], size=180)
-            components.html(avatar_html, height=190)
+            avatar_html = render_avatar(skin=b["skin"], hair_style=b["hair_style"], hair_color=b["hair_color"], glasses=b["glasses"], shirt=b["shirt"], accessory=b["accessory"], size=160)
+            components.html(avatar_html, height=170)
+            
             if st.button(f"Play as {name}", key=f"prof_{name}", use_container_width=True):
                 st.session_state.active_user = name
                 st.session_state.screen = "adventure_trail"
                 speak(f"Welcome back {name}! Complete all questions in each level to advance!")
                 st.rerun()
 
+            # Delete Profile Button (Only if more than 1 profile exists so you don't delete all)
+            if len(st.session_state.profiles) > 1:
+                if st.button(f"🗑️ Delete {name}", key=f"del_{name}", use_container_width=True):
+                    del st.session_state.profiles[name]
+                    speak(f"Profile {name} has been deleted.")
+                    st.success(f"🗑️ Profile '{name}' deleted successfully!")
+                    st.rerun()
+
     with cols[-1]:
         raw_plus = """
         <div style="display:flex; justify-content:center; align-items:center; width:100%;">
-            <svg width="180" height="180" viewBox="0 0 200 200">
+            <svg width="160" height="160" viewBox="0 0 200 200">
                 <circle cx="100" cy="100" r="90" fill="#f8fafc" stroke="#94a3b8" stroke-width="6" stroke-dasharray="12,8"/>
                 <line x1="100" y1="65" x2="100" y2="135" stroke="#0284c7" stroke-width="12" stroke-linecap="round"/>
                 <line x1="65" y1="100" x2="135" y2="100" stroke="#0284c7" stroke-width="12" stroke-linecap="round"/>
             </svg>
         </div>
         """
-        components.html(raw_plus, height=190)
+        components.html(raw_plus, height=170)
         if st.button("New Buddy Studio", use_container_width=True):
             st.session_state.screen = "buddy_dressup"
             st.rerun()
