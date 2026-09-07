@@ -1,1281 +1,347 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import random
-from datetime import datetime, timezone
-from typing import Dict, List, Any, Optional
-from pydantic import BaseModel, Field
-from supabase import create_client, Client
+from datetime import datetime
 
+# --- PAGE SETUP ---
 st.set_page_config(
-    page_title="Gracyn's Learning Adventure Studio",
-    page_icon="🐣",
+    page_title="Adventure Academy Kids",
+    page_icon="🌟",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# =========================================================
-# 1. CURRICULUM SCHEMA & REGISTRY (curriculum_config.py)
-# =========================================================
-
-class ScaffoldingCues(BaseModel):
-    voice_audio_key: str
-    spoken_text: str
-    visual_action: str
-    reduce_distractor_count: bool = False
-
-class PhaseInstruction(BaseModel):
-    phase_type: str  # 'I_DO', 'WE_DO', 'YOU_DO'
-    voice_audio_key: str
-    spoken_text: str
-    visual_cues: List[str]
-    repeat_instruction_timer_seconds: int = 10
-    repeat_instruction_audio_key: str
-    repeat_instruction_text: str
-    on_failure_scaffolding: ScaffoldingCues
-    requires_user_input: bool
-    evaluation_criteria: Dict[str, Any]
-
-class CurriculumSkillNode(BaseModel):
-    skill_id: str
-    domain: str  # 'LITERACY' or 'MATH'
-    tier_sequence_index: int
-    title: str
-    standard_code: str
-    mastery_threshold_correct_streak: int = 3
-    stars_awarded_on_mastery: int = 2
-    i_do: PhaseInstruction
-    we_do: PhaseInstruction
-    you_do: PhaseInstruction
-
-SKILL_REGISTRY: Dict[str, CurriculumSkillNode] = {
-    "LIT_REC_A_UPPER": CurriculumSkillNode(
-        skill_id="LIT_REC_A_UPPER",
-        domain="LITERACY",
-        tier_sequence_index=1,
-        title="Letter Recognition: Uppercase A",
-        standard_code="CCSS.ELA-LITERACY.RF.K.1.D",
-        mastery_threshold_correct_streak=3,
-        stars_awarded_on_mastery=2,
-        i_do=PhaseInstruction(
-            phase_type="I_DO",
-            voice_audio_key="vo_lit_a_ido_01",
-            spoken_text="Watch me! This is the uppercase letter A. A says 'ah' like in apple!",
-            visual_cues=["pulse_card_center", "trace_letter_outline_gold"],
-            repeat_instruction_timer_seconds=10,
-            repeat_instruction_audio_key="vo_lit_a_ido_idle",
-            repeat_instruction_text="Look at the big letter A! It stands tall like a tent.",
-            on_failure_scaffolding=ScaffoldingCues(
-                voice_audio_key="vo_lit_a_ido_scaff",
-                spoken_text="Let's look together. Here is the letter A.",
-                visual_action="spotlight_target_letter"
-            ),
-            requires_user_input=False,
-            evaluation_criteria={"auto_advance_on_audio_completion": True}
-        ),
-        we_do=PhaseInstruction(
-            phase_type="WE_DO",
-            voice_audio_key="vo_lit_a_wedo_01",
-            spoken_text="Let's do it together! Tap the letter A to pop the golden bubble!",
-            visual_cues=["pulsing_bubble_target", "render_options_A_and_B"],
-            repeat_instruction_timer_seconds=10,
-            repeat_instruction_audio_key="vo_lit_a_wedo_idle",
-            repeat_instruction_text="Can you tap the letter A with me? It's right in the glowing bubble.",
-            on_failure_scaffolding=ScaffoldingCues(
-                voice_audio_key="vo_lit_a_wedo_scaff",
-                spoken_text="Almost! Letter A has two tall sides and a bridge across. Tap A!",
-                visual_action="dim_distractors_and_shake_target",
-                reduce_distractor_count=True
-            ),
-            requires_user_input=True,
-            evaluation_criteria={"target_value": "A", "allow_retry_without_penalty": True, "max_allowed_attempts": 2}
-        ),
-        you_do=PhaseInstruction(
-            phase_type="YOU_DO",
-            voice_audio_key="vo_lit_a_youdo_01",
-            spoken_text="Your turn, detective! Find and tap the letter A hiding on the cards.",
-            visual_cues=["render_floating_letters_grid"],
-            repeat_instruction_timer_seconds=10,
-            repeat_instruction_audio_key="vo_lit_a_youdo_idle",
-            repeat_instruction_text="Tap the letter A! Listen for the 'ah' sound.",
-            on_failure_scaffolding=ScaffoldingCues(
-                voice_audio_key="vo_lit_a_youdo_scaff",
-                spoken_text="Almost! Letter A points straight up like a triangle mountain.",
-                visual_action="soft_glow_on_correct_pool"
-            ),
-            requires_user_input=True,
-            evaluation_criteria={"target_value": "A", "distractors": ["O", "H", "B"]}
-        )
-    ),
-    "MTH_SUBITIZE_5": CurriculumSkillNode(
-        skill_id="MTH_SUBITIZE_5",
-        domain="MATH",
-        tier_sequence_index=2,
-        title="Subitizing: Quantities 1 to 5",
-        standard_code="CCSS.MATH.CONTENT.K.CC.B.4",
-        mastery_threshold_correct_streak=3,
-        stars_awarded_on_mastery=2,
-        i_do=PhaseInstruction(
-            phase_type="I_DO",
-            voice_audio_key="vo_mth_sub5_ido_01",
-            spoken_text="My turn! Watch how I count: One, two, three! There are 3 juicy apples.",
-            visual_cues=["spawn_three_apples_in_basket"],
-            repeat_instruction_timer_seconds=10,
-            repeat_instruction_audio_key="vo_mth_sub5_ido_idle",
-            repeat_instruction_text="Look at the apples in the basket. Count along: 1, 2, 3!",
-            on_failure_scaffolding=ScaffoldingCues(
-                voice_audio_key="vo_mth_sub5_ido_scaff",
-                spoken_text="Let's look at the counters together.",
-                visual_action="bounce_each_apple_in_sequence"
-            ),
-            requires_user_input=False,
-            evaluation_criteria={"auto_advance_on_audio_completion": True}
-        ),
-        we_do=PhaseInstruction(
-            phase_type="WE_DO",
-            voice_audio_key="vo_mth_sub5_wedo_01",
-            spoken_text="Let's practice together! Tap the plate with 4 strawberries.",
-            visual_cues=["render_plate_with_4_items", "render_plate_with_2_items"],
-            repeat_instruction_timer_seconds=10,
-            repeat_instruction_audio_key="vo_mth_sub5_wedo_idle",
-            repeat_instruction_text="Which plate has four strawberries? Touch the plate to count them.",
-            on_failure_scaffolding=ScaffoldingCues(
-                voice_audio_key="vo_mth_sub5_wedo_scaff",
-                spoken_text="That plate has 2 berries. Let's count the other one: 1, 2, 3, 4! Tap 4.",
-                visual_action="dim_incorrect_plate_and_show_tallies",
-                reduce_distractor_count=True
-            ),
-            requires_user_input=True,
-            evaluation_criteria={"target_quantity": 4, "allow_retry_without_penalty": True}
-        ),
-        you_do=PhaseInstruction(
-            phase_type="YOU_DO",
-            voice_audio_key="vo_mth_sub5_youdo_01",
-            spoken_text="You've got this! Quick, tap the jar with 5 jelly beans!",
-            visual_cues=["render_three_dice_choices"],
-            repeat_instruction_timer_seconds=10,
-            repeat_instruction_audio_key="vo_mth_sub5_youdo_idle",
-            repeat_instruction_text="Find the jar with 5 beans! Count the dots on each one.",
-            on_failure_scaffolding=ScaffoldingCues(
-                voice_audio_key="vo_mth_sub5_youdo_scaff",
-                spoken_text="Count the beans slowly with your finger to find 5.",
-                visual_action="display_touchable_sync_dots"
-            ),
-            requires_user_input=True,
-            evaluation_criteria={"target_quantity": 5, "distractors": [3, 4]}
-        )
-    )
-}
-
-def get_skill_definition(skill_id: str) -> CurriculumSkillNode:
-    return SKILL_REGISTRY.get(skill_id, list(SKILL_REGISTRY.values())[0])
-
-def get_next_sequential_skill(current_tier_index: int) -> CurriculumSkillNode:
-    for skill in SKILL_REGISTRY.values():
-        if skill.tier_sequence_index == current_tier_index + 1:
-            return skill
-    return list(SKILL_REGISTRY.values())[0]
-
-# =========================================================
-# 2. TELEMETRY & NON-PUNITIVE ENGINE (telemetry_engine.py)
-# =========================================================
-
-class GoalObject(BaseModel):
-    name: str = "Rocket Ship"
-    total_parts: int = 10
-    repaired_parts: int = 2
-    stars_per_part: int = 5
-
-class StudentProfile(BaseModel):
-    student_id: str
-    display_name: str
-    avatar: str = "🦄"
-    buddy: Dict[str, str] = Field(default_factory=lambda: {"skin": "🏽", "hair": "👧🏾", "glasses": "👓", "shirt": "🚀"})
-    current_tier_index: int = 1
-    current_skill_id: str = "LIT_REC_A_UPPER"
-    current_phase: str = "YOU_DO"  # 'I_DO', 'WE_DO', 'YOU_DO'
-    coins: int = 50
-    stars: int = 12
-    streak: int = 0
-    sw_score_count: int = 0
-    mastered_skills: List[str] = Field(default_factory=list)
-    goal_object: GoalObject = Field(default_factory=GoalObject)
-    daily_log: Dict[str, Any] = Field(default_factory=dict)
-
-SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
-SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", "")
-supabase: Optional[Client] = None
-if SUPABASE_URL and SUPABASE_KEY:
-    try:
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    except Exception:
-        pass
-
-def evaluate_and_commit_answer(
-    profile: StudentProfile,
-    skill_id: str,
-    is_correct: bool,
-    response_time_ms: int = 1200,
-    detail: str = ""
-) -> Dict[str, Any]:
-    skill_node = get_skill_definition(skill_id)
-    today_str = datetime.now().strftime("%A, %B %d, %Y")
-    now_iso = datetime.now(timezone.utc).isoformat()
-    scaffolding_meta: Optional[Dict[str, Any]] = None
-
-    if today_str not in profile.daily_log:
-        profile.daily_log[today_str] = {"attempts": 0, "correct": 0, "activities": []}
-    profile.daily_log[today_str]["attempts"] += 1
-
-    if is_correct:
-        profile.streak += 1
-        profile.coins += 10
-        profile.stars += skill_node.stars_awarded_on_mastery
-        profile.daily_log[today_str]["correct"] += 1
-
-        # Check Goal Object Rocket Ship repair progress
-        goal = profile.goal_object
-        if profile.stars >= goal.stars_per_part and goal.repaired_parts < goal.total_parts:
-            parts_to_add = profile.stars // goal.stars_per_part
-            actual_add = min(parts_to_add, goal.total_parts - goal.repaired_parts)
-            goal.repaired_parts += actual_add
-
-        if skill_id not in profile.mastered_skills:
-            profile.mastered_skills.append(skill_id)
-
-        next_skill = get_next_sequential_skill(skill_node.tier_sequence_index)
-        profile.current_skill_id = next_skill.skill_id
-        profile.current_tier_index = next_skill.tier_sequence_index
-        profile.current_phase = "YOU_DO"
-
-        client_message = f"Super job! You earned {skill_node.stars_awarded_on_mastery} stars!"
-        action = "ADVANCE_NEXT_SKILL"
-    else:
-        # Non-punitive: No star or coin reduction. Falls back to WE_DO scaffolding.
-        profile.current_phase = "WE_DO"
-        active_phase = skill_node.you_do if profile.current_phase == "YOU_DO" else skill_node.we_do
-        scaffold = active_phase.on_failure_scaffolding
-
-        scaffolding_meta = {
-            "voice_audio_key": scaffold.voice_audio_key,
-            "spoken_text": scaffold.spoken_text,
-            "visual_action": scaffold.visual_action,
-            "reduce_distractor_count": scaffold.reduce_distractor_count
-        }
-        client_message = scaffold.spoken_text
-        action = "TRIGGER_SCAFFOLDING_FALLBACK"
-
-    profile.daily_log[today_str]["activities"].append({
-        "time": datetime.now().strftime("%I:%M:%S %p"),
-        "skill": skill_id,
-        "detail": detail or skill_node.title,
-        "result": "Mastered (+10🪙)" if is_correct else "Gentle Scaffolding Hint (No Penalty)",
-        "phase": profile.current_phase
-    })
-
-    if supabase:
-        try:
-            supabase.table("student_question_telemetry").insert({
-                "student_id": profile.student_id,
-                "student_name": profile.display_name,
-                "skill_id": skill_id,
-                "is_correct": is_correct,
-                "response_time_ms": response_time_ms,
-                "scaffolding_triggered": not is_correct,
-                "coins_balance": profile.coins,
-                "stars_balance": profile.stars,
-                "goal_repaired_parts": profile.goal_object.repaired_parts,
-                "timestamp": now_iso
-            }).execute()
-        except Exception:
-            pass
-
-    return {
-        "action": action,
-        "is_correct": is_correct,
-        "client_message": client_message,
-        "scaffolding": scaffolding_meta
-    }
-
-# =========================================================
-# 3. GLOBAL STYLING & AUDIO INFRASTRUCTURE
-# =========================================================
-
+# --- VIBRANT KHAN KIDS / HATCH IGNITE CSS THEME ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;800&family=Quicksand:wght@600;700;800&display=swap');
 
+    /* Global Arcade Canvas */
     .stApp {
-        background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 40%, #7dd3fc 100%) !important;
+        background: linear-gradient(180deg, #38bdf8 0%, #6ee7b7 55%, #fef08a 100%) !important;
         font-family: 'Fredoka', 'Quicksand', cursive, sans-serif !important;
     }
 
-    .profile-bubble {
-        width: 170px;
-        height: 170px;
-        border-radius: 50%;
-        background: #ffffff;
-        border: 7px solid #38bdf8;
-        box-shadow: 0 14px 30px rgba(0,0,0,0.15);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 12px auto;
-        transition: transform 0.15s ease;
-    }
-
+    /* Tactile Child-Friendly Touch Buttons */
     .stButton > button {
-        border-radius: 28px !important;
-        font-size: 1.35rem !important;
+        border-radius: 30px !important;
+        font-size: 1.6rem !important;
         font-weight: 800 !important;
-        padding: 14px 26px !important;
-        box-shadow: 0 8px 0 rgba(0,0,0,0.18) !important;
-        transition: transform 0.08s ease !important;
-        border: 3.5px solid #ffffff !important;
+        padding: 18px 28px !important;
+        background: #ffffff !important;
+        color: #0369a1 !important;
+        border: 4px solid #38bdf8 !important;
+        box-shadow: 0 10px 0 #0284c7, 0 15px 25px rgba(0,0,0,0.15) !important;
+        transition: transform 0.08s ease, box-shadow 0.08s ease !important;
+        margin: 8px 0 !important;
+    }
+    .stButton > button:hover {
+        background: #f0f9ff !important;
+        color: #0284c7 !important;
+        border-color: #0284c7 !important;
     }
     .stButton > button:active {
-        transform: translateY(6px) !important;
-        box-shadow: 0 2px 0 rgba(0,0,0,0.18) !important;
+        transform: translateY(8px) !important;
+        box-shadow: 0 2px 0 #0284c7 !important;
     }
 
-    .hud-chip {
+    /* Top HUD Ribbon */
+    .hud-banner {
+        background: #ffffff;
+        border-radius: 32px;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 4px solid #facc15;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        margin-bottom: 20px;
+    }
+    .hud-stat {
         background: #fef08a;
         color: #854d0e;
         padding: 8px 18px;
-        border-radius: 22px;
-        font-size: 1.25rem;
+        border-radius: 20px;
+        font-size: 1.3rem;
         font-weight: 800;
+        border: 2px solid #facc15;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        border: 2.5px solid #facc15;
+        gap: 6px;
     }
 
-    .mascot-banner {
+    /* Mascot Speech Card */
+    .mascot-card {
+        background: #ffffff;
+        border-radius: 32px;
+        padding: 20px 26px;
+        border: 4.5px solid #38bdf8;
+        box-shadow: 0 14px 28px rgba(0,0,0,0.1);
         display: flex;
         align-items: center;
-        gap: 16px;
-        background: #ffffff;
-        border: 4px solid #38bdf8;
-        border-radius: 30px;
-        padding: 16px 22px;
-        box-shadow: 0 10px 24px rgba(0,0,0,0.1);
-        margin-bottom: 18px;
+        gap: 18px;
+        margin-bottom: 22px;
     }
-
-    .mascot-face {
-        font-size: 4rem;
-        background: #f0fdf4;
-        border: 3.5px solid #22c55e;
+    .mascot-avatar {
+        font-size: 4.5rem;
+        background: #ecfeff;
+        border: 3.5px solid #38bdf8;
         border-radius: 50%;
-        width: 86px;
-        height: 86px;
+        width: 90px;
+        height: 90px;
         display: flex;
         align-items: center;
         justify-content: center;
         animation: floatMascot 2.5s ease-in-out infinite alternate;
         flex-shrink: 0;
     }
-
     @keyframes floatMascot {
-        0% { transform: translateY(0px) rotate(-3deg); }
-        100% { transform: translateY(-7px) rotate(3deg); }
+        0% { transform: translateY(0px) rotate(-4deg); }
+        100% { transform: translateY(-8px) rotate(4deg); }
     }
-
-    .mascot-speech {
-        background: #f8fafc;
-        border: 3px solid #60a5fa;
-        border-radius: 24px;
-        padding: 12px 18px;
-        flex: 1;
-        font-size: 1.2rem;
-        font-weight: 700;
+    .mascot-prompt {
+        font-size: 1.7rem;
+        font-weight: 800;
         color: #0f172a;
+        line-height: 1.35;
     }
 
-    .instruction-card {
+    /* Center Play Arena Card */
+    .play-card {
         background: #ffffff;
-        border-radius: 26px;
-        padding: 16px 22px;
-        border: 3.5px solid #60a5fa;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-        margin-bottom: 16px;
+        border-radius: 36px;
+        padding: 28px;
         text-align: center;
+        border: 5px solid #60a5fa;
+        box-shadow: 0 16px 36px rgba(0,0,0,0.12);
+        margin-bottom: 24px;
     }
 
-    .jar-container {
-        background: #ffffff;
-        border: 4px solid #0284c7;
+    /* Non-Punitive Scaffolding Clue Box */
+    .hint-box {
+        background: #fffbeb;
+        border: 4px dashed #f59e0b;
         border-radius: 26px;
-        padding: 16px;
+        padding: 18px 22px;
         text-align: center;
-        box-shadow: 0 8px 22px rgba(0,0,0,0.1);
+        margin-top: 18px;
+        animation: popHint 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popHint {
+        0% { transform: scale(0.92); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
     }
 </style>
 """, unsafe_allow_html=True)
 
-def speak(text: str, sfx: str = "pop"):
-    sound_url = {
-        "pop": "https://cdn.freesound.org/previews/536/536108_11565331-lq.mp3",
-        "cheer": "https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3",
-        "tada": "https://cdn.freesound.org/previews/397/397355_4284968-lq.mp3",
-        "tryagain": "https://cdn.freesound.org/previews/415/415079_5121236-lq.mp3"
-    }.get(sfx, "")
-
+# --- ZERO-DEPENDENCY WEBAUDIO SPEECH SYNTHESIZER ---
+def speak(text):
     clean_text = text.replace('"', '\\"').replace("'", "\\'")
     js = f"""
     <script>
         (function() {{
+            const synth = (window.parent && window.parent.speechSynthesis) 
+                ? window.parent.speechSynthesis 
+                : window.speechSynthesis;
+            if (!synth) return;
+
             try {{
-                let snd = new Audio("{sound_url}");
-                snd.volume = 0.55;
-                snd.play().catch(() => {{}});
+                synth.cancel();
+                if (synth.paused) synth.resume();
             }} catch(e) {{}}
 
-            function triggerSpeech() {{
-                const synth = (window.parent && window.parent.speechSynthesis) 
-                    ? window.parent.speechSynthesis 
-                    : window.speechSynthesis;
-                if (!synth) return;
+            const utter = new SpeechSynthesisUtterance("{clean_text}");
+            utter.rate = 0.84;
+            utter.pitch = 1.25;
+            utter.lang = 'en-US';
 
-                try {{
-                    synth.cancel();
-                    if (synth.paused) synth.resume();
-                }} catch(e) {{}}
-
-                const utter = new SpeechSynthesisUtterance("{clean_text}");
-                utter.rate = 0.84;
-                utter.pitch = 1.22;
-                utter.lang = 'en-US';
-
-                const voices = synth.getVoices();
-                if (voices && voices.length > 0) {{
-                    const preferred = voices.find(v => (v.name.includes("Samantha") || v.name.includes("Victoria") || v.lang === "en-US") && !v.name.includes("Bad"));
-                    if (preferred) utter.voice = preferred;
-                }}
-
-                synth.speak(utter);
+            const voices = synth.getVoices();
+            if (voices && voices.length > 0) {{
+                const pref = voices.find(v => (v.name.includes("Samantha") || v.name.includes("Victoria") || v.lang === "en-US") && !v.name.includes("Bad"));
+                if (pref) utter.voice = pref;
             }}
-
-            triggerSpeech();
-            setTimeout(triggerSpeech, 250);
+            synth.speak(utter);
         }})();
     </script>
     """
     components.html(js, height=0)
 
-def render_mascot_guide(text: str, name: str = "Buddy", emoji: str = "👧🏾"):
-    st.markdown(f"""
-    <div class="mascot-banner">
-        <div class="mascot-face">{emoji}</div>
-        <div class="mascot-speech">
-            <b style="color:#0284c7;">{name} says:</b><br>
-            "{text}"
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-def tracing_box(word: str):
-    html = f"""
-    <div style="background:#f8fafc; border:4px dashed #0284c7; border-radius:26px; padding:14px; text-align:center;">
-        <canvas id="cPad" width="340" height="155" style="background:#ffffff; border-radius:20px; touch-action:none; cursor:crosshair; border:3px solid #cbd5e1;"></canvas>
-        <div style="margin-top:12px; display:flex; justify-content:center; gap:12px;">
-            <button onclick="clearPad()" style="background:#ef4444; color:#fff; font-size:1.15rem; font-weight:800; border:none; border-radius:18px; padding:10px 22px; box-shadow:0 4px 0 #b91c1c; cursor:pointer;">🧹 Erase</button>
-            <button onclick="checkTrace()" style="background:#22c55e; color:#fff; font-size:1.15rem; font-weight:800; border:none; border-radius:18px; padding:10px 22px; box-shadow:0 4px 0 #15803d; cursor:pointer;">⭐ Check Writing!</button>
-        </div>
-        <div id="cMsg" style="font-size:1.35rem; font-weight:800; color:#16a34a; margin-top:10px; min-height:35px;"></div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script>
-        const cvs = document.getElementById('cPad');
-        const ctx = cvs.getContext('2d');
-        let isPressing = false;
-
-        function getCoordinates(e) {{
-            const rect = cvs.getBoundingClientRect();
-            if (e.touches && e.touches.length > 0) {{
-                return {{ x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top }};
-            }}
-            return {{ x: e.clientX - rect.left, y: e.clientY - rect.top }};
-        }}
-
-        function handleDown(e) {{
-            if (e.type === 'mousedown' && e.button !== 0) return;
-            e.preventDefault();
-            isPressing = true;
-            const pt = getCoordinates(e);
-            ctx.beginPath();
-            ctx.moveTo(pt.x, pt.y);
-            ctx.lineWidth = 10;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.strokeStyle = '#ec4899';
-        }}
-
-        function handleMove(e) {{
-            if (!isPressing) return;
-            e.preventDefault();
-            if (e.type === 'mousemove' && e.buttons === 0) {{
-                isPressing = false;
-                ctx.beginPath();
-                return;
-            }}
-            const pt = getCoordinates(e);
-            ctx.lineTo(pt.x, pt.y);
-            ctx.stroke();
-        }}
-
-        function handleUp(e) {{
-            if (isPressing) {{ isPressing = false; ctx.beginPath(); }}
-        }}
-
-        cvs.addEventListener('mousedown', handleDown);
-        cvs.addEventListener('mousemove', handleMove);
-        window.addEventListener('mouseup', handleUp);
-
-        cvs.addEventListener('touchstart', handleDown, {{ passive: false }});
-        cvs.addEventListener('touchmove', handleMove, {{ passive: false }});
-        window.addEventListener('touchend', handleUp, {{ passive: false }});
-        window.addEventListener('touchcancel', handleUp, {{ passive: false }});
-
-        function clearPad() {{
-            ctx.clearRect(0, 0, cvs.width, cvs.height);
-            document.getElementById('cMsg').innerText = '';
-        }}
-
-        function checkTrace() {{
-            confetti({{ particleCount: 90, spread: 75, origin: {{ y: 0.75 }} }});
-            document.getElementById('cMsg').innerText = "🌟 Great handwriting!";
-            let a = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
-            a.play().catch(() => {{}});
-        }}
-    </script>
-    """
-    components.html(html, height=330)
-
-def speech_box(target_word: str):
-    clean_target = target_word.strip().lower()
-    html = f"""
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <div style="text-align:center; margin-top:8px;">
-        <button id="micB" style="background:#f97316; color:#ffffff; font-size:1.35rem; font-weight:800; border:none; border-radius:26px; padding:14px 28px; box-shadow:0 6px 0 #c2410c; cursor:pointer;" onclick="listenNow()">
-            🎙️ Tap to Say Your Word
-        </button>
-        <div id="mRes" style="font-size:1.35rem; font-weight:800; margin-top:10px; min-height:30px;"></div>
-    </div>
-    <script>
-        let rec = null;
-        let answered = false;
-
-        function listenNow() {{
-            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const res = document.getElementById('mRes');
-            const btn = document.getElementById('micB');
-            if (!SpeechRec) {{ res.innerHTML = "<span style='color:red;'>Please open in Safari or Chrome!</span>"; return; }}
-
-            answered = false;
-            rec = new SpeechRec();
-            rec.lang = 'en-US';
-            rec.interimResults = true;
-
-            btn.innerText = "👂 Listening...";
-            btn.style.background = "#22c55e";
-            res.innerHTML = "";
-
-            rec.onresult = (e) => {{
-                if (answered) return;
-                let heard = "";
-                for (let i = 0; i < e.results.length; ++i) {{
-                    heard += e.results[i][0].transcript.toLowerCase();
-                }}
-                heard = heard.trim();
-                let target = "{clean_target}";
-                let match = (heard.includes(target) || target.includes(heard));
-
-                if (target === "to" && (heard.includes("two") || heard.includes("too") || heard.includes("2"))) match = true;
-                if (target === "for" && (heard.includes("four") || heard.includes("4"))) match = true;
-                if (target === "i" && (heard.includes("eye") || heard === "ay")) match = true;
-
-                if (match) {{
-                    answered = true;
-                    try {{ rec.stop(); }} catch(err) {{}}
-                    confetti({{ particleCount: 120, spread: 80, origin: {{ y: 0.7 }} }});
-                    let a = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
-                    a.play().catch(() => {{}});
-                    res.innerHTML = "<span style='color:#15803d;'>🎉 YES! You read it correctly! 🌟</span>";
-                    btn.innerText = '🎙️ Tap to Say Again';
-                    btn.style.background = "#f97316";
-                }}
-            }};
-
-            rec.onspeechend = () => {{
-                setTimeout(() => {{
-                    if (!answered) {{
-                        btn.innerText = '🎙️ Tap to Say Your Word';
-                        btn.style.background = "#f97316";
-                    }}
-                }}, 400);
-            }};
-
-            rec.start();
-        }}
-    </script>
-    """
-    components.html(html, height=125)
-
-# =========================================================
-# 4. SESSION STATE INITIALIZATION
-# =========================================================
-
-if "profiles" not in st.session_state:
-    st.session_state.profiles = {
-        "Gracyn": StudentProfile(
-            student_id="student_gracyn_01",
-            display_name="Gracyn",
-            avatar="🦄",
-            buddy={"skin": "🏽", "hair": "👧🏾", "glasses": "👓", "shirt": "🚀"}
-        )
+# --- CURRICULUM QUESTION REPOSITORY (PHONICS, SIGHT WORDS, MATH) ---
+QUESTIONS = [
+    {
+        "id": "q1",
+        "domain": "Early Phonics",
+        "instruction": "Look at uppercase letter A! Which baby lowercase letter matches it?",
+        "prompt_visual": "🅰️",
+        "options": [
+            {"label": "a", "display": "a"},
+            {"label": "b", "display": "b"},
+            {"label": "d", "display": "d"}
+        ],
+        "correct": "a",
+        "hint": "Letter A says 'ah' like in 🍎 apple! Look for the round circle with a short tail: 'a'."
+    },
+    {
+        "id": "q2",
+        "domain": "Object Counting",
+        "instruction": "Count the yummy strawberries! How many are on the plate?",
+        "prompt_visual": "🍓 🍓 🍓 🍓",
+        "options": [
+            {"label": "2", "display": "2"},
+            {"label": "4", "display": "4"},
+            {"label": "5", "display": "5"}
+        ],
+        "correct": "4",
+        "hint": "Touch and count each berry slowly: 1... 2... 3... 4!"
+    },
+    {
+        "id": "q3",
+        "domain": "Sight Words",
+        "instruction": "Which word says 'THE'?",
+        "prompt_visual": "📖 T - H - E",
+        "options": [
+            {"label": "the", "display": "the"},
+            {"label": "and", "display": "and"},
+            {"label": "was", "display": "was"}
+        ],
+        "correct": "the",
+        "hint": "Look for the letters that start with tall letter T and H: 'the'!"
+    },
+    {
+        "id": "q4",
+        "domain": "Kindergarten Math",
+        "instruction": "What is 2 apples plus 1 apple?",
+        "prompt_visual": "🍎 🍎 + 🍏",
+        "options": [
+            {"label": "2", "display": "2"},
+            {"label": "3", "display": "3"},
+            {"label": "4", "display": "4"}
+        ],
+        "correct": "3",
+        "hint": "Count all the apples together: 1, 2, and 1 more makes 3!"
     }
+]
 
-if "active_user" not in st.session_state:
-    st.session_state.active_user = None
+# --- GAME STATE MANAGEMENT ---
+if "current_question_index" not in st.session_state:
+    st.session_state.current_question_index = 0
+if "stars_earned" not in st.session_state:
+    st.session_state.stars_earned = 0
+if "streak" not in st.session_state:
+    st.session_state.streak = 0
+if "show_hint" not in st.session_state:
+    st.session_state.show_hint = False
+if "telemetry_log" not in st.session_state:
+    st.session_state.telemetry_log = []
+if "last_spoken_id" not in st.session_state:
+    st.session_state.last_spoken_id = None
 
-if "screen" not in st.session_state:
-    st.session_state.screen = "profile_picker"
+current_idx = st.session_state.current_question_index % len(QUESTIONS)
+current_q = QUESTIONS[current_idx]
 
-if "current_game" not in st.session_state:
-    st.session_state.current_game = "📖 Sight Words"
+# Auto-speak question on transition
+if st.session_state.last_spoken_id != f"{current_q['id']}_{st.session_state.show_hint}":
+    if st.session_state.show_hint:
+        speak(f"Let's look at the clue: {current_q['hint']}")
+    else:
+        speak(current_q["instruction"])
+    st.session_state.last_spoken_id = f"{current_q['id']}_{st.session_state.show_hint}"
 
-if "selected_sw_list" not in st.session_state:
-    st.session_state.selected_sw_list = "⭐ List 1 (12 Words)"
-
-SIGHT_WORD_LISTS = {
-    "⭐ List 1 (12 Words)": ["a", "at", "do", "was", "the", "as", "I", "you", "am", "to", "is", "an"],
-    "🌟 List 2 (12 Words)": ["man", "did", "of", "your", "in", "sit", "for", "said", "it", "can", "from", "all"]
-}
-
-# =========================================================
-# SCREEN 1: KHAN-KIDS PROFILE PICKER HUB
-# =========================================================
-if st.session_state.screen == "profile_picker":
-    st.markdown("""
-    <div style="text-align:center; padding:25px 0 10px 0;">
-        <div style="font-size:3.5rem; font-weight:900; color:#0284c7;">🛡️ Adventure Academy</div>
-        <div style="font-size:1.6rem; color:#475569; font-weight:800;">Who is ready to learn today? Tap your name!</div>
+# --- TOP HUD DISPLAY ---
+st.markdown(f"""
+<div class="hud-banner">
+    <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:2.2rem;">🚀</span>
+        <b style="font-size:1.5rem; color:#0f172a;">Level {st.session_state.current_question_index + 1}</b>
     </div>
-    """, unsafe_allow_html=True)
-    speak("Who is ready to learn today? Tap your name, or tap new to create a profile!")
-
-    prof_names = list(st.session_state.profiles.keys())
-    cols = st.columns(len(prof_names) + 1)
-
-    for i, name in enumerate(prof_names):
-        prof = st.session_state.profiles[name]
-        with cols[i]:
-            st.markdown(f"""
-            <div class="profile-bubble">
-                <div style="font-size:5rem;">{prof.avatar}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button(f"⭐ {name}", key=f"sel_prof_{name}", use_container_width=True):
-                st.session_state.active_user = name
-                st.session_state.screen = "adventure_hub"
-                speak(f"Welcome back {name}! Let's start learning!")
-                st.rerun()
-
-    with cols[-1]:
-        st.markdown("""
-        <div class="profile-bubble" style="border:7px dashed #94a3b8; background:#f8fafc;">
-            <div style="font-size:4.5rem; color:#0284c7;">➕</div>
-            <div style="font-weight:900; color:#0369a1; font-size:1.2rem;">NEW</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("➕ Add Person", key="btn_add_person", use_container_width=True):
-            st.session_state.screen = "buddy_creator"
-            st.rerun()
-
-# =========================================================
-# SCREEN 2: BUDDY CREATION STUDIO
-# =========================================================
-elif st.session_state.screen == "buddy_creator":
-    st.markdown("""
-    <div class="instruction-card">
-        <div style="font-size:2rem; font-weight:900; color:#b45309;">🎨 Buddy Creation Studio</div>
-        <div style="font-size:1.2rem; font-weight:700; color:#475569;">Design your buddy to learn with you!</div>
+    <div style="display:flex; gap:12px;">
+        <div class="hud-stat">⭐ {st.session_state.stars_earned} Stars</div>
+        <div class="hud-stat" style="background:#fee2e2; color:#b91c1c; border-color:#f87171;">🔥 {st.session_state.streak} Streak</div>
     </div>
-    """, unsafe_allow_html=True)
-    speak("Type your name and customize your learning buddy!")
+</div>
+""", unsafe_allow_html=True)
 
-    new_name = st.text_input("What is your name?", value="", placeholder="Type your name here...")
+# --- MASCOT GUIDE BANNER ---
+st.markdown(f"""
+<div class="mascot-card">
+    <div class="mascot-avatar">🐥</div>
+    <div class="mascot-prompt">
+        <span style="color:#0284c7; font-size:1.1rem; text-transform:uppercase; letter-spacing:1px;">{current_q['domain']}</span><br>
+        {current_q['instruction']}
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-    if "temp_buddy" not in st.session_state:
-        st.session_state.temp_buddy = {"skin": "🏽", "hair": "👧🏾", "glasses": "👓", "shirt": "🚀", "avatar": "🦄"}
+# --- PLAY ARENA ---
+st.markdown(f"""
+<div class="play-card">
+    <div style="font-size: 5rem; letter-spacing: 8px; margin: 10px 0;">{current_q['prompt_visual']}</div>
+</div>
+""", unsafe_allow_html=True)
 
-    b = st.session_state.temp_buddy
-    b_col1, b_col2 = st.columns([1, 1.2])
+# --- ANSWER CHECKER FUNCTION ---
+def handle_choice(selected_value):
+    is_correct = (selected_value == current_q["correct"])
+    now_str = datetime.now().strftime("%I:%M:%S %p")
 
-    with b_col1:
-        st.markdown(f"""
-        <div style="background:#ffffff; border:5px solid #38bdf8; border-radius:32px; padding:30px; text-align:center; box-shadow:0 12px 28px rgba(0,0,0,0.1);">
-            <div style="font-size:7.5rem; line-height:1.1;">{b['hair']}</div>
-            <div style="font-size:4rem; margin-top:-20px;">{b['glasses']}</div>
-            <div style="font-size:4.5rem; margin-top:-10px;">{b['shirt']}</div>
-            <div style="font-size:1.6rem; font-weight:900; color:#0284c7; margin-top:10px;">Buddy Preview</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with b_col2:
-        st.markdown("#### 1. Pick Hair & Style:")
-        h_cols = st.columns(5)
-        for idx, h in enumerate(["👧🏾", "👧🏽", "👧🏼", "👦🏾", "👦🏽"]):
-            if h_cols[idx].button(h, key=f"bh_{idx}"):
-                b["hair"] = h
-                st.rerun()
-
-        st.markdown("#### 2. Pick Glasses / Accessories:")
-        g_cols = st.columns(4)
-        for idx, g in enumerate(["👓", "🕶️", "👑", "🎀"]):
-            if g_cols[idx].button(g, key=f"bg_{idx}"):
-                b["glasses"] = g
-                st.rerun()
-
-        st.markdown("#### 3. Pick Outfit Theme:")
-        s_cols = st.columns(4)
-        for idx, s in enumerate(["🚀", "⭐", "🎨", "⚽"]):
-            if s_cols[idx].button(s, key=f"bs_{idx}"):
-                b["shirt"] = s
-                st.rerun()
-
-        st.markdown("#### 4. Pick Avatar Icon:")
-        a_cols = st.columns(4)
-        for idx, a in enumerate(["🦄", "🐯", "🐼", "🐬"]):
-            if a_cols[idx].button(a, key=f"ba_{idx}"):
-                b["avatar"] = a
-                st.rerun()
-
-    if st.button("🎉 Save My Buddy & Start Learning!", use_container_width=True):
-        final_name = new_name.strip() if new_name.strip() else "Superstar"
-        st.session_state.profiles[final_name] = StudentProfile(
-            student_id=f"student_{final_name.lower()}_{random.randint(100, 999)}",
-            display_name=final_name,
-            avatar=b["avatar"],
-            buddy=b
-        )
-        st.session_state.active_user = final_name
-        st.session_state.screen = "adventure_hub"
-        speak(f"Awesome! Welcome to Adventure Academy {final_name}!")
+    if is_correct:
+        st.session_state.stars_earned += 1
+        st.session_state.streak += 1
+        st.session_state.show_hint = False
+        st.session_state.current_question_index += 1
+        st.session_state.telemetry_log.append({
+            "time": now_str,
+            "question": current_q["id"],
+            "domain": current_q["domain"],
+            "result": "Correct (+1 ⭐)",
+            "streak": st.session_state.streak
+        })
+        st.balloons()
+        st.rerun()
+    else:
+        # Non-punitive: Never deduct stars or drop level
+        st.session_state.streak = 0
+        st.session_state.show_hint = True
+        st.session_state.telemetry_log.append({
+            "time": now_str,
+            "question": current_q["id"],
+            "domain": current_q["domain"],
+            "result": "Hint Triggered (No Penalty)",
+            "streak": 0
+        })
         st.rerun()
 
-# =========================================================
-# SCREEN 3: ADVENTURE HUB & GRADUAL-RELEASE ARENA
-# =========================================================
-elif st.session_state.screen == "adventure_hub":
-    curr_user = st.session_state.active_user
-    profile = st.session_state.profiles[curr_user]
-    buddy = profile.buddy
+# --- INTERACTIVE TACTILE BUTTON TARGETS ---
+cols = st.columns(len(current_q["options"]))
+for i, opt in enumerate(current_q["options"]):
+    with cols[i]:
+        if st.button(f"👉  {opt['display']}", key=f"btn_{current_q['id']}_{opt['label']}", use_container_width=True):
+            handle_choice(opt["label"])
 
-    # Top HUD with Rocket Ship Goal Object & Star Bank
-    hud_c1, hud_c2, hud_c3 = st.columns([1.8, 2, 1.4])
-    with hud_c1:
-        st.markdown(f"""
-        <div style="display:flex; align-items:center; gap:12px;">
-            <div style="font-size:3.2rem; background:#ffffff; border-radius:50%; border:3.5px solid #38bdf8; width:72px; height:72px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-                {profile.avatar}
-            </div>
-            <div>
-                <b style="font-size:1.4rem; color:#0f172a;">{curr_user}'s Quest</b><br>
-                <span style="color:#0284c7; font-weight:800; font-size:1.05rem;">Buddy: {buddy['hair']}{buddy['shirt']}</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with hud_c2:
-        goal_pct = profile.goal_object.repaired_parts / profile.goal_object.total_parts
-        st.progress(goal_pct)
-        st.markdown(f"<div style='text-align:center; font-weight:800; color:#0369a1;'>🚀 {profile.goal_object.name}: {profile.goal_object.repaired_parts}/{profile.goal_object.total_parts} Parts Repaired! (Phase: {profile.current_phase})</div>", unsafe_allow_html=True)
-
-    with hud_c3:
-        ch1, ch2 = st.columns(2)
-        ch1.markdown(f"<div class='hud-chip'>🪙 {profile.coins}</div>", unsafe_allow_html=True)
-        ch2.markdown(f"<div class='hud-chip'>⭐ {profile.stars}</div>", unsafe_allow_html=True)
-
-    # Station Chooser
-    st.markdown("""
-    <div class="instruction-card">
-        <span style="font-size:1.3rem; font-weight:800; color:#0369a1;">🎮 Choose Your Learning Adventure Station:</span>
+# --- GENTLE VISUAL CLUE BOX (ON MISS) ---
+if st.session_state.show_hint:
+    st.markdown(f"""
+    <div class="hint-box">
+        <div style="font-size: 2.2rem; margin-bottom: 4px;">💡 Gentle Clue:</div>
+        <div style="font-size: 1.4rem; font-weight: 700; color: #78350f;">{current_q['hint']}</div>
     </div>
     """, unsafe_allow_html=True)
 
-    game_modes = [
-        "📖 Sight Words",
-        "📚 Parts of a Book & Story Time",
-        "🕵️ Number Detective (20 & Under)",
-        "🔤 Word Family Spelling Lab",
-        "🔍 Letter I-Spy Safari",
-        "🍁 Seasons & Nature Quest",
-        "➕ Cool Math (10 and Under)",
-        "📊 Parent Progress Portal"
-    ]
-    active_game = st.selectbox("", game_modes, index=game_modes.index(st.session_state.current_game), label_visibility="collapsed")
-    if active_game != st.session_state.current_game:
-        st.session_state.current_game = active_game
-        st.rerun()
+# --- EDUCATOR & PARENT TELEMETRY DASHBOARD ---
+st.markdown("---")
+with st.expander("📊 Parent & Teacher Live Dashboard", expanded=False):
+    m1, m2, m3 = st.columns(3)
+    total_answered = len(st.session_state.telemetry_log)
+    correct_count = sum(1 for entry in st.session_state.telemetry_log if "Correct" in entry["result"])
+    accuracy = int((correct_count / total_answered) * 100) if total_answered > 0 else 100
 
-    # -------------------------------------------------------------
-    # 1. SIGHT WORDS WITH GRADUAL-RELEASE ("I Do, We Do, You Do")
-    # -------------------------------------------------------------
-    if active_game == "📖 Sight Words":
-        node = get_skill_definition(profile.current_skill_id)
-        phase_data = getattr(node, profile.current_phase.lower())
+    m1.metric("Questions Practiced", total_answered)
+    m2.metric("Total Stars", f"⭐ {st.session_state.stars_earned}")
+    m3.metric("First-Try Accuracy", f"{accuracy}%")
 
-        render_mascot_guide(phase_data.spoken_text, "Buddy", buddy['hair'])
-        speak(phase_data.spoken_text)
-
-        sel_col1, sel_col2 = st.columns([1.2, 1])
-        with sel_col1:
-            st.markdown("<b style='font-size:1.15rem; color:#0c4a6e;'>📚 Choose Word List:</b>", unsafe_allow_html=True)
-            chosen_list = st.selectbox(
-                "Word List",
-                list(SIGHT_WORD_LISTS.keys()),
-                index=list(SIGHT_WORD_LISTS.keys()).index(st.session_state.selected_sw_list),
-                label_visibility="collapsed"
-            )
-            if chosen_list != st.session_state.selected_sw_list:
-                st.session_state.selected_sw_list = chosen_list
-                st.session_state.current_sw = SIGHT_WORD_LISTS[chosen_list][0]
-                st.rerun()
-
-        active_bank = SIGHT_WORD_LISTS[st.session_state.selected_sw_list]
-        if "current_sw" not in st.session_state or st.session_state.current_sw not in active_bank:
-            st.session_state.current_sw = active_bank[0]
-
-        with sel_col2:
-            st.markdown("<b style='font-size:1.15rem; color:#0c4a6e;'>🎯 Target Word:</b>", unsafe_allow_html=True)
-            picked = st.selectbox("Target Word", active_bank, index=active_bank.index(st.session_state.current_sw), label_visibility="collapsed")
-            if picked != st.session_state.current_sw:
-                st.session_state.current_sw = picked
-                st.rerun()
-
-        word = st.session_state.current_sw
-        w_col1, w_col2 = st.columns([1, 1.25])
-
-        with w_col1:
-            st.markdown(f"""
-            <div style="background:#ffffff; border:5px solid #f87171; border-radius:32px; padding:22px; text-align:center; box-shadow:0 12px 28px rgba(0,0,0,0.08);">
-                <div style="font-size:1.4rem; color:#ef4444; font-weight:800;">❤️ {st.session_state.selected_sw_list.split('(')[0].strip()}</div>
-                <div style="font-size:5.5rem; font-weight:900; color:#dc2626; letter-spacing:6px; margin:8px 0;">{word.upper()}</div>
-                <div style="font-size:1.1rem; color:#64748b; font-weight:700;">Phase: {profile.current_phase}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            speech_box(word)
-
-        with w_col2:
-            st.markdown("""
-            <div style="background:#ffffff; border-radius:24px; padding:10px 18px; border:3px solid #0284c7; margin-bottom:8px; text-align:center;">
-                <b style="font-size:1.25rem; color:#0369a1;">✏️ Trace & Write with Your Finger:</b>
-            </div>
-            """, unsafe_allow_html=True)
-            tracing_box(word.upper())
-
-            b1, b2 = st.columns(2)
-            with b1:
-                if st.button("🌟 I Mastered It! (+10 🪙)", use_container_width=True):
-                    profile.sw_score_count += 1
-                    res = evaluate_and_commit_answer(profile, node.skill_id, is_correct=True, detail=f"Mastered word: {word}")
-                    curr_i = active_bank.index(word)
-                    st.session_state.current_sw = active_bank[(curr_i + 1) % len(active_bank)]
-                    st.rerun()
-            with b2:
-                if st.button("➡️ Practice Next 🎲", use_container_width=True):
-                    rem = [w for w in active_bank if w != word]
-                    st.session_state.current_sw = random.choice(rem) if rem else word
-                    st.rerun()
-
-    # -------------------------------------------------------------
-    # 2. PARTS OF A BOOK & STORY TIME
-    # -------------------------------------------------------------
-    elif active_game == "📚 Parts of a Book & Story Time":
-        b_tab1, b_tab2, b_tab3 = st.tabs(["🎓 Step 1: Touch & Learn", "📖 Step 2: Read Story & Recall", "🕵️ Step 3: Detective Quiz"])
-
-        with b_tab1:
-            msg_p1 = "Tap each glowing part of the book below so I can show you what it does!"
-            render_mascot_guide(msg_p1, "Bella", "🐶")
-            speak(msg_p1)
-
-            p1, p2, p3 = st.columns(3)
-            p4, p5, p6 = st.columns(3)
-            with p1:
-                if st.button("📕 Front Cover", use_container_width=True):
-                    speak("The front cover is the strong front door that protects the pages inside!")
-                    st.info("📕 **Front Cover:** Heavy cardboard that protects the book.")
-            with p2:
-                if st.button("🏷️ The Title", use_container_width=True):
-                    speak("The title is the big name of the book that tells you what the story is about!")
-                    st.info("🏷️ **Title:** The name of the story.")
-            with p3:
-                if st.button("🧑‍🏫 The Author", use_container_width=True):
-                    speak("The author is the writer who writes all the words in the story!")
-                    st.info("🧑‍🏫 **Author:** The person who writes words.")
-            with p4:
-                if st.button("🎨 The Illustrator", use_container_width=True):
-                    speak("The illustrator is the artist who paints all the colorful pictures!")
-                    st.info("🎨 **Illustrator:** The artist drawing pictures.")
-            with p5:
-                if st.button("📏 The Spine", use_container_width=True):
-                    speak("The spine is the side edge that holds all the pages tightly together like your backbone!")
-                    st.info("📏 **Spine:** The backbone binding all pages.")
-            with p6:
-                if st.button("📘 The Back Cover", use_container_width=True):
-                    speak("The back cover has the barcode and a quick summary of the story!")
-                    st.info("📘 **Back Cover:** Has the barcode.")
-
-        with b_tab2:
-            msg_story = "Listen to our mini story about Bella the Pup! Pay close attention to what happens!"
-            render_mascot_guide(msg_story, "Oliver Owl", "🦉")
-            speak(msg_story)
-
-            st.markdown("""
-            <div style="background:#ffffff; border:4px solid #38bdf8; border-radius:28px; padding:22px; text-align:center; box-shadow:0 8px 22px rgba(0,0,0,0.08); margin-bottom:18px;">
-                <div style="font-size:4rem; margin-bottom:8px;">🐶🌈🎈</div>
-                <h3 style="color:#0369a1; margin-bottom:6px;">Title: Bella's Big Sunny Day</h3>
-                <p style="font-size:1.35rem; color:#1e293b; font-weight:700; line-height:1.6;">
-                    Once upon a time, a fluffy golden pup named Bella found a bright red balloon stuck in a tree. 
-                    Bella wagged her tail, jumped with all her puppy might, and tapped the balloon with her nose. 
-                    Pop! The balloon floated up into the clouds, and Bella made a new friend named Oliver the Owl!
-                </p>
-                <div style="background:#f0fdf4; border-radius:18px; padding:10px; font-weight:800; color:#166534; font-size:1.15rem;">
-                    Written by: Raeven Brown (Author)  •  Illustrated by: Gracyn (Artist)
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-            rc1, rc2 = st.columns(2)
-            with rc1:
-                if st.button("🐶 Who was the hero? (A) Bella the Pup", use_container_width=True):
-                    st.balloons()
-                    speak("Yes! Bella the fluffy pup was the main character!", "cheer")
-                    evaluate_and_commit_answer(profile, "LIT_BOOK_PARTS", is_correct=True, detail="Hero: Bella the Pup")
-            with rc2:
-                if st.button("🐱 Was the hero a Kitty named Cleo?", use_container_width=True):
-                    speak("Think back to our story! It was about Bella the brave pup!", "tryagain")
-                    evaluate_and_commit_answer(profile, "LIT_BOOK_PARTS", is_correct=False, detail="Guessed Kitty Cleo")
-
-        with b_tab3:
-            book_questions = [
-                {
-                    "target": "Front Cover", "highlight": "cover",
-                    "q": "Look at the front. What part protects the book and welcomes you in?",
-                    "correct": "Front Cover",
-                    "hint": "The front cover is the big front door with the cover picture!",
-                    "opts": [
-                        {"name": "Front Cover", "icon": "📕", "desc": "Front Cover with Picture"},
-                        {"name": "The Spine", "icon": "📏", "desc": "Side Edge Backbone"},
-                        {"name": "Back Cover", "icon": "📘", "desc": "Back of Book"},
-                        {"name": "Page Numbers", "icon": "📄", "desc": "Bottom Corner Numbers"}
-                    ]
-                }
-            ]
-            if "bq_idx" not in st.session_state: st.session_state.bq_idx = 0
-            curr_q = book_questions[st.session_state.bq_idx % len(book_questions)]
-
-            render_mascot_guide(f"{curr_user}! {curr_q['q']}", "Chickie", "🐥")
-            speak(f"{curr_user}! {curr_q['q']}")
-
-            cols = st.columns(2)
-            for i, opt in enumerate(curr_q["opts"]):
-                with cols[i % 2]:
-                    st.markdown(f"""
-                    <div style="background:#ffffff; border:3.5px solid #93c5fd; border-radius:22px; padding:14px; text-align:center; margin-bottom:8px; box-shadow:0 6px 14px rgba(0,0,0,0.06);">
-                        <div style="font-size:3.5rem; margin-bottom:4px;">{opt['icon']}</div>
-                        <div style="font-size:1.35rem; font-weight:900; color:#0f172a;">{opt['name']}</div>
-                        <div style="font-size:1.05rem; font-weight:700; color:#64748b;">{opt['desc']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    if st.button(f"👉 Select {opt['name']}", key=f"btn_bk_opt_{opt['name']}_{st.session_state.bq_idx}", use_container_width=True):
-                        if opt["name"] == curr_q["correct"]:
-                            st.balloons()
-                            speak(f"Yes! That is {opt['name']}!", "cheer")
-                            evaluate_and_commit_answer(profile, "LIT_BOOK_PARTS", is_correct=True, detail=f"Identified {opt['name']}")
-                            st.session_state.bq_idx += 1
-                            st.rerun()
-                        else:
-                            speak(f"Not quite! Here is a hint: {curr_q['hint']}", "tryagain")
-                            evaluate_and_commit_answer(profile, "LIT_BOOK_PARTS", is_correct=False, detail=f"Missed {opt['name']}")
-
-    # -------------------------------------------------------------
-    # 3. NUMBER DETECTIVE (20 & UNDER)
-    # -------------------------------------------------------------
-    elif active_game == "🕵️ Number Detective (20 & Under)":
-        mascot_num = f"{curr_user}! We are looking for the number 18! Count the jelly beans in the glass jars and tallies!"
-        render_mascot_guide(mascot_num, "Buddy", buddy['hair'])
-        speak(mascot_num)
-
-        c1, c2 = st.columns(2)
-        c3, c4 = st.columns(2)
-
-        with c1:
-            st.markdown("""
-            <div class="jar-container">
-                <b style="font-size:1.4rem; color:#0369a1;">🫙 Candy Shop Glass Jars:</b><br>
-                <div style="background:#e0f2fe; border:2.5px solid #0284c7; border-radius:18px; padding:14px; margin:10px 0;">
-                    <div style="font-size:2rem; margin-bottom:4px;">🍬🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴</div>
-                    <b style="font-size:1.25rem; color:#0f172a;">Jar 1: Exactly 10 Red Beans</b>
-                    <div style="font-size:2rem; margin:8px 0 4px 0;">🍬🟢🟢🟢🟢🟢🟢🟢🟢</div>
-                    <b style="font-size:1.25rem; color:#0f172a;">Jar 2: Exactly 8 Green Beans</b>
-                </div>
-                <div style="background:#fef08a; border-radius:14px; padding:6px; font-size:1.35rem; font-weight:900; color:#854d0e;">
-                    10 Beans + 8 Beans
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button("✅ Yes! This makes 18 Beans!", key="btn_jar_18", use_container_width=True):
-                st.balloons()
-                speak("Yes! Ten beans plus eight beans equals 18!", "cheer")
-                evaluate_and_commit_answer(profile, "MTH_SUBITIZE_5", is_correct=True, detail="Jellybeans: 10 + 8 = 18")
-
-        with c2:
-            st.markdown("""
-            <div class="jar-container">
-                <b style="font-size:1.4rem; color:#0369a1;">🟧 Base-Ten Rods & Ones:</b><br>
-                <div style="background:#e0f2fe; border:2.5px solid #0284c7; border-radius:18px; padding:14px; margin:10px 0;">
-                    <div style="font-size:2rem; margin-bottom:4px;">🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦</div>
-                    <b style="font-size:1.25rem; color:#0f172a;">1 Ten-Rod (10)</b>
-                    <div style="font-size:2rem; margin:8px 0 4px 0;">🟩 🟩 🟩 🟩 🟩 🟩 🟩 🟩</div>
-                    <b style="font-size:1.25rem; color:#0f172a;">8 Unit Cubes (8)</b>
-                </div>
-                <div style="background:#fef08a; border-radius:14px; padding:6px; font-size:1.35rem; font-weight:900; color:#854d0e;">
-                    1 Ten + 8 Ones
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button("✅ Yes! This is 18!", key="btn_base10_18", use_container_width=True):
-                st.balloons()
-                speak("Bingo! 1 ten rod and 8 single cubes makes 18!", "cheer")
-                evaluate_and_commit_answer(profile, "MTH_SUBITIZE_5", is_correct=True, detail="Base Ten: 10 + 8 = 18")
-
-        with c3:
-            st.markdown("""
-            <div class="jar-container" style="border-color:#f87171;">
-                <b style="font-size:1.4rem; color:#dc2626;">🍪 Cookie Bakery Jar:</b><br>
-                <div style="background:#fee2e2; border:2.5px solid #ef4444; border-radius:18px; padding:14px; margin:10px 0;">
-                    <div style="font-size:2rem; margin-bottom:4px;">🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪</div>
-                    <b style="font-size:1.25rem; color:#0f172a;">Jar 1: 10 Cookies</b>
-                    <div style="font-size:2rem; margin:8px 0 4px 0;">🍪🍪🍪🍪</div>
-                    <b style="font-size:1.25rem; color:#0f172a;">Jar 2: 4 Cookies</b>
-                </div>
-                <div style="background:#fee2e2; border-radius:14px; padding:6px; font-size:1.35rem; font-weight:900; color:#b91c1c;">
-                    10 Cookies + 4 Cookies
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button("Is this 18 Cookies? 🤔", key="btn_cookies_14", use_container_width=True):
-                speak("Let's count together! Ten plus four is 14. We want 18! Try the other choices!", "tryagain")
-                evaluate_and_commit_answer(profile, "MTH_SUBITIZE_5", is_correct=False, detail="10 + 4 = 14 cookies")
-
-        with c4:
-            st.markdown("""
-            <div class="jar-container">
-                <b style="font-size:1.4rem; color:#0369a1;">🥢 Wooden Campfire Tallies:</b><br>
-                <div style="background:#e0f2fe; border:2.5px solid #0284c7; border-radius:18px; padding:14px; margin:10px 0;">
-                    <div style="font-size:2.2rem; letter-spacing:6px; margin-bottom:4px;">卌 卌 卌</div>
-                    <b style="font-size:1.25rem; color:#0f172a;">3 Bundles of 5 = 15</b>
-                    <div style="font-size:2.2rem; letter-spacing:6px; margin:8px 0 4px 0;">| | |</div>
-                    <b style="font-size:1.25rem; color:#0f172a;">3 Extra Single Sticks</b>
-                </div>
-                <div style="background:#fef08a; border-radius:14px; padding:6px; font-size:1.35rem; font-weight:900; color:#854d0e;">
-                    15 Tallies + 3 Tallies
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button("✅ Yes! This makes 18 Tallies!", key="btn_tally_18", use_container_width=True):
-                st.balloons()
-                speak("Super job! Fifteen plus three tallies is 18!", "cheer")
-                evaluate_and_commit_answer(profile, "MTH_SUBITIZE_5", is_correct=True, detail="Tallies: 15 + 3 = 18")
-
-    # -------------------------------------------------------------
-    # 4. WORD FAMILY SPELLING LAB
-    # -------------------------------------------------------------
-    elif active_game == "🔤 Word Family Spelling Lab":
-        family_choice = st.radio("Choose Word Family to Spell:", ["🐱 -AT Family (cat, bat, hat, rat, mat)", "🏀 -ALL Family (ball, call, tall, fall, hall)"], horizontal=True)
-        if "-AT" in family_choice:
-            ending = "at"
-            letters = [("C", "🐱 Cat"), ("B", "🦇 Bat"), ("H", "🎩 Hat"), ("R", "🐭 Rat"), ("M", "🧘 Mat")]
-        else:
-            ending = "all"
-            letters = [("B", "🏀 Ball"), ("C", "📞 Call"), ("T", "🦒 Tall"), ("F", "🍂 Fall"), ("H", "🏛️ Hall")]
-
-        render_mascot_guide(f"Tap a letter tile to spell a new rhyming word ending in {ending.upper()}!", "Chickie", "🐥")
-        speak(f"Tap a letter tile to spell a new rhyming word ending in {ending.upper()}!")
-
-        st.markdown(f"""
-        <div style="background:#faf5ff; border:5px solid #a855f7; border-radius:28px; padding:22px; text-align:center; margin-bottom:18px;">
-            <div style="font-size:2rem; font-weight:900; color:#6b21a8;">Ending Family: <span style="font-size:3.5rem; color:#7e22ce;">-{ending.upper()}</span></div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        sp_cols = st.columns(len(letters))
-        for i, (l_char, desc) in enumerate(letters):
-            full_word = f"{l_char.lower()}{ending}"
-            with sp_cols[i]:
-                if st.button(f"🔤 {l_char}\n+{ending}", key=f"wf_{l_char}_{ending}", use_container_width=True):
-                    st.balloons()
-                    speak(f"{l_char} plus {ending} spells {full_word}! {desc}!", "cheer")
-                    evaluate_and_commit_answer(profile, "LIT_WORD_FAMILY", is_correct=True, detail=f"Spelled {full_word}")
-                    st.success(f"⭐ {full_word.upper()} ({desc})")
-
-    # -------------------------------------------------------------
-    # 5. LETTER I-SPY SAFARI (DISAPPEARING BUBBLES)
-    # -------------------------------------------------------------
-    elif active_game == "🔍 Letter I-Spy Safari":
-        if "target_letter" not in st.session_state:
-            st.session_state.target_letter = random.choice(["B", "M", "D", "S", "A", "T"])
-            st.session_state.popped_indices = []
-
-        t_let = st.session_state.target_letter
-        render_mascot_guide(f"I spy the letter {t_let}! Tap and pop all the bubbles that match {t_let}!", "Oliver Owl", "🦉")
-        speak(f"I spy the letter {t_let}! Tap and pop all the bubbles that match {t_let}!")
-
-        st.markdown(f"""
-        <div style="background:#ffffff; border:4px dashed #ec4899; border-radius:24px; padding:14px; text-align:center; font-size:1.8rem; font-weight:900; color:#db2777; margin-bottom:15px; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
-            🎯 TARGET: <span style="font-size:3.5rem; color:#be185d;">{t_let}</span> or <span style="font-size:3.5rem; color:#be185d;">{t_let.lower()}</span>
-        </div>
-        """, unsafe_allow_html=True)
-
-        grid_letters = [t_let, t_let.lower(), "m", "P", t_let, "d", "c", t_let.lower(), "r", "O", t_let, "w", "e", t_let.lower(), "k", "L"]
-        cols_grid = st.columns(4)
-
-        for idx, char in enumerate(grid_letters):
-            with cols_grid[idx % 4]:
-                if idx in st.session_state.popped_indices:
-                    st.markdown("""
-                    <div style="background:#f1f5f9; border:2px dashed #94a3b8; border-radius:24px; padding:16px; text-align:center; font-size:1.4rem; color:#94a3b8; font-weight:800;">
-                        ✅ Popped!
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    if st.button(f"🎈 {char}", key=f"ispy_bubble_{idx}_{t_let}", use_container_width=True):
-                        if char.upper() == t_let:
-                            st.session_state.popped_indices.append(idx)
-                            st.balloons()
-                            speak(f"Pop! You found {char}!", "pop")
-                            evaluate_and_commit_answer(profile, "LIT_ISPY", is_correct=True, detail=f"Found {char}")
-                            st.rerun()
-                        else:
-                            speak(f"Almost! That is the letter {char}. Look for {t_let}!", "tryagain")
-                            evaluate_and_commit_answer(profile, "LIT_ISPY", is_correct=False, detail=f"Missed {char}")
-
-        if st.button("🔄 Play with a New Target Letter!", use_container_width=True):
-            st.session_state.target_letter = random.choice(["B", "M", "D", "S", "A", "T"])
-            st.session_state.popped_indices = []
-            st.rerun()
-
-    # -------------------------------------------------------------
-    # 6. SEASONS WEATHER-CASTER
-    # -------------------------------------------------------------
-    elif active_game == "🍁 Seasons & Nature Quest":
-        season_scenes = [
-            {
-                "season": "Winter",
-                "q": "Freezing cold weather, snowmen with carrot noses, and warm cozy mittens!",
-                "correct": "Winter",
-                "hint": "Brrr! Snow and ice appear in the winter time!",
-                "choices": [
-                    {"name": "Winter", "img": "⛄❄️🧤", "desc": "Snowman & ice skates"},
-                    {"name": "Summer", "img": "☀️🏖️🍉", "desc": "Beach & swimming"},
-                    {"name": "Spring", "img": "🌸🌱🌧️", "desc": "Rain boots & flowers"},
-                    {"name": "Fall / Autumn", "img": "🍂🍁🎃", "desc": "Leaves & pumpkins"}
-                ]
-            }
-        ]
-        curr_sc = season_scenes[0]
-
-        render_mascot_guide(f"Look at the weather clue: {curr_sc['q']} Which season is it?", "Bella", "🐶")
-        speak(f"Look at the weather clue: {curr_sc['q']} Which season is it?")
-
-        sc_cols = st.columns(2)
-        for i, choice in enumerate(curr_sc["choices"]):
-            with sc_cols[i % 2]:
-                st.markdown(f"""
-                <div style="background:#ffffff; border:3.5px solid #86efac; border-radius:24px; padding:16px; text-align:center; margin-bottom:8px; box-shadow:0 6px 14px rgba(0,0,0,0.06);">
-                    <div style="font-size:3.5rem; margin-bottom:4px;">{choice['img']}</div>
-                    <div style="font-size:1.4rem; font-weight:900; color:#14532d;">{choice['name']}</div>
-                    <div style="font-size:1.05rem; font-weight:700; color:#475569;">{choice['desc']}</div>
-                </div>
-                """, unsafe_allow_html=True)
-                if st.button(f"👉 Select {choice['name']}", key=f"btn_season_{choice['name']}", use_container_width=True):
-                    if choice["name"] == curr_sc["correct"]:
-                        st.balloons()
-                        speak(f"Correct! That happens in {choice['name']}!", "cheer")
-                        evaluate_and_commit_answer(profile, "SCI_SEASONS", is_correct=True, detail=choice["name"])
-                        st.rerun()
-                    else:
-                        speak(f"Let's rethink: {curr_sc['hint']}", "tryagain")
-                        evaluate_and_commit_answer(profile, "SCI_SEASONS", is_correct=False, detail=choice["name"])
-
-    # -------------------------------------------------------------
-    # 7. COOL MATH (SUMS <= 10)
-    # -------------------------------------------------------------
-    elif active_game == "➕ Cool Math (10 and Under)":
-        if "km_math" not in st.session_state:
-            a = random.randint(1, 5)
-            b = random.randint(1, 4)
-            st.session_state.km_math = {"a": a, "b": b, "op": "+", "ans": a + b}
-
-        m = st.session_state.km_math
-        render_mascot_guide(f"What is {m['a']} {m['op']} {m['b']}? Count the apples to solve it!", "Chickie", "🐥")
-        speak(f"What is {m['a']} {m['op']} {m['b']}? Count the apples to solve it!")
-
-        st.markdown(f"""
-        <div style="background:#ffffff; border:5px solid #a855f7; border-radius:28px; padding:20px; text-align:center; font-size:4.2rem; font-weight:900; color:#7e22ce; margin-bottom:15px; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
-            {m['a']} {m['op']} {m['b']} = ?
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown(f"<div style='text-align:center; font-size:2.2rem; margin-bottom:20px;'>{'🍎 ' * m['a']} + {'🍏 ' * m['b']}</div>", unsafe_allow_html=True)
-
-        opts = list(set([m["ans"], m["ans"] + 1, max(1, m["ans"] - 1)]))
-        random.shuffle(opts)
-
-        mcols = st.columns(len(opts))
-        for i, opt in enumerate(opts):
-            with mcols[i]:
-                if st.button(f"🔢 {opt}", key=f"km_{opt}", use_container_width=True):
-                    if opt == m["ans"]:
-                        st.balloons()
-                        speak(f"Yes! {m['a']} {m['op']} {m['b']} is {m['ans']}!", "cheer")
-                        evaluate_and_commit_answer(profile, "MTH_ADD_10", is_correct=True, detail=f"{m['a']}+{m['b']}={m['ans']}")
-                        del st.session_state.km_math
-                        st.rerun()
-                    else:
-                        speak("Count the apples one by one with your finger! You can do it!", "tryagain")
-                        evaluate_and_commit_answer(profile, "MTH_ADD_10", is_correct=False, detail=f"Guessed {opt}")
-
-    # -------------------------------------------------------------
-    # 8. TEACHER / PARENT PROGRESS AUDIT PORTAL
-    # -------------------------------------------------------------
-    elif active_game == "📊 Parent Progress Portal":
-        today_str = datetime.now().strftime("%A, %B %d, %Y")
-        st.markdown(f"### 🗓️ Sequential Telemetry Audit: **{curr_user}** ({today_str})")
-
-        d_log = profile.daily_log.get(today_str, {"attempts": 0, "correct": 0, "activities": []})
-        attempts = d_log["attempts"]
-        correct = d_log["correct"]
-        acc = int((correct / attempts) * 100) if attempts > 0 else 100
-
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Questions Attempted", f"{attempts}")
-        m2.metric("First-Attempt Correct", f"{correct}")
-        m3.metric("Accuracy Rate", f"{acc}%")
-        m4.metric("i-Ready Readiness", "On Track ⭐" if acc >= 75 else "Practicing")
-
-        st.markdown("---")
-        if st.button("🔄 Switch Profile / Back to Profile Selector"):
-            st.session_state.screen = "profile_picker"
-            st.rerun()
-
-        st.markdown("#### 📝 Real-Time Question Event Audit Stream:")
-        if d_log["activities"]:
-            for act in reversed(d_log["activities"]):
-                st.write(f"• **{act['time']}** — [{act['skill']}] {act['detail']} — **{act['result']}** *(Phase: {act['phase']})*")
-        else:
-            st.info("No activities logged yet today. Practice any adventure station to begin streaming telemetry!")
+    st.markdown("#### 📝 Live Session Activity Stream:")
+    if st.session_state.telemetry_log:
+        for item in reversed(st.session_state.telemetry_log):
+            st.write(f"• **{item['time']}** — [{item['domain']}] Question `{item['question']}`: **{item['result']}**")
+    else:
+        st.info("No answers logged yet. Tap an answer choice to record real-time telemetry!")
