@@ -250,13 +250,15 @@ if "active_user" not in st.session_state:
     st.session_state.active_user = "Gracyn"
 
 if "screen" not in st.session_state:
-    st.session_state.screen = "profile_select"
+    st.screen = "profile_select" if "active_user" not in st.session_state or st.session_state.active_user not in st.session_state.profiles else "adventure_trail"
 
 if "active_level_id" not in st.session_state:
     st.session_state.active_level_id = "lvl_1"
 
 def record_progress(level_id, is_correct):
     user = st.session_state.active_user
+    if user not in st.session_state.profiles:
+        return
     prof = st.session_state.profiles[user]
     if "level_progress" not in prof:
         prof["level_progress"] = {}
@@ -275,13 +277,13 @@ def record_progress(level_id, is_correct):
                         prof["unlocked_level"] = idx + 2
 
 # =========================================================
-# SCREEN 1: PROFILE HUB (WITH DELETE PLAYER OPTION)
+# SCREEN 1: PROFILE HUB (WITH EXPLICIT DELETE PLAYER OPTION)
 # =========================================================
 if st.session_state.screen == "profile_select":
     st.markdown("""
     <div style="text-align:center; padding: 18px 0 10px 0;">
         <h1 style="color:#0369a1; font-size:3.2rem; font-weight:900; margin-bottom:4px;">ADVENTURE LEARNING ACADEMY</h1>
-        <p style="font-size:1.5rem; color:#1e293b; font-weight:800;">Who is playing today? Tap your character or manage profiles!</p>
+        <p style="font-size:1.5rem; color:#1e293b; font-weight:800;">Who is playing today? Tap your character or delete profiles below!</p>
     </div>
     """, unsafe_allow_html=True)
     speak("Who is playing today? Tap your character or design a new buddy!")
@@ -302,17 +304,17 @@ if st.session_state.screen == "profile_select":
                 speak(f"Welcome back {name}! Follow your Kindergarten Road Map to learn and grow!")
                 st.rerun()
 
-            # DELETE PLAYER BUTTON
-            if len(st.session_state.profiles) > 1:
-                if st.button(f"🗑️ Delete {name}", key=f"del_{name}", use_container_width=True):
+            # EXPLICIT DELETE PLAYER BUTTON (Always available so you can manage profiles)
+            if st.button(f"🗑️ Delete {name}", key=f"del_{name}", use_container_width=True):
+                if len(st.session_state.profiles) > 1:
                     del st.session_state.profiles[name]
-                    # If active user was deleted, switch active user to another profile if available
-                    remaining_profiles = list(st.session_state.profiles.keys())
-                    if remaining_profiles:
-                        st.session_state.active_user = remaining_profiles[0]
+                    remaining = list(st.session_state.profiles.keys())
+                    st.session_state.active_user = remaining[0] if remaining else ""
                     speak(f"Player {name} deleted.")
                     st.success(f"🗑️ Player '{name}' deleted successfully!")
                     st.rerun()
+                else:
+                    st.warning("⚠️ You must keep at least one profile in the academy!")
 
     with cols[-1]:
         raw_plus = """
@@ -402,6 +404,10 @@ elif st.session_state.screen == "buddy_dressup":
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
+    if user not in st.session_state.profiles:
+        st.session_state.screen = "profile_select"
+        st.rerun()
+        
     pdata = st.session_state.profiles[user]
     b = pdata["buddy"]
     unlocked_lvl = pdata.get("unlocked_level", 1)
@@ -465,6 +471,10 @@ elif st.session_state.screen == "adventure_trail":
 # =========================================================
 elif st.session_state.screen == "station_play":
     user = st.session_state.active_user
+    if user not in st.session_state.profiles:
+        st.session_state.screen = "profile_select"
+        st.rerun()
+        
     pdata = st.session_state.profiles[user]
     lvl_id = st.session_state.active_level_id
     
