@@ -425,7 +425,7 @@ elif st.session_state.screen == "adventure_trail":
 
     speak(f"Welcome to your Kindergarten Road Map {user}! Tap Level 1, 2, or 3 right on the winding path to play!")
 
-    # STATION DEFINITIONS
+    # STATION DEFINITIONS (ALL 8 LEVELS)
     trail_stations = [
         {"level": 1, "id": "sight_words", "title": "Level 1"},
         {"level": 2, "id": "book_parts", "title": "Level 2"},
@@ -437,10 +437,10 @@ elif st.session_state.screen == "adventure_trail":
         {"level": 8, "id": "parent_portal", "title": "Level 8"}
     ]
 
-    # FULL EXPANDED MAP CONTAINER WITH 500px HEIGHT (NO CLIPPING, NO EXTRA BUTTONS BELOW)
+    # FULL EXPANDED MAP CONTAINER WITH 520px HEIGHT (NO CLIPPING, NO EXTRA BUTTONS BELOW)
     map_container_html = f"""
-    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:28px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; overflow:hidden;">
-        <svg width="100%" height="420" viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg">
+    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:28px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; overflow:visible;">
+        <svg width="100%" height="450" viewBox="0 0 900 450" xmlns="http://www.w3.org/2000/svg">
             <!-- Winding Path Road -->
             <path d="M 60 250 Q 220 80 450 220 Q 680 360 810 160" fill="none" stroke="#64748b" stroke-width="22" stroke-linecap="round" opacity="0.6"/>
             
@@ -476,7 +476,7 @@ elif st.session_state.screen == "adventure_trail":
         </svg>
 
         <!-- Companion Animals along the bottom -->
-        <div style="display:flex; justify-content:center; gap:40px; align-items:flex-end; margin-top:10px;">
+        <div style="display:flex; justify-content:center; gap:40px; align-items:flex-end; margin-top:15px;">
             <div style="font-size:3.5rem;">🐘</div>
             <div style="font-size:3.5rem;">🦊</div>
             <div style="font-size:3rem;">🦜</div>
@@ -484,7 +484,7 @@ elif st.session_state.screen == "adventure_trail":
         </div>
     </div>
     """
-    components.html(map_container_html, height=470)
+    components.html(map_container_html, height=500)
 
     # Check if a card inside the map was clicked via URL query params
     params = st.query_params
