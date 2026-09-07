@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # =========================================================
-# 1. VECTOR GRAPHICS ENGINE (AVATAR, HOUSE, TRAIL)
+# 1. VECTOR GRAPHICS ENGINE (AVATARS, SVG PATH MAP)
 # =========================================================
 
 def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glasses="gold_round", shirt="#ec4899", accessory="crown", size=180):
@@ -316,9 +316,9 @@ if st.session_state.screen == "profile_select":
             render_avatar(skin=b["skin"], hair_style=b["hair_style"], hair_color=b["hair_color"], glasses=b["glasses"], shirt=b["shirt"], accessory=b["accessory"], size=180)
             if st.button(f"Play as {name}", key=f"prof_{name}", use_container_width=True):
                 st.session_state.active_user = name
-                # DIRECTLY GO TO THE ADVENTURE TRAIL MAP (KHAN ACADEMY KIDS STYLE)
+                # LANDS DIRECTLY ON THE KHAN ACADEMY KIDS LEARNING HOUSE & TRAIL MAP
                 st.session_state.screen = "adventure_trail"
-                speak(f"Welcome back {name}! Tap any station along your learning path to begin!")
+                speak(f"Welcome back {name}! Tap the play button or any station on your path to begin!")
                 st.rerun()
 
     with cols[-1]:
@@ -368,7 +368,6 @@ elif st.session_state.screen == "buddy_dressup":
                 "daily_log": []
             }
             st.session_state.active_user = clean_name
-            # DIRECTLY GO TO ADVENTURE TRAIL
             st.session_state.screen = "adventure_trail"
             speak(f"Awesome! Welcome to Adventure Academy, {clean_name}!")
             st.rerun()
@@ -405,20 +404,20 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: ADVENTURE TRAIL MAP (KHAN ACADEMY KIDS STYLE MAIN MENU)
+# SCREEN 3: KHAN ACADEMY KIDS ADVENTURE TRAIL MAP (MAIN MENU)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
     pdata = st.session_state.profiles[user]
     b = pdata["buddy"]
 
-    # Top Navigation / HUD Bar
-    hud_l, hud_r = st.columns([3, 1])
-    with hud_l:
+    # Top Khan Kids Style Header
+    h_l, h_r = st.columns([3, 1])
+    with h_l:
         st.markdown(f"""
         <div class="hud-bar" style="margin-bottom:0;">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <b style="font-size:1.4rem; color:#0f172a;">🗺️ {user}'s Learning Adventure Trail</b>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <b style="font-size:1.4rem; color:#0f172a;">Khan Academy Kids: {user}'s Quest</b>
             </div>
             <div style="display:flex; gap:12px;">
                 <div class="stat-chip">⭐ {pdata['stars']} Stars</div>
@@ -426,36 +425,98 @@ elif st.session_state.screen == "adventure_trail":
             </div>
         </div>
         """, unsafe_allow_html=True)
-    with hud_r:
+    with h_r:
         if st.button("🏠 Switch Profile", use_container_width=True):
             st.session_state.screen = "profile_select"
             st.rerun()
 
-    st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
-    speak("Follow the adventure trail! Tap any station along your learning path to begin!")
+    st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
+    speak(f"Welcome to your adventure trail {user}! Tap the giant play button on your house, or choose any learning station below!")
 
-    # Visual Trail Map Stations (Khan Academy Kids style grid)
+    # KHAN ACADEMY KIDS WINDING TRAIL & LEARNING HOUSE (SVG)
+    map_svg = f"""
+    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:20px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; overflow:hidden;">
+        <!-- Top Library Badge -->
+        <div style="position:absolute; top:20px; left:20px; background:#ffffff; border:3px solid #facc15; border-radius:20px; padding:6px 14px; font-family:'Fredoka',sans-serif; font-weight:800; font-size:1rem; color:#854d0e;">
+            📚 Library
+        </div>
+        
+        <!-- Profile Avatar Top Right -->
+        <div style="position:absolute; top:15px; right:20px;">
+            {render_avatar(skin=b['skin'], hair_style=b['hair_style'], hair_color=b['hair_color'], glasses=b['glasses'], shirt=b['shirt'], accessory=b['accessory'], size=65)}
+        </div>
+
+        <!-- Winding Path & Milestone Previews (SVG Illustration) -->
+        <svg width="100%" height="220" viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg">
+            <!-- Winding Path Road -->
+            <path d="M 50 140 Q 200 40 350 140 Q 500 240 650 100" fill="none" stroke="#64748b" stroke-width="14" stroke-linecap="round" opacity="0.6"/>
+            
+            <!-- Milestone Node 1: Sight Words -->
+            <g transform="translate(60, 90)">
+                <rect x="0" y="0" width="85" height="55" rx="10" fill="#ffffff" stroke="#0284c7" stroke-width="3"/>
+                <text x="42.5" y="33" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#0369a1" text-anchor="middle">📖 Sight Words</text>
+            </g>
+
+            <!-- Milestone Node 2: Book Detective -->
+            <g transform="translate(230, 70)">
+                <rect x="0" y="0" width="85" height="55" rx="10" fill="#ffffff" stroke="#10b981" stroke-width="3"/>
+                <text x="42.5" y="33" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#047857" text-anchor="middle">📚 Book Parts</text>
+            </g>
+
+            <!-- Milestone Node 3: Number Detective -->
+            <g transform="translate(410, 130)">
+                <rect x="0" y="0" width="85" height="55" rx="10" fill="#ffffff" stroke="#f59e0b" stroke-width="3"/>
+                <text x="42.5" y="33" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#b45309" text-anchor="middle">🕵️ Numbers</text>
+            </g>
+
+            <!-- Learning House at end of path -->
+            <g transform="translate(600, 25)">
+                <!-- House Roof -->
+                <polygon points="70,10 20,65 120,65" fill="#991b1b"/>
+                <rect x="30" y="65" width="80" height="75" fill="#f8fafc" stroke="#475569" stroke-width="3"/>
+                <rect x="60" y="95" width="20" height="45" rx="4" fill="#78350f"/>
+                <!-- Giant Play Button Bubble -->
+                <circle cx="70" cy="95" r="28" fill="#14b8a6" stroke="#ffffff" stroke-width="4"/>
+                <polygon points="62,82 62,108 86,95" fill="#ffffff"/>
+            </g>
+        </svg>
+
+        <!-- Bottom Companion Animals -->
+        <div style="display:flex; justify-content:center; gap:24px; align-items:flex-end; margin-top:-10px;">
+            <div style="font-size:2.8rem;">🐘</div>
+            <div style="font-size:2.8rem;">🦊</div>
+            <div style="font-size:2.5rem;">🦜</div>
+            <div style="font-size:2.8rem;">🦭</div>
+        </div>
+    </div>
+    """
+    components.html(map_svg, height=310)
+
+    st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
+
+    # Interactive Game Station Buttons (Matching the Winding Path)
+    st.markdown("### 🎮 Choose a Station on Your Path:")
     trail_stations = [
-        {"id": "sight_words", "title": "1. Sight Words Explorer", "icon": "📖", "desc": "Read & Trace"},
-        {"id": "book_parts", "title": "2. Book Detective", "icon": "📚", "desc": "Parts of a Book"},
-        {"id": "numbers", "title": "3. Number Detective", "icon": "🕵️", "desc": "Counting & Quantities"},
-        {"id": "spelling", "title": "4. Word Family Lab", "icon": "🔤", "desc": "Onset-Rime Rhymes"},
-        {"id": "ispy", "title": "5. Letter I-Spy Safari", "icon": "🔍", "desc": "Bubble Pop Phonics"},
-        {"id": "seasons", "title": "6. Seasons Quest", "icon": "🍁", "desc": "Nature & Weather"},
-        {"id": "math", "title": "7. Cool Math Apples", "icon": "➕", "desc": "Addition Sums"},
-        {"id": "parent_portal", "title": "8. Parent Progress", "icon": "📊", "desc": "Telemetry & Logs"}
+        {"id": "sight_words", "title": "1. Sight Words Explorer", "icon": "📖"},
+        {"id": "book_parts", "title": "2. Book Detective", "icon": "📚"},
+        {"id": "numbers", "title": "3. Number Detective", "icon": "🕵️"},
+        {"id": "spelling", "title": "4. Word Family Lab", "icon": "🔤"},
+        {"id": "ispy", "title": "5. Letter I-Spy Safari", "icon": "🔍"},
+        {"id": "seasons", "title": "6. Seasons Quest", "icon": "🍁"},
+        {"id": "math", "title": "7. Cool Math Apples", "icon": "➕"},
+        {"id": "parent_portal", "title": "8. Parent Progress", "icon": "📊"}
     ]
 
     cols_trail = st.columns(4)
     for idx, node in enumerate(trail_stations):
         with cols_trail[idx % 4]:
-            if st.button(f"{node['icon']} {node['title']}", key=f"trail_{node['id']}", use_container_width=True):
+            if st.button(f"{node['icon']} {node['title']}", key=f"trail_btn_{node['id']}", use_container_width=True):
                 st.session_state.active_activity = node['id']
                 st.session_state.screen = "station_play"
                 st.rerun()
 
 # =========================================================
-# SCREEN 4: INDIVIDUAL STATION PLAY ARENA
+# SCREEN 6: INDIVIDUAL STATION PLAY ARENA
 # =========================================================
 elif st.session_state.screen == "station_play":
     user = st.session_state.active_user
@@ -637,7 +698,7 @@ elif st.session_state.screen == "station_play":
         sc1, sc2 = st.columns(2)
         if sc1.button("Fall / Autumn", use_container_width=True):
             st.balloons(); speak("Correct! That happens during Fall and Autumn!"); record_event("Seasons", True, "Fall"); st.success("Correct! Pumpkins and orange leaves happen in Fall!")
-        if sc2.button("Summer", use_keyword := True, use_container_width=True):
+        if sc2.button("Summer", use_container_width=True):
             speak("Think about the leaves changing color! Summer is hot and sunny!")
             record_event("Seasons", False, "Guessed Summer")
             st.info("Hint: Leaves fall from trees during Fall / Autumn!")
