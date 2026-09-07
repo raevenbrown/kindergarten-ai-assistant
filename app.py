@@ -22,7 +22,7 @@ st.markdown("""
         font-family: 'Fredoka', 'Quicksand', cursive, sans-serif !important;
     }
 
-    /* FIX STREAMLIT DEFAULT DROPDOWNS TO MATCH KID THEME */
+    /* Fix Streamlit Select Boxes into High-Contrast White Cards */
     div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         border: 3.5px solid #0284c7 !important;
@@ -43,7 +43,7 @@ st.markdown("""
         text-shadow: 0 1px 2px rgba(255,255,255,0.8);
     }
 
-    /* Big Tactile Touch Buttons */
+    /* Big Tactile Touch Buttons for iPad */
     .stButton > button {
         border-radius: 28px !important;
         font-size: 1.35rem !important;
@@ -56,19 +56,6 @@ st.markdown("""
     .stButton > button:active {
         transform: translateY(6px) !important;
         box-shadow: 0 2px 0 rgba(0,0,0,0.18) !important;
-    }
-
-    /* Clean Card Framing */
-    .game-banner {
-        background: #ffffff;
-        border-radius: 28px;
-        padding: 16px 24px;
-        box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-        border: 4px solid #38bdf8;
-        margin-bottom: 18px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
     }
 
     .hud-chip {
@@ -178,7 +165,7 @@ def tracing_box(word):
     """
     components.html(html, height=330)
 
-# --- MICROPHONE SPEECH BOX ---
+# --- INSTANT ZERO-LATENCY SPEECH RECOGNITION BOX ---
 def speech_box(target_word):
     clean_target = target_word.strip().lower()
     html = f"""
@@ -190,40 +177,79 @@ def speech_box(target_word):
         <div id="mRes" style="font-size:1.35rem; font-weight:800; margin-top:10px; min-height:30px;"></div>
     </div>
     <script>
+        let rec = null;
+        let answered = false;
+
         function listenNow() {{
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             const res = document.getElementById('mRes');
             const btn = document.getElementById('micB');
-            if(!SpeechRec) {{ res.innerHTML = "<span style='color:red;'>Please open in Safari or Chrome!</span>"; return; }}
-            const rec = new SpeechRec();
+            
+            if (!SpeechRec) {{ 
+                res.innerHTML = "<span style='color:red;'>Please use Safari or Chrome!</span>"; 
+                return; 
+            }}
+
+            answered = false;
+            rec = new SpeechRec();
             rec.lang = 'en-US';
-            btn.innerText = "👂 Listening to Gracyn...";
+            rec.continuous = false;
+            rec.interimResults = true;
+
+            btn.innerText = "👂 Listening...";
             btn.style.background = "#22c55e";
-            rec.start();
+            res.innerHTML = "";
+
             rec.onresult = (e) => {{
-                let heard = e.results[0][0].transcript.toLowerCase().trim();
+                if (answered) return;
+
+                let heard = "";
+                for (let i = 0; i < e.results.length; ++i) {{
+                    heard += e.results[i][0].transcript.toLowerCase();
+                }}
+                heard = heard.trim();
+
                 let target = "{clean_target}";
                 let match = (heard.includes(target) || target.includes(heard));
-                if (target === "to" && (heard === "two" || heard === "too" || heard === "2")) match = true;
-                if (target === "for" && (heard === "four" || heard === "4")) match = true;
-                if (target === "i" && (heard === "eye")) match = true;
-                if (target === "see" && (heard === "sea" || heard === "c")) match = true;
+
+                if (target === "to" && (heard.includes("two") || heard.includes("too") || heard.includes("2"))) match = true;
+                if (target === "for" && (heard.includes("four") || heard.includes("4"))) match = true;
+                if (target === "i" && (heard.includes("eye") || heard === "ay")) match = true;
+                if (target === "see" && (heard.includes("sea") || heard.includes("c"))) match = true;
+                if (target === "be" && (heard.includes("bee") || heard.includes("b"))) match = true;
+
                 if (match) {{
-                    res.innerHTML = "<span style='color:#15803d;'>🎉 YES! You said it! 🌟🎈</span>";
-                    confetti({{ particleCount: 140, spread: 80, origin: {{ y: 0.7 }} }});
+                    answered = true;
+                    try {{ rec.stop(); }} catch(err) {{}}
+                    
+                    confetti({{ particleCount: 120, spread: 80, origin: {{ y: 0.7 }} }});
                     let a = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
                     a.play();
-                }} else {{
-                    res.innerHTML = "<span style='color:#b91c1c;'>👂 You said '" + heard + "' - Let's try again!</span>";
+
+                    res.innerHTML = "<span style='color:#15803d;'>🎉 YES! You said " + target.toUpperCase() + "! 🌟</span>";
+                    btn.innerText = '🎙️ Tap to Say Again';
+                    btn.style.background = "#f97316";
                 }}
-                btn.innerText = '🎙️ Tap & Say Again';
-                btn.style.background = "#f97316";
             }};
+
+            rec.onspeechend = () => {{
+                setTimeout(() => {{
+                    if (!answered) {{
+                        btn.innerText = '🎙️ Tap to Say';
+                        btn.style.background = "#f97316";
+                    }}
+                }}, 400);
+            }};
+
             rec.onerror = () => {{
-                btn.innerText = '🎙️ Tap & Say';
+                btn.innerText = '🎙️ Tap to Say';
                 btn.style.background = "#f97316";
-                res.innerHTML = "<span style='color:#ea580c;'>Speak loud and clear!</span>";
+                if (!answered) {{
+                    res.innerHTML = "<span style='color:#ea580c;'>Speak loud and clear!</span>";
+                }}
             }};
+
+            rec.start();
         }}
     </script>
     """
@@ -323,7 +349,7 @@ with hud_c3:
     c1.markdown(f"<div class='hud-chip'>🪙 {st.session_state.coins}</div>", unsafe_allow_html=True)
     c2.markdown(f"<div class='hud-chip'>⭐ {st.session_state.stars}</div>", unsafe_allow_html=True)
 
-# --- TREASURE BOX POPUP MODAL ---
+# --- TREASURE BOX POPUP MODAL (MILESTONE) ---
 if st.session_state.trigger_treasure:
     st.markdown("""
     <div style="background:#fffbeb; border:6px dashed #f59e0b; border-radius:32px; padding:24px; text-align:center; margin-bottom:25px; box-shadow:0 12px 30px rgba(0,0,0,0.15);">
@@ -356,7 +382,7 @@ if st.session_state.trigger_treasure:
                     st.rerun()
     st.stop()
 
-# --- CARD SCAFFOLDED GAME NAVIGATION (CLEAN & BRIGHT) ---
+# --- CARD SCAFFOLDED GAME NAVIGATION ---
 st.markdown("""
 <div class="instruction-card">
     <span style="font-size:1.3rem; font-weight:800; color:#0369a1;">🎮 Choose Your Learning Adventure Station:</span>
@@ -381,13 +407,12 @@ if active_game != st.session_state.current_game:
 # 1. SIGHT WORDS WITH REFINED HIGH-CONTRAST UI
 # ==========================================
 if active_game == "📖 Sight Words":
-    # Instruction Banner with Big Play Sound Button
     col_title, col_audio = st.columns([3, 1.2])
     with col_title:
         st.markdown("""
         <div style="background:#ffffff; border-radius:22px; padding:12px 20px; border:3.5px solid #38bdf8; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
             <div style="font-size:1.6rem; font-weight:900; color:#0284c7;">📖 Sight Word Explorer</div>
-            <div style="font-size:1.05rem; font-weight:700; color:#475569;">1. Look at the word  •  2. Trace & Write it  •  3. Say it in the microphone!</div>
+            <div style="font-size:1.05rem; font-weight:700; color:#475569;">1. Look at the word  •  2. Trace & Write it  •  3. Say it into the mic!</div>
         </div>
         """, unsafe_allow_html=True)
     with col_audio:
@@ -396,7 +421,6 @@ if active_game == "📖 Sight Words":
 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
-    # Word List Selectors in Clean White Cards
     sel_col1, sel_col2 = st.columns([1.2, 1])
     with sel_col1:
         st.markdown("<b style='font-size:1.15rem; color:#0c4a6e;'>📚 Choose Word List:</b>", unsafe_allow_html=True)
@@ -429,14 +453,12 @@ if active_game == "📖 Sight Words":
 
     word = st.session_state.current_sw
 
-    # Auto-read target word
     if "last_sw_spoken" not in st.session_state or st.session_state.last_sw_spoken != word:
         speak(f"Read this word: {word}!")
         st.session_state.last_sw_spoken = word
 
     st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
-    # Flashcard & Tracing Station
     w_col1, w_col2 = st.columns([1, 1.25])
     with w_col1:
         st.markdown(f"""
