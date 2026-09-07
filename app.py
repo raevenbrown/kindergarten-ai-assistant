@@ -253,7 +253,7 @@ def record_progress(level_id, is_correct):
                         prof["unlocked_level"] = idx + 2
 
 # =========================================================
-# SCREEN 1: PROFILE HUB (WITH DELETE OPTION)
+# SCREEN 1: PROFILE HUB (WITH DELETE PROFILE BUTTON)
 # =========================================================
 if st.session_state.screen == "profile_select":
     st.markdown("""
@@ -371,7 +371,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: WINDING ROAD MAP (VISUAL PATH WITH 15 LEVELS)
+# SCREEN 3: WINDING ROAD MAP (FULL UNCLIPPED CONTAINER WITH ALL 15 LEVELS)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -394,7 +394,7 @@ elif st.session_state.screen == "adventure_trail":
 
     speak(f"Welcome to your Kindergarten Road Map {user}! Follow the winding road and select any unlocked level to play!")
 
-    # RENDER THE WINDING ROAD MAP CONTAINER GRAPHIC WITH ALL LEVELS VISIBLE
+    # FULL UNCLIPPED CONTAINER WITH ALL 15 LEVELS VISIBLE ON THE ROAD MAP
     map_container_html = f"""
     <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:35px 30px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; margin:20px auto; width:100%; box-sizing:border-box;">
         <div style="text-align:center; margin-bottom:15px;">
