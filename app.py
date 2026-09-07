@@ -101,6 +101,28 @@ def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glas
     """
     return raw_html
 
+def render_book_diagram(part="spine"):
+    spine_border = 'stroke="#facc15" stroke-width="6"' if part == "spine" else 'stroke="#1e3a8a" stroke-width="2"'
+    cover_border = 'stroke="#facc15" stroke-width="6"' if part == "cover" else 'stroke="#2563eb" stroke-width="2"'
+    raw_html = f"""
+    <div style="display:flex; justify-content:center; align-items:center; width:100%;">
+        <svg width="280" height="210" viewBox="0 0 280 210" xmlns="http://www.w3.org/2000/svg">
+            <rect x="25" y="25" width="230" height="160" rx="14" fill="#60a5fa" {cover_border}/>
+            <rect x="25" y="25" width="40" height="160" rx="6" fill="#1d4ed8" {spine_border}/>
+            <line x1="38" y1="40" x2="38" y2="170" stroke="#93c5fd" stroke-width="3" stroke-dasharray="6,4"/>
+            <rect x="80" y="45" width="160" height="42" rx="8" fill="#ffffff"/>
+            <text x="160" y="71" font-family="'Fredoka', sans-serif" font-size="15" font-weight="900" fill="#1e40af" text-anchor="middle">THE BRAVE PUPPY</text>
+            <circle cx="160" cy="120" r="24" fill="#fef08a"/>
+            <ellipse cx="152" cy="116" rx="3.5" ry="4.5" fill="#0f172a"/>
+            <ellipse cx="168" cy="116" rx="3.5" ry="4.5" fill="#0f172a"/>
+            <ellipse cx="160" cy="124" rx="4.5" ry="3" fill="#78350f"/>
+            <rect x="90" y="152" width="140" height="22" rx="6" fill="#ffffffcc"/>
+            <text x="160" y="167" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#334155" text-anchor="middle">By Raeven Brown</text>
+        </svg>
+    </div>
+    """
+    components.html(raw_html, height=220)
+
 # =========================================================
 # 2. STYLING & AUDIO SYNTHESIZER
 # =========================================================
@@ -255,7 +277,7 @@ def record_progress(level_id, is_correct):
                         prof["unlocked_level"] = idx + 2
 
 # =========================================================
-# SCREEN 1: PROFILE HUB (WITH DELETE PLAYER OPTION)
+# SCREEN 1: PROFILE HUB (WITH EXPLICIT DELETE PLAYER OPTION)
 # =========================================================
 if st.session_state.screen == "profile_select":
     st.markdown("""
@@ -378,7 +400,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: WINDING ROAD MAP (FULL VISUAL KHAN ACADEMY KIDS MAP CONTAINER)
+# SCREEN 3: CANDY LAND STYLE ROAD MAP (ALL 15 LEVELS VISIBLE ON THE WINDING PATH)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -403,48 +425,122 @@ elif st.session_state.screen == "adventure_trail":
             st.session_state.screen = "profile_select"
             st.rerun()
 
-    speak(f"Welcome to your Kindergarten Road Map {user}! Follow the winding road and tap any unlocked level to play!")
+    speak(f"Welcome to your Kindergarten Road Map {user}! Follow the Candy Land trail and tap any unlocked level to play!")
 
-    # FULL VISUAL KHAN ACADEMY KIDS STYLE WINDING ROAD MAP CONTAINER WITH PREVIEW MILESTONE CARDS & LEARNING HOUSE
-    map_container_html = f"""
-    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:30px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; margin:20px auto; width:100%; box-sizing:border-box; overflow:visible;">
-        <div style="text-align:center; margin-bottom:10px;">
-            <h2 style="color:#0369a1; margin:0; font-size:1.9rem;">🗺️ Winding Road Map (Progress: Level {unlocked_lvl} of 15 Unlocked)</h2>
-            <p style="color:#334155; font-weight:700; font-size:1rem; margin-top:4px;">Complete each level fully to journey down the road to success!</p>
+    # CANDY LAND STYLE VISUAL ROAD MAP SHOWING ALL 15 LEVELS ALONG THE WINDING PATH
+    road_map_html = f"""
+    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:30px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; margin:20px auto; width:100%; box-sizing:border-box;">
+        <div style="text-align:center; margin-bottom:15px;">
+            <h2 style="color:#0369a1; margin:0; font-size:2rem;">🍭 Candy Land Winding Road Map (Level {unlocked_lvl} of 15 Unlocked)</h2>
+            <p style="color:#334155; font-weight:700; font-size:1.1rem; margin-top:5px;">Journey along the colored path and complete each milestone to advance!</p>
         </div>
 
-        <svg width="100%" height="240" viewBox="0 0 900 240" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
-            <!-- Winding Path Road -->
-            <path d="M 40 160 Q 180 50 320 150 Q 480 230 620 110" fill="none" stroke="#64748b" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
-            
-            <!-- Milestone Preview Card 1 (Level 1) -->
-            <g transform="translate(60, 100)">
-                <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="#0284c7" stroke-width="4"/>
-                <text x="55" y="30" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#0369a1" text-anchor="middle">📖 Sight Words</text>
-                <text x="55" y="52" font-family="'Fredoka', sans-serif" font-size="12" font-weight="800" fill="#1e293b" text-anchor="middle">Level 1</text>
+        <!-- SVG CANDY LAND PATH CONTAINING ALL 15 LEVEL NODES -->
+        <svg width="100%" height="480" viewBox="0 0 1000 480" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
+            <!-- Winding Road Path -->
+            <path d="M 60 420 Q 200 420 300 340 Q 400 260 500 340 Q 600 420 740 320 Q 880 220 920 100" fill="none" stroke="#f43f5e" stroke-width="18" stroke-linecap="round" stroke-dasharray="14,10" opacity="0.85"/>
+
+            <!-- Level Nodes 1 to 15 mapped along the trail -->
+            <!-- Row 1 (Levels 1 to 5) -->
+            <g transform="translate(60, 380)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=1'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 1 else '#38bdf8' if unlocked_lvl == 1 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">1</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">Sight Words</text>
             </g>
 
-            <!-- Milestone Preview Card 2 (Level 2) -->
-            <g transform="translate(230, 80)">
-                <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="{'#10b981' if unlocked_lvl >= 2 else '#94a3b8'}" stroke-width="4"/>
-                <text x="55" y="30" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="{'#047857' if unlocked_lvl >= 2 else '#94a3b8'}" text-anchor="middle">📚 Book Parts</text>
-                <text x="55" y="52" font-family="'Fredoka', sans-serif" font-size="12" font-weight="800" fill="{('#047857' if unlocked_lvl >= 2 else '#94a3b8')}">{'Level 2' if unlocked_lvl >= 2 else '🔒 Locked'}</text>
+            <g transform="translate(180, 330)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=2'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 2 else '#38bdf8' if unlocked_lvl == 2 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">2</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">List 2 Words</text>
             </g>
 
-            <!-- Milestone Preview Card 3 (Level 3) -->
-            <g transform="translate(410, 130)">
-                <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="{'#f59e0b' if unlocked_lvl >= 3 else '#94a3b8'}" stroke-width="4"/>
-                <text x="55" y="30" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="{'#b45309' if unlocked_lvl >= 3 else '#94a3b8'}" text-anchor="middle">🕵️ Numbers</text>
-                <text x="55" y="52" font-family="'Fredoka', sans-serif" font-size="12" font-weight="800" fill="{('#b45309' if unlocked_lvl >= 3 else '#94a3b8')}">{'Level 3' if unlocked_lvl >= 3 else '🔒 Locked'}</text>
+            <g transform="translate(300, 290)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=3'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 3 else '#38bdf8' if unlocked_lvl == 3 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">3</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">ABCs</text>
             </g>
 
-            <!-- Learning House on the Right with Giant Play Button -->
-            <g transform="translate(640, 10)">
-                <polygon points="100,10 20,80 180,80" fill="#991b1b"/>
-                <rect x="35" y="80" width="130" height="100" fill="#f8fafc" stroke="#475569" stroke-width="4"/>
-                <rect x="80" y="120" width="40" height="60" rx="6" fill="#78350f"/>
-                <circle cx="100" cy="110" r="30" fill="#14b8a6" stroke="#ffffff" stroke-width="4"/>
-                <polygon points="90,97 90,123 115,110" fill="#ffffff"/>
+            <g transform="translate(420, 310)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=4'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 4 else '#38bdf8' if unlocked_lvl == 4 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">4</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">Count to 100</text>
+            </g>
+
+            <g transform="translate(540, 350)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=5'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 5 else '#38bdf8' if unlocked_lvl == 5 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">5</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">Rhymes</text>
+            </g>
+
+            <!-- Row 2 (Levels 6 to 10) -->
+            <g transform="translate(660, 300)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=6'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 6 else '#38bdf8' if unlocked_lvl == 6 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">6</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">Syllables</text>
+            </g>
+
+            <g transform="translate(780, 240)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=7'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 7 else '#38bdf8' if unlocked_lvl == 7 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">7</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">Addition</text>
+            </g>
+
+            <g transform="translate(660, 160)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=8'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 8 else '#38bdf8' if unlocked_lvl == 8 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">8</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">Subtraction</text>
+            </g>
+
+            <g transform="translate(540, 120)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=9'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 9 else '#38bdf8' if unlocked_lvl == 9 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">9</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">Upper/Lower</text>
+            </g>
+
+            <g transform="translate(420, 100)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=10'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 10 else '#38bdf8' if unlocked_lvl == 10 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">10</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">Find Letters</text>
+            </g>
+
+            <!-- Row 3 (Levels 11 to 15 & Finish House) -->
+            <g transform="translate(300, 120)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=11'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 11 else '#38bdf8' if unlocked_lvl == 11 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">11</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">Picture Book</text>
+            </g>
+
+            <g transform="translate(180, 160)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=12'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 12 else '#38bdf8' if unlocked_lvl == 12 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">12</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">Sentences</text>
+            </g>
+
+            <g transform="translate(80, 220)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=13'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 13 else '#38bdf8' if unlocked_lvl == 13 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">13</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">Count 2,5,10</text>
+            </g>
+
+            <g transform="translate(200, 260)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=14'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 14 else '#38bdf8' if unlocked_lvl == 14 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">14</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">My Address</text>
+            </g>
+
+            <g transform="translate(340, 220)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=15'">
+                <circle cx="25" cy="25" r="28" fill="{('#10b981' if unlocked_lvl > 15 else '#38bdf8' if unlocked_lvl == 15 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
+                <text x="25" y="30" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">15</text>
+                <text x="25" y="65" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#0f172a" text-anchor="middle">Spell Name</text>
+            </g>
+
+            <!-- Grand Learning House Castle at the End of the Trail -->
+            <g transform="translate(850, 40)">
+                <polygon points="60,10 5,60 115,60" fill="#991b1b"/>
+                <rect x="15" y="60" width="90" height="80" fill="#f8fafc" stroke="#475569" stroke-width="3"/>
+                <rect x="45" y="95" width="30" height="45" rx="4" fill="#78350f"/>
+                <circle cx="60" cy="82" r="20" fill="#14b8a6" stroke="#ffffff" stroke-width="3"/>
+                <polygon points="53,72 53,92 70,82" fill="#ffffff"/>
             </g>
         </svg>
 
@@ -457,10 +553,25 @@ elif st.session_state.screen == "adventure_trail":
         </div>
     </div>
     """
-    components.html(map_container_html, height=350)
+    components.html(road_map_html, height=560)
 
-    # DISPLAY ALL 15 LEVELS IN A BEAUTIFUL 3-COLUMN ROAD MAP GRID
-    st.markdown("### 🚀 Choose Your Level on the Road Map:", unsafe_allow_html=True)
+    # Check if a map node was clicked via URL parameters
+    params = st.query_params
+    if "lvl" in params:
+        clicked_lvl = int(params["lvl"][0])
+        if clicked_lvl <= unlocked_lvl:
+            target_id = CURRICULUM_LEVELS[clicked_lvl - 1]["id"]
+            st.session_state.active_level_id = target_id
+            st.query_params.clear()
+            st.session_state.screen = "station_play"
+            st.rerun()
+        else:
+            speak(f"Level {clicked_lvl} is locked! Complete previous levels first!")
+            st.query_params.clear()
+            st.warning(f"🔒 Level {clicked_lvl} is locked!")
+
+    # DISPLAY ALL 15 LEVELS IN A BEAUTIFUL 3-COLUMN GRID BELOW THE MAP
+    st.markdown("### 🚀 Or Select Your Level Below:", unsafe_allow_html=True)
     
     cols_grid = st.columns(3)
     for idx, lvl_info in enumerate(CURRICULUM_LEVELS):
