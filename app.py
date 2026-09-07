@@ -14,7 +14,7 @@ st.set_page_config(
 # 1. VECTOR GRAPHICS ENGINE (AVATARS & BOOKS)
 # =========================================================
 
-def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glasses="gold_round", shirt="#ec4899", accessory="crown", size=180):
+def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glasses="gold_round", shirt="#ec4899", accessory="crown", size=160):
     hair_svg = ""
     if hair_style == "puffs":
         hair_svg = f"""
@@ -100,6 +100,28 @@ def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glas
     </div>
     """
     return raw_html
+
+def render_book_diagram(part="spine"):
+    spine_border = 'stroke="#facc15" stroke-width="6"' if part == "spine" else 'stroke="#1e3a8a" stroke-width="2"'
+    cover_border = 'stroke="#facc15" stroke-width="6"' if part == "cover" else 'stroke="#2563eb" stroke-width="2"'
+    raw_html = f"""
+    <div style="display:flex; justify-content:center; align-items:center; width:100%;">
+        <svg width="280" height="210" viewBox="0 0 280 210" xmlns="http://www.w3.org/2000/svg">
+            <rect x="25" y="25" width="230" height="160" rx="14" fill="#60a5fa" {cover_border}/>
+            <rect x="25" y="25" width="40" height="160" rx="6" fill="#1d4ed8" {spine_border}/>
+            <line x1="38" y1="40" x2="38" y2="170" stroke="#93c5fd" stroke-width="3" stroke-dasharray="6,4"/>
+            <rect x="80" y="45" width="160" height="42" rx="8" fill="#ffffff"/>
+            <text x="160" y="71" font-family="'Fredoka', sans-serif" font-size="15" font-weight="900" fill="#1e40af" text-anchor="middle">THE BRAVE PUPPY</text>
+            <circle cx="160" cy="120" r="24" fill="#fef08a"/>
+            <ellipse cx="152" cy="116" rx="3.5" ry="4.5" fill="#0f172a"/>
+            <ellipse cx="168" cy="116" rx="3.5" ry="4.5" fill="#0f172a"/>
+            <ellipse cx="160" cy="124" rx="4.5" ry="3" fill="#78350f"/>
+            <rect x="90" y="152" width="140" height="22" rx="6" fill="#ffffffcc"/>
+            <text x="160" y="167" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#334155" text-anchor="middle">By Raeven Brown</text>
+        </svg>
+    </div>
+    """
+    components.html(raw_html, height=220)
 
 # =========================================================
 # 2. STYLING & AUDIO SYNTHESIZER
@@ -253,7 +275,7 @@ def record_progress(level_id, is_correct):
                         prof["unlocked_level"] = idx + 2
 
 # =========================================================
-# SCREEN 1: PROFILE HUB (WITH DELETE PROFILE BUTTON)
+# SCREEN 1: PROFILE HUB (WITH DELETE PLAYER OPTION)
 # =========================================================
 if st.session_state.screen == "profile_select":
     st.markdown("""
@@ -280,11 +302,12 @@ if st.session_state.screen == "profile_select":
                 speak(f"Welcome back {name}! Follow your Kindergarten Road Map to learn and grow!")
                 st.rerun()
 
+            # DELETE CHARACTER BUTTON
             if len(st.session_state.profiles) > 1:
                 if st.button(f"🗑️ Delete {name}", key=f"del_{name}", use_container_width=True):
                     del st.session_state.profiles[name]
-                    speak(f"Profile {name} deleted.")
-                    st.success(f"🗑️ Profile '{name}' deleted!")
+                    speak(f"Player {name} deleted.")
+                    st.success(f"🗑️ Player '{name}' deleted successfully!")
                     st.rerun()
 
     with cols[-1]:
@@ -394,9 +417,9 @@ elif st.session_state.screen == "adventure_trail":
 
     speak(f"Welcome to your Kindergarten Road Map {user}! Follow the winding road and select any unlocked level to play!")
 
-    # FULL UNCLIPPED CONTAINER WITH ALL 15 LEVELS VISIBLE ON THE ROAD MAP
+    # FULL UNCLIPPED CONTAINER WITH GENEROUS HEIGHT SO NOTHING IS CUT OFF
     map_container_html = f"""
-    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:35px 30px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; margin:20px auto; width:100%; box-sizing:border-box;">
+    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:35px 30px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; margin:20px auto; width:100%; box-sizing:border-box; overflow:visible;">
         <div style="text-align:center; margin-bottom:15px;">
             <h2 style="color:#0369a1; margin:0; font-size:2rem;">🗺️ Winding Road Map (Progress: Level {unlocked_lvl} of 15 Unlocked)</h2>
             <p style="color:#334155; font-weight:700; font-size:1.1rem; margin-top:5px;">Complete each level fully to journey down the road to success!</p>
@@ -411,7 +434,7 @@ elif st.session_state.screen == "adventure_trail":
         </div>
     </div>
     """
-    components.html(map_container_html, height=210)
+    components.html(map_container_html, height=240)
 
     # DISPLAY ALL 15 LEVELS IN A BEAUTIFUL 3-COLUMN ROAD MAP GRID
     st.markdown("### 🚀 Choose Your Level on the Road Map:", unsafe_allow_html=True)
