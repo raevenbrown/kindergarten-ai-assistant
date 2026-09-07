@@ -126,16 +126,16 @@ def play_sound_and_speak(text, sound_type="cheer"):
     """
     components.html(html_code, height=0)
 
-# --- IPAD DRAWING PAD FOR TRACING & HEART WORDS ---
+# --- IPAD DRAWING PAD FOR TRACING & SIGHT WORDS (FIXED HEIGHT NO CLIPPING) ---
 def kid_canvas(target_word):
     html = f"""
-    <div style="background:#f8fafc; border:4px dashed #38bdf8; border-radius:24px; padding:12px; text-align:center;">
-        <canvas id="cPad" width="340" height="150" style="background:#ffffff; border-radius:18px; touch-action:none; cursor:crosshair;"></canvas>
-        <div style="margin-top:10px;">
-            <button onclick="clearPad()" style="background:#ef4444; color:#fff; font-size:1.1rem; font-weight:800; border:none; border-radius:14px; padding:8px 20px; box-shadow:0 4px 0 #b91c1c;">🧹 Erase</button>
-            <button onclick="cheerWrite()" style="background:#22c55e; color:#fff; font-size:1.1rem; font-weight:800; border:none; border-radius:14px; padding:8px 20px; box-shadow:0 4px 0 #15803d; margin-left:8px;">⭐ Check My Writing!</button>
+    <div style="background:#f8fafc; border:4px dashed #38bdf8; border-radius:24px; padding:16px; text-align:center; min-height:330px; box-sizing:border-box;">
+        <canvas id="cPad" width="340" height="150" style="background:#ffffff; border-radius:18px; touch-action:none; cursor:crosshair; border:2px solid #cbd5e1;"></canvas>
+        <div style="margin-top:14px;">
+            <button onclick="clearPad()" style="background:#ef4444; color:#fff; font-size:1.15rem; font-weight:800; border:none; border-radius:16px; padding:10px 22px; box-shadow:0 4px 0 #b91c1c; cursor:pointer;">🧹 Erase</button>
+            <button onclick="cheerWrite()" style="background:#22c55e; color:#fff; font-size:1.15rem; font-weight:800; border:none; border-radius:16px; padding:10px 22px; box-shadow:0 4px 0 #15803d; margin-left:10px; cursor:pointer;">⭐ Check My Writing!</button>
         </div>
-        <div id="cMsg" style="font-size:1.3rem; font-weight:bold; color:#16a34a; margin-top:8px;"></div>
+        <div id="cMsg" style="font-size:1.4rem; font-weight:800; color:#16a34a; margin-top:14px; min-height:36px;"></div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
@@ -162,19 +162,19 @@ def kid_canvas(target_word):
         cvs.addEventListener('mousedown', start);
         cvs.addEventListener('mouseup', end);
         cvs.addEventListener('mousemove', draw);
-        cvs.addEventListener('touchstart', start);
-        cvs.addEventListener('touchend', end);
-        cvs.addEventListener('touchmove', draw);
+        cvs.addEventListener('touchstart', start, {{ passive: false }});
+        cvs.addEventListener('touchend', end, {{ passive: false }});
+        cvs.addEventListener('touchmove', draw, {{ passive: false }});
         function clearPad() {{ ctx.clearRect(0, 0, cvs.width, cvs.height); document.getElementById('cMsg').innerText = ''; }}
         function cheerWrite() {{
-            confetti({{ particleCount: 80, spread: 70, origin: {{ y: 0.7 }} }});
-            document.getElementById('cMsg').innerText = "🌟 WOW! Beautiful handwriting!";
+            confetti({{ particleCount: 90, spread: 75, origin: {{ y: 0.75 }} }});
+            document.getElementById('cMsg').innerText = "🌟 WOW! You wrote it so beautifully!";
             let a = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
             a.play();
         }}
     </script>
     """
-    components.html(html, height=250)
+    components.html(html, height=350)
 
 # --- SPEECH RECOGNITION WITH CONFETTI ---
 def mic_speaker_box(target_word):
@@ -252,7 +252,7 @@ def log_progress(activity, result):
         except Exception:
             pass
 
-# --- EXACT CURRICULUM SIGHT WORD LISTS ---
+# --- EXACT SIGHT WORD LISTS ---
 SIGHT_WORD_LISTS = {
     "⭐ List 1 (12 Words)": [
         "a", "at", "do", "was", "the", "as", "I", "you", "am", "to", "is", "an"
@@ -269,12 +269,12 @@ if "streak" not in st.session_state: st.session_state.streak = 0
 if "level" not in st.session_state: st.session_state.level = 1
 if "questions_done" not in st.session_state: st.session_state.questions_done = 0
 if "unlocked_treasure" not in st.session_state: st.session_state.unlocked_treasure = False
-if "current_game" not in st.session_state: st.session_state.current_game = "📖 Heart Words"
+if "current_game" not in st.session_state: st.session_state.current_game = "📖 Sight Words"
 if "avatar_head" not in st.session_state: st.session_state.avatar_head = "👑"
 if "avatar_pet" not in st.session_state: st.session_state.avatar_pet = "🐥"
 if "avatar_bg" not in st.session_state: st.session_state.avatar_bg = "#ecfeff"
-if "selected_hw_list" not in st.session_state:
-    st.session_state.selected_hw_list = "⭐ List 1 (12 Words)"
+if "selected_sw_list" not in st.session_state:
+    st.session_state.selected_sw_list = "⭐ List 1 (12 Words)"
 
 def award_win(points=10, stars=1):
     st.session_state.coins += points
@@ -317,7 +317,7 @@ if st.session_state.unlocked_treasure:
 # --- GAME SELECTOR TABS ---
 st.markdown("---")
 game_modes = [
-    "📖 Heart Words",
+    "📖 Sight Words",
     "📚 Parts of a Book",
     "🕵️ Number Detective (18 & Beyond)",
     "🔤 Letter I-Spy",
@@ -329,13 +329,13 @@ active_game = st.selectbox("🎮 Choose an Adventure Game:", game_modes, index=g
 st.session_state.current_game = active_game
 
 # ==========================================
-# 1. HEART WORDS: READ, TRACE, WRITE & SAY
+# 1. SIGHT WORDS: READ, TRACE, WRITE & SAY
 # ==========================================
-if active_game == "📖 Heart Words":
+if active_game == "📖 Sight Words":
     st.markdown("""
     <div class="game-board">
-        <div class="game-title">💖 Heart Word Explorer</div>
-        <div class="game-subtitle">Sight words you have to know by heart! Pick your list, read it, trace it, write it, and say it loud!</div>
+        <div class="game-title">📖 Sight Word Explorer</div>
+        <div class="game-subtitle">Choose your list! Read it, trace it, write it, and say it loud!</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -344,35 +344,35 @@ if active_game == "📖 Heart Words":
         chosen_list_name = st.selectbox(
             "📚 Choose Sight Word List to Practice:",
             list(SIGHT_WORD_LISTS.keys()),
-            index=list(SIGHT_WORD_LISTS.keys()).index(st.session_state.selected_hw_list)
+            index=list(SIGHT_WORD_LISTS.keys()).index(st.session_state.selected_sw_list)
         )
-        if chosen_list_name != st.session_state.selected_hw_list:
-            st.session_state.selected_hw_list = chosen_list_name
-            st.session_state.current_hw = SIGHT_WORD_LISTS[chosen_list_name][0]
+        if chosen_list_name != st.session_state.selected_sw_list:
+            st.session_state.selected_sw_list = chosen_list_name
+            st.session_state.current_sw = SIGHT_WORD_LISTS[chosen_list_name][0]
             st.rerun()
 
-    active_bank = SIGHT_WORD_LISTS[st.session_state.selected_hw_list]
+    active_bank = SIGHT_WORD_LISTS[st.session_state.selected_sw_list]
 
-    if "current_hw" not in st.session_state or st.session_state.current_hw not in active_bank:
-        st.session_state.current_hw = active_bank[0]
+    if "current_sw" not in st.session_state or st.session_state.current_sw not in active_bank:
+        st.session_state.current_sw = active_bank[0]
 
     with col_pick:
         picked_word = st.selectbox(
             "🎯 Pick a Specific Word (or use Next):",
             active_bank,
-            index=active_bank.index(st.session_state.current_hw)
+            index=active_bank.index(st.session_state.current_sw)
         )
-        if picked_word != st.session_state.current_hw:
-            st.session_state.current_hw = picked_word
+        if picked_word != st.session_state.current_sw:
+            st.session_state.current_sw = picked_word
             st.rerun()
 
-    word = st.session_state.current_hw
+    word = st.session_state.current_sw
     col_w1, col_w2 = st.columns([1, 1.2])
 
     with col_w1:
         st.markdown(f"""
         <div style="background:#fef2f2; border:5px solid #f87171; border-radius:30px; padding:25px; text-align:center; margin-bottom:15px;">
-            <div style="font-size:1.4rem; color:#ef4444; font-weight:800;">❤️ {st.session_state.selected_hw_list.split('(')[0].strip()}</div>
+            <div style="font-size:1.4rem; color:#ef4444; font-weight:800;">❤️ {st.session_state.selected_sw_list.split('(')[0].strip()}</div>
             <div style="font-size:5.5rem; font-weight:900; color:#dc2626; letter-spacing:6px; margin: 10px 0;">{word.upper()}</div>
             <div style="font-size:1.1rem; color:#6b7280; font-weight:600;">Word {active_bank.index(word) + 1} of {len(active_bank)}</div>
         </div>
@@ -386,51 +386,214 @@ if active_game == "📖 Heart Words":
         c1, c2 = st.columns(2)
         with c1:
             if st.button("🌟 Mastered! (+10 🪙)", use_container_width=True):
-                log_progress("Heart Word", f"Mastered [{st.session_state.selected_hw_list}]: {word}")
+                log_progress("Sight Word", f"Mastered [{st.session_state.selected_sw_list}]: {word}")
                 curr_idx = active_bank.index(word)
                 next_idx = (curr_idx + 1) % len(active_bank)
-                st.session_state.current_hw = active_bank[next_idx]
+                st.session_state.current_sw = active_bank[next_idx]
                 award_win(10, 1)
         with c2:
             if st.button("➡️ Next Word in List 🎲", use_container_width=True):
                 remaining = [w for w in active_bank if w != word]
-                st.session_state.current_hw = random.choice(remaining) if remaining else word
+                st.session_state.current_sw = random.choice(remaining) if remaining else word
                 st.rerun()
 
 # ==========================================
-# 2. PARTS OF A BOOK (i-Ready Kindergarten Reading)
+# 2. VISUAL PARTS OF A BOOK (i-Ready Kindergarten)
 # ==========================================
 elif active_game == "📚 Parts of a Book":
     st.markdown("""
     <div class="game-board">
-        <div class="game-title">📚 Parts of a Book Detective</div>
-        <div class="game-subtitle">Tap the matching part of the book to help Chickie get ready to read!</div>
+        <div class="game-title">📚 Visual Book Detective</div>
+        <div class="game-subtitle">Look at the actual book! Follow the yellow bouncy arrow and tap what part it's pointing to!</div>
     </div>
     """, unsafe_allow_html=True)
 
     book_questions = [
-        {"q": "Where is the FRONT COVER that protects the book?", "correct": "Front Cover", "opts": ["Front Cover", "Spine", "Back Cover", "Page Numbers"], "desc": "The front cover welcomes you to the story!"},
-        {"q": "What tells you what the book is called?", "correct": "The Title", "opts": ["The Title", "The Barcode", "The Spine", "The Illustrator"], "desc": "The Title is the name of the book!"},
-        {"q": "Who WRITES the words in the book?", "correct": "The Author", "opts": ["The Author", "The Illustrator", "The Character", "The Reader"], "desc": "The Author writes all the wonderful words!"},
-        {"q": "Who DRAWS the colorful pictures in the book?", "correct": "The Illustrator", "opts": ["The Illustrator", "The Author", "The Library", "The Teacher"], "desc": "The Illustrator creates the artwork!"},
-        {"q": "What holds the pages together tightly like your backbone?", "correct": "The Spine", "opts": ["The Spine", "The Cover", "The Bookmark", "The Glue"], "desc": "The spine connects and holds all the pages!"}
+        {
+            "target": "Front Cover",
+            "highlight": "cover",
+            "question": "Look at the whole front of the book! What do we call this?",
+            "correct": "Front Cover",
+            "opts": ["Front Cover", "Spine", "Back Cover", "Page Numbers"],
+            "desc": "The Front Cover protects the whole book and shows the title!"
+        },
+        {
+            "target": "Title",
+            "highlight": "title",
+            "question": "The yellow arrow is pointing to 'THE BRAVE PUPPY'. What is this called?",
+            "correct": "The Title",
+            "opts": ["The Title", "The Author", "The Spine", "The Illustrator"],
+            "desc": "The Title is the name of the book!"
+        },
+        {
+            "target": "Author",
+            "highlight": "author",
+            "question": "The yellow arrow is pointing to 'By Raeven Brown'. Who is this?",
+            "correct": "The Author",
+            "opts": ["The Author", "The Illustrator", "The Character", "The Reader"],
+            "desc": "The Author writes the words in the book!"
+        },
+        {
+            "target": "Illustrator",
+            "highlight": "illustrator",
+            "question": "The yellow arrow is pointing to 'Art by Gracyn'. Who is this?",
+            "correct": "The Illustrator",
+            "opts": ["The Illustrator", "The Author", "The Library", "The Teacher"],
+            "desc": "The Illustrator draws all the colorful pictures!"
+        },
+        {
+            "target": "Spine",
+            "highlight": "spine",
+            "question": "The yellow arrow is pointing to the side edge. What holds the pages together like a backbone?",
+            "correct": "The Spine",
+            "opts": ["The Spine", "The Front Cover", "The Bookmark", "The Back Cover"],
+            "desc": "The Spine holds all the book's pages together!"
+        }
     ]
 
     if "book_q_idx" not in st.session_state:
         st.session_state.book_q_idx = 0
 
     bq = book_questions[st.session_state.book_q_idx % len(book_questions)]
-    
+    target_key = bq["highlight"]
+
+    # Render Visual Illustrated Book with Animated Arrow
+    html_book = f"""
+    <style>
+        .book-container {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 15px 0 25px 0;
+        }}
+        .realistic-book {{
+            display: flex;
+            width: 380px;
+            height: 290px;
+            box-shadow: 0 16px 30px rgba(0,0,0,0.25);
+            border-radius: 12px 24px 24px 12px;
+            overflow: visible;
+            position: relative;
+        }}
+        .book-spine {{
+            width: 50px;
+            background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 70%, #1d4ed8 100%);
+            border-radius: 12px 0 0 12px;
+            color: #ffffff;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: 4px;
+            position: relative;
+            box-shadow: inset -4px 0 8px rgba(0,0,0,0.3);
+            border: {'4px solid #facc15' if target_key == 'spine' else 'none'};
+        }}
+        .book-cover {{
+            flex: 1;
+            background: linear-gradient(135deg, #60a5fa 0%, #93c5fd 100%);
+            border-radius: 0 20px 20px 0;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            border-left: 3px solid #1e40af;
+            position: relative;
+            border: {'5px solid #facc15' if target_key == 'cover' else 'none'};
+        }}
+        .book-title-box {{
+            background: #ffffff;
+            border: {'4px solid #facc15' if target_key == 'title' else '2px solid #2563eb'};
+            border-radius: 16px;
+            padding: 8px 16px;
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #1e3a8a;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: relative;
+        }}
+        .book-author-box {{
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #0f172a;
+            background: {'#fef08a' if target_key == 'author' else '#ffffffcc'};
+            border: {'3px solid #f59e0b' if target_key == 'author' else '1px solid #cbd5e1'};
+            border-radius: 12px;
+            padding: 4px 12px;
+            position: relative;
+        }}
+        .book-illustrator-box {{
+            font-size: 1rem;
+            font-weight: 800;
+            color: #0f172a;
+            background: {'#fef08a' if target_key == 'illustrator' else '#ffffffcc'};
+            border: {'3px solid #f59e0b' if target_key == 'illustrator' else '1px solid #cbd5e1'};
+            border-radius: 12px;
+            padding: 4px 12px;
+            position: relative;
+        }}
+        .pointer-arrow {{
+            position: absolute;
+            font-size: 3.2rem;
+            animation: bounce 0.9s infinite alternate;
+            z-index: 100;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }}
+        @keyframes bounce {{
+            0% {{ transform: translateY(0); }}
+            100% {{ transform: translateY(-12px); }}
+        }}
+    </style>
+
+    <div class="book-container">
+        <div class="realistic-book">
+            <!-- Spine -->
+            <div class="book-spine">
+                {'<span class="pointer-arrow" style="left:-65px; top:40%;">👉</span>' if target_key == 'spine' else ''}
+                SPINE
+            </div>
+            <!-- Front Cover -->
+            <div class="book-cover">
+                {'<span class="pointer-arrow" style="top:-55px; left:45%;">👇</span>' if target_key == 'cover' else ''}
+                
+                <div class="book-title-box">
+                    {'<span class="pointer-arrow" style="right:-55px; top:-10px;">👈</span>' if target_key == 'title' else ''}
+                    📖 THE BRAVE PUPPY
+                </div>
+
+                <div style="font-size: 4rem; margin: 4px 0;">🐶🐾</div>
+
+                <div class="book-author-box">
+                    {'<span class="pointer-arrow" style="left:-50px; top:-5px;">👉</span>' if target_key == 'author' else ''}
+                    ✍️ By Raeven Brown
+                </div>
+
+                <div class="book-illustrator-box">
+                    {'<span class="pointer-arrow" style="right:-50px; top:-5px;">👈</span>' if target_key == 'illustrator' else ''}
+                    🎨 Art by Gracyn
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+    components.html(html_book, height=330)
+
     st.markdown(f"""
-    <div style="background:#eff6ff; border:4px solid #3b82f6; border-radius:24px; padding:24px; text-align:center; font-size:1.8rem; font-weight:800; color:#1e40af; margin-bottom:20px;">
-        ❓ {bq['q']}
+    <div style="background:#eff6ff; border:4px solid #3b82f6; border-radius:24px; padding:20px; text-align:center; font-size:1.8rem; font-weight:800; color:#1e40af; margin-bottom:20px;">
+        ❓ {bq['question']}
     </div>
     """, unsafe_allow_html=True)
 
     b_cols = st.columns(2)
     for i, opt in enumerate(bq["opts"]):
         with b_cols[i % 2]:
-            if st.button(f"👉 {opt}", key=f"bk_{opt}", use_container_width=True):
+            icon = "📖" if "Cover" in opt else ("🏷️" if "Title" in opt else ("✍️" if "Author" in opt else ("🎨" if "Illustrator" in opt else "🦴")))
+            if st.button(f"{icon} {opt}", key=f"bk_{opt}_{st.session_state.book_q_idx}", use_container_width=True):
                 if opt == bq["correct"]:
                     st.balloons()
                     st.success(f"🎉 CORRECT! {bq['desc']}")
@@ -438,7 +601,7 @@ elif active_game == "📚 Parts of a Book":
                     st.session_state.book_q_idx += 1
                     award_win(15, 1)
                 else:
-                    st.error("❌ Try again! Think about what holds or names the book!")
+                    st.error("❌ Look closely at where the arrow points and try again!")
 
 # ==========================================
 # 3. NUMBER DETECTIVE: REPRESENTING 18 & BEYOND
