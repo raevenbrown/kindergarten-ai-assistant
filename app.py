@@ -193,12 +193,12 @@ CURRICULUM_LEVELS = [
     {"id": "lvl_7", "name": "Level 7: Addition Up to 10"},
     {"id": "lvl_8", "name": "Level 8: Subtraction Up to 10"},
     {"id": "lvl_9", "name": "Level 9: Upper & Lowercase Match"},
-    {"id": "lvl_10", "name": "Level 10: Reading Picture Word Book (Lists 1 & 2)"},
-    {"id": "lvl_11", "name": "Level 11: Write a Sentence"},
-    {"id": "lvl_12", "name": "Level 12: Count by 2s"},
-    {"id": "lvl_13", "name": "Level 13: Count by 5s"},
-    {"id": "lvl_14", "name": "Level 14: Count by 10s"},
-    {"id": "lvl_15", "name": "Level 15: My Personal Info (Location & Name)"}
+    {"id": "lvl_10", "name": "Level 10: Find Letters in ABCs"},
+    {"id": "lvl_11", "name": "Level 11: Reading Picture Word Book"},
+    {"id": "lvl_12", "name": "Level 12: Write a Sentence"},
+    {"id": "lvl_13", "name": "Level 13: Count by 2s, 5s & 10s"},
+    {"id": "lvl_14", "name": "Level 14: Personal Location (USA, GA, Covington, Belmont Circle)"},
+    {"id": "lvl_15", "name": "Level 15: Spell Full Name (First, Middle, Last)"}
 ]
 
 # =========================================================
@@ -247,7 +247,6 @@ def record_progress(level_id, is_correct):
         
         # Check if level is completed (3 questions per level)
         if prof["level_progress"][level_id] >= 3:
-            # Find index of current level and unlock next
             for idx, lvl in enumerate(CURRICULUM_LEVELS):
                 if lvl["id"] == level_id and prof["unlocked_level"] <= idx + 1:
                     if idx + 1 < len(CURRICULUM_LEVELS):
@@ -278,7 +277,7 @@ if st.session_state.screen == "profile_select":
             if st.button(f"Play as {name}", key=f"prof_{name}", use_container_width=True):
                 st.session_state.active_user = name
                 st.session_state.screen = "adventure_trail"
-                speak(f"Welcome back {name}! Complete all 15 levels on your Kindergarten Road Map!")
+                speak(f"Welcome back {name}! Follow your Kindergarten Road Map to learn and grow!")
                 st.rerun()
 
             if len(st.session_state.profiles) > 1:
@@ -372,7 +371,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: KINDERGARTEN ROAD MAP (15 PROGRESSIVE LEVELS)
+# SCREEN 3: WINDING ROAD MAP (VISUAL PATH WITH 15 LEVELS)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -393,14 +392,30 @@ elif st.session_state.screen == "adventure_trail":
             st.session_state.screen = "profile_select"
             st.rerun()
 
-    speak(f"Welcome to your Kindergarten Road Map {user}! Select any unlocked level from Level 1 to Level 15 to play!")
+    speak(f"Welcome to your Kindergarten Road Map {user}! Follow the winding road and select any unlocked level to play!")
 
-    # DISPLAY ALL 15 LEVELS IN A CLEAN GRID
-    st.markdown("""
-    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:28px; box-shadow:0 16px 32px rgba(0,0,0,0.12); margin:20px auto;">
-        <h2 style="color:#0369a1; text-align:center; margin-top:0;">🗺️ Winding Road Map (Levels 1 to 15)</h2>
-    """, unsafe_allow_html=True)
+    # RENDER THE WINDING ROAD MAP CONTAINER GRAPHIC WITH ALL LEVELS VISIBLE
+    map_container_html = f"""
+    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:35px 30px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; margin:20px auto; width:100%; box-sizing:border-box;">
+        <div style="text-align:center; margin-bottom:15px;">
+            <h2 style="color:#0369a1; margin:0; font-size:2rem;">🗺️ Winding Road Map (Progress: Level {unlocked_lvl} of 15 Unlocked)</h2>
+            <p style="color:#334155; font-weight:700; font-size:1.1rem; margin-top:5px;">Complete each level fully to journey down the road to success!</p>
+        </div>
 
+        <!-- Companion Animals along the bottom of the map box -->
+        <div style="display:flex; justify-content:center; gap:45px; align-items:flex-end; margin-top:20px;">
+            <div style="font-size:3.5rem;">🐘</div>
+            <div style="font-size:3.5rem;">🦊</div>
+            <div style="font-size:3rem;">🦜</div>
+            <div style="font-size:3.5rem;">🦭</div>
+        </div>
+    </div>
+    """
+    components.html(map_container_html, height=210)
+
+    # DISPLAY ALL 15 LEVELS IN A BEAUTIFUL 3-COLUMN ROAD MAP GRID
+    st.markdown("### 🚀 Choose Your Level on the Road Map:", unsafe_allow_html=True)
+    
     cols_grid = st.columns(3)
     for idx, lvl_info in enumerate(CURRICULUM_LEVELS):
         lvl_num = idx + 1
@@ -415,10 +430,8 @@ elif st.session_state.screen == "adventure_trail":
                     st.rerun()
             else:
                 if st.button(f"🔒 {lvl_info['name']} (Locked)", key=f"lock_{lvl_info['id']}", use_container_width=True):
-                    speak(f"This level is locked! Complete previous levels first.")
+                    speak("This level is locked! Complete previous levels first.")
                     st.warning(f"🔒 **{lvl_info['name']} is Locked:** Complete previous levels to unlock!")
-
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
 # SCREEN 4: INDIVIDUAL LEVEL PLAY ARENA (MASTERY ENGINE)
@@ -428,7 +441,6 @@ elif st.session_state.screen == "station_play":
     pdata = st.session_state.profiles[user]
     lvl_id = st.session_state.active_level_id
     
-    # Find current level name
     current_lvl_info = next((l for l in CURRICULUM_LEVELS if l["id"] == lvl_id), CURRICULUM_LEVELS[0])
     
     if "level_progress" not in pdata:
@@ -731,13 +743,13 @@ elif st.session_state.screen == "station_play":
                 st.rerun()
 
     # ---------------------------------------------------------
-    # LEVEL 10: PICTURE WORD BOOK (READING LIST 1 & 2)
+    # LEVEL 10: FIND LETTERS IN ABCs
     # ---------------------------------------------------------
     elif lvl_id == "lvl_10":
         questions = [
-            {"q": "Read the sentence: 'I see the cat.' Which word is a List 1 sight word?", "correct": "the", "opts": ["cat", "the", "see"], "hint": "T-H-E!"},
-            {"q": "Read the sentence: 'Look at the big dog.' Which word is a List 2 sight word?", "correct": "look", "opts": ["dog", "big", "look"], "hint": "L-O-O-K!"},
-            {"q": "Read: 'Play with me.' Which word is a List 2 sight word?", "correct": "play", "opts": ["play", "me", "with"], "hint": "P-L-A-Y!"}
+            {"q": "Which letter comes first in the alphabet?", "correct": "A", "opts": ["A", "Z", "M"], "hint": "Starts with the very beginning!"},
+            {"q": "Find the letter 'K' in the alphabet.", "correct": "K", "opts": ["J", "K", "L"], "hint": "Between J and L!"},
+            {"q": "Which letter comes last in the alphabet?", "correct": "Z", "opts": ["A", "T", "Z"], "hint": "The very end!"}
         ]
         if current_step < len(questions):
             q = questions[current_step]
@@ -762,13 +774,13 @@ elif st.session_state.screen == "station_play":
                 st.rerun()
 
     # ---------------------------------------------------------
-    # LEVEL 11: WRITE A SENTENCE
+    # LEVEL 11: READING PICTURE WORD BOOK
     # ---------------------------------------------------------
     elif lvl_id == "lvl_11":
         questions = [
-            {"q": "What punctuation mark goes at the very end of a complete sentence?", "correct": "Period (.)", "opts": ["Comma (,)", "Period (.)", "Question mark (?) if asking"], "hint": "A little dot at the end!"},
-            {"q": "What should the very first letter of a sentence always be?", "correct": "Uppercase capital letter", "opts": ["Lowercase small letter", "Uppercase capital letter", "Doesn't matter"], "hint": "Big letter at the start!"},
-            {"q": "What needs to be between words in a sentence so they don't squish?", "correct": "Finger spaces", "opts": ["Finger spaces", "Big glue", "Nothing"], "hint": "Keep spaces between words!"}
+            {"q": "Read: 'I see the cat.' Which word is a sight word?", "correct": "the", "opts": ["cat", "the", "see"], "hint": "T-H-E!"},
+            {"q": "Read: 'Look at the big dog.' Which word is a sight word?", "correct": "look", "opts": ["dog", "big", "look"], "hint": "L-O-O-K!"},
+            {"q": "Read: 'Play with me.' Which word is a sight word?", "correct": "play", "opts": ["play", "me", "with"], "hint": "P-L-A-Y!"}
         ]
         if current_step < len(questions):
             q = questions[current_step]
@@ -793,13 +805,13 @@ elif st.session_state.screen == "station_play":
                 st.rerun()
 
     # ---------------------------------------------------------
-    # LEVEL 12: COUNT BY 2s
+    # LEVEL 12: WRITE A SENTENCE
     # ---------------------------------------------------------
     elif lvl_id == "lvl_12":
         questions = [
-            {"q": "Count by 2s: 2, 4, 6, ... What comes next?", "correct": "8", "opts": ["7", "8", "9"], "hint": "Add 2 to 6!"},
-            {"q": "Count by 2s: 10, 12, 14, ... What comes next?", "correct": "16", "opts": ["15", "16", "18"], "hint": "Add 2 to 14!"},
-            {"q": "Count by 2s: 20, 22, 24, ... What comes next?", "correct": "26", "opts": ["25", "26", "28"], "hint": "Add 2 to 24!"}
+            {"q": "What goes at the very end of a sentence?", "correct": "Period (.)", "opts": ["Comma", "Period (.)", "Question mark"], "hint": "A dot!"},
+            {"q": "What should the first letter of a sentence be?", "correct": "Capital letter", "opts": ["Small letter", "Capital letter", "Any letter"], "hint": "Uppercase!"},
+            {"q": "What needs to be between words in a sentence?", "correct": "Finger spaces", "opts": ["Spaces", "Glue", "Nothing"], "hint": "Keep them apart!"}
         ]
         if current_step < len(questions):
             q = questions[current_step]
@@ -824,13 +836,13 @@ elif st.session_state.screen == "station_play":
                 st.rerun()
 
     # ---------------------------------------------------------
-    # LEVEL 13: COUNT BY 5s
+    # LEVEL 13: COUNT BY 2s, 5s & 10s
     # ---------------------------------------------------------
     elif lvl_id == "lvl_13":
         questions = [
-            {"q": "Count by 5s: 5, 10, 15, ... What comes next?", "correct": "20", "opts": ["18", "20", "25"], "hint": "Add 5 to 15!"},
-            {"q": "Count by 5s: 30, 35, 40, ... What comes next?", "correct": "45", "opts": ["42", "45", "50"], "hint": "Add 5 to 40!"},
-            {"q": "Count by 5s: 75, 80, 85, ... What comes next?", "correct": "90", "opts": ["88", "90", "95"], "hint": "Add 5 to 85!"}
+            {"q": "Count by 2s: 2, 4, 6, ... What's next?", "correct": "8", "opts": ["7", "8", "9"], "hint": "Add 2!"},
+            {"q": "Count by 5s: 5, 10, 15, ... What's next?", "correct": "20", "opts": ["18", "20", "25"], "hint": "Add 5!"},
+            {"q": "Count by 10s: 10, 20, 30, ... What's next?", "correct": "40", "opts": ["35", "40", "50"], "hint": "Add 10!"}
         ]
         if current_step < len(questions):
             q = questions[current_step]
@@ -855,13 +867,13 @@ elif st.session_state.screen == "station_play":
                 st.rerun()
 
     # ---------------------------------------------------------
-    # LEVEL 14: COUNT BY 10s
+    # LEVEL 14: PERSONAL LOCATION
     # ---------------------------------------------------------
     elif lvl_id == "lvl_14":
         questions = [
-            {"q": "Count by 10s: 10, 20, 30, ... What comes next?", "correct": "40", "opts": ["35", "40", "50"], "hint": "Add 10 to 30!"},
-            {"q": "Count by 10s: 50, 60, 70, ... What comes next?", "correct": "80", "opts": ["75", "80", "90"], "hint": "Add 10 to 70!"},
-            {"q": "Count by 10s: 70, 80, 90, ... What comes next?", "correct": "100", "opts": ["95", "100", "110"], "hint": "Up to 100!"}
+            {"q": "What city do you live in?", "correct": "Covington", "opts": ["Atlanta", "Covington", "Savannah"], "hint": "Covington, GA!"},
+            {"q": "What street do you live on?", "correct": "210 Belmont Circle", "opts": ["123 Main St", "210 Belmont Circle", "500 Peachtree Rd"], "hint": "210 Belmont Circle!"},
+            {"q": "What state do you live in?", "correct": "Georgia (GA)", "opts": ["Florida", "Georgia (GA)", "Texas"], "hint": "The Peach State!"}
         ]
         if current_step < len(questions):
             q = questions[current_step]
@@ -886,13 +898,13 @@ elif st.session_state.screen == "station_play":
                 st.rerun()
 
     # ---------------------------------------------------------
-    # LEVEL 15: PERSONAL INFO (USA, GA, COVINGTON, 210 BELMONT CIRCLE, NAME)
+    # LEVEL 15: SPELL FULL NAME
     # ---------------------------------------------------------
     elif lvl_id == "lvl_15":
         questions = [
-            {"q": "What city do you live in?", "correct": "Covington", "opts": ["Atlanta", "Covington", "Savannah"], "hint": "Starts with C in Georgia!"},
-            {"q": "What street do you live on?", "correct": "210 Belmont Circle", "opts": ["123 Main Street", "210 Belmont Circle", "500 Peachtree Rd"], "hint": "210 Belmont Circle!"},
-            {"q": "What state do you live in?", "correct": "Georgia (GA)", "opts": ["Florida", "Georgia (GA)", "Texas"], "hint": "The Peach State!"}
+            {"q": "What is your first name?", "correct": "Gracyn", "opts": ["Gracyn", "Alex", "Taylor"], "hint": "Gracyn!"},
+            {"q": "What is your middle name / last name initial?", "correct": "Brown", "opts": ["Smith", "Brown", "Johnson"], "hint": "Brown!"},
+            {"q": "Are you a Kindergarten Star?", "correct": "Yes!", "opts": ["No", "Yes!", "Maybe"], "hint": "Always yes!"}
         ]
         if current_step < len(questions):
             q = questions[current_step]
@@ -911,7 +923,7 @@ elif st.session_state.screen == "station_play":
                             speak(f"Hint: {q['hint']}")
                             st.warning(f"💡 Hint: {q['hint']}")
         else:
-            st.success("🎉 Congratulations! You have completed all 15 Levels of the Kindergarten Road Map!")
+            st.success("🎉 Congratulations! You have fully completed all 15 Levels of the Kindergarten Road Map!")
             if st.button("🗺️ Return to Road Map"):
                 st.session_state.screen = "adventure_trail"
                 st.rerun()
