@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- KID ARCADE / HATCH THEMED STYLING ---
+# --- KID ARCADE / LUCAS & FRIENDS THEMED STYLING ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;800&family=Quicksand:wght@600;700;800&display=swap');
@@ -70,6 +70,59 @@ st.markdown("""
         border: 2.5px solid #facc15;
     }
 
+    /* Animated Mascot Stage */
+    .mascot-container {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: #ffffff;
+        border: 4px solid #38bdf8;
+        border-radius: 30px;
+        padding: 16px 22px;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.1);
+        margin-bottom: 16px;
+    }
+
+    .mascot-avatar {
+        font-size: 4.2rem;
+        background: #ecfeff;
+        border: 3.5px solid #0284c7;
+        border-radius: 50%;
+        width: 90px;
+        height: 90px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: floatMascot 2.5s ease-in-out infinite alternate;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        flex-shrink: 0;
+    }
+
+    @keyframes floatMascot {
+        0% { transform: translateY(0px) rotate(-3deg); }
+        100% { transform: translateY(-8px) rotate(4deg); }
+    }
+
+    .mascot-bubble {
+        background: #f8fafc;
+        border: 3px solid #60a5fa;
+        border-radius: 24px;
+        padding: 12px 18px;
+        flex: 1;
+        position: relative;
+    }
+    .mascot-bubble:after {
+        content: '';
+        position: absolute;
+        left: -14px;
+        top: 30px;
+        border-width: 8px 14px 8px 0;
+        border-style: solid;
+        border-color: transparent #60a5fa transparent transparent;
+        display: block;
+        width: 0;
+    }
+
     .instruction-card {
         background: #ffffff;
         border-radius: 26px;
@@ -91,7 +144,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- DIRECT UNIVERSAL AUTOPLAY (IPAD & LAPTOP NATIVE BRIDGE) ---
+# --- IPAD NATIVE WEBAUDIO UNFREEZER & SPEECH DISPATCHER ---
 def speak(text, sfx="pop"):
     sound_url = {
         "pop": "https://cdn.freesound.org/previews/536/536108_11565331-lq.mp3",
@@ -111,38 +164,59 @@ def speak(text, sfx="pop"):
                 snd.play().catch(() => {{}});
             }} catch(e) {{}}
 
-            // 2. Cross-window SpeechSynthesis for iOS Safari & Desktop
-            function runSpeech() {{
-                const synth = (window.parent && window.parent.speechSynthesis) ? window.parent.speechSynthesis : window.speechSynthesis;
-                if (!synth) return;
-                
+            // 2. Reliable Multi-Target Speech Engine (Unblocks iOS WebKit Queue)
+            function executeVoice() {{
+                const targetSynth = window.speechSynthesis || (window.top && window.top.speechSynthesis) || (window.parent && window.parent.speechSynthesis);
+                if (!targetSynth) return;
+
+                // iOS Safari Queue Unfreezer
                 try {{
-                    synth.cancel();
-                    if (synth.paused) synth.resume();
-                }} catch(e) {{}}
+                    if (targetSynth.speaking || targetSynth.pending) {{
+                        targetSynth.cancel();
+                    }}
+                    if (targetSynth.paused) {{
+                        targetSynth.resume();
+                    }}
+                }} catch(err) {{}}
 
-                const utter = new SpeechSynthesisUtterance("{clean_text}");
-                utter.rate = 0.84;
-                utter.pitch = 1.25;
-                utter.lang = 'en-US';
+                const msg = new SpeechSynthesisUtterance("{clean_text}");
+                msg.rate = 0.83;
+                msg.pitch = 1.25;
+                msg.lang = 'en-US';
 
-                const voices = synth.getVoices();
+                // Force voice selection
+                const voices = targetSynth.getVoices();
                 if (voices && voices.length > 0) {{
                     const preferred = voices.find(v => (v.name.includes("Samantha") || v.name.includes("Victoria") || v.name.includes("Karen") || v.lang === "en-US") && !v.name.includes("Bad"));
-                    if (preferred) utter.voice = preferred;
+                    if (preferred) msg.voice = preferred;
                 }}
 
-                synth.speak(utter);
+                targetSynth.speak(msg);
             }}
 
-            runSpeech();
-            setTimeout(runSpeech, 150);
+            // Run immediately and queue a safety re-dispatch for Safari
+            executeVoice();
+            setTimeout(executeVoice, 180);
         }})();
     </script>
     """
     components.html(js, height=0)
 
-# --- FINGER TRACING PAD (DISCRETE STROKES ONLY ON ACTIVE MOUSE/TOUCH DOWN) ---
+# --- MASCOT DISPLAY HELPER ---
+def show_mascot(speech_text, character_name="Chickie", character_emoji="🐥"):
+    st.markdown(f"""
+    <div class="mascot-container">
+        <div class="mascot-avatar">
+            {character_emoji}
+        </div>
+        <div class="mascot-bubble">
+            <b style="font-size:1.25rem; color:#0284c7;">{character_name} says:</b><br>
+            <span style="font-size:1.15rem; color:#1e293b; font-weight:700;">"{speech_text}"</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# --- FINGER TRACING PAD ---
 def tracing_box(word):
     html = f"""
     <div style="background:#f8fafc; border:4px dashed #0284c7; border-radius:26px; padding:14px; text-align:center;">
@@ -230,7 +304,7 @@ def tracing_box(word):
     """
     components.html(html, height=330)
 
-# --- INSTANT SPEECH RECOGNITION (NO SPOILERS) ---
+# --- SPEECH RECOGNITION BOX ---
 def speech_box(target_word):
     clean_target = target_word.strip().lower()
     html = f"""
@@ -470,22 +544,11 @@ if active_game != st.session_state.current_game:
     st.rerun()
 
 # ==========================================
-# 1. SIGHT WORDS (AUTOMATIC AUDIO INSTRUCTIONS - NO SPOILERS)
+# 1. SIGHT WORDS WITH ANIMATED MASCOT (NO SPOILERS)
 # ==========================================
 if active_game == "📖 Sight Words":
-    col_title, col_audio = st.columns([3, 1.2])
-    with col_title:
-        st.markdown("""
-        <div style="background:#ffffff; border-radius:22px; padding:12px 20px; border:3.5px solid #38bdf8; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
-            <div style="font-size:1.6rem; font-weight:900; color:#0284c7;">📖 Sight Word Explorer</div>
-            <div style="font-size:1.05rem; font-weight:700; color:#475569;">1. Read the word  •  2. Tap orange button to say it  •  3. Trace and tap green button!</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col_audio:
-        if st.button("🔊 Hear Directions Again", use_container_width=True):
-            speak("Hey Gracyn! Read this word on your card. Tap the orange button to say your word, then trace it with your finger and tap the green button when you are done!")
-
-    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+    mascot_msg = "Hey Gracyn! Look at the big card. Read your word, tap the orange button to say it, and trace it with your finger!"
+    show_mascot(mascot_msg, "Chickie", "🐥")
 
     sel_col1, sel_col2 = st.columns([1.2, 1])
     with sel_col1:
@@ -519,9 +582,8 @@ if active_game == "📖 Sight Words":
 
     word = st.session_state.current_sw
 
-    # Automatic prompt on navigation without spoiling the word
     if "last_sw_spoken" not in st.session_state or st.session_state.last_sw_spoken != word:
-        speak("Read this word! Tap the orange button to say your word into the microphone, then trace it with your finger and tap the green button!")
+        speak(mascot_msg)
         st.session_state.last_sw_spoken = word
 
     st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
@@ -562,98 +624,52 @@ if active_game == "📖 Sight Words":
                 st.rerun()
 
 # ==========================================
-# 2. PARTS OF A BOOK & STORY TIME (TEACH FIRST -> STORY RECALL -> TEST)
+# 2. PARTS OF A BOOK (INTERACTIVE TEACHING & STORY RECALL)
 # ==========================================
 elif active_game == "📚 Parts of a Book & Story Time":
-    book_tab1, book_tab2, book_tab3 = st.tabs(["🎓 Step 1: Learn the Parts", "📖 Step 2: Read Story & Recall", "🕵️ Step 3: Detective Quiz"])
+    book_tab1, book_tab2, book_tab3 = st.tabs(["🎓 Step 1: Touch & Learn", "📖 Step 2: Read Story & Recall", "🕵️ Step 3: Detective Quiz"])
 
-    # STEP 1: INTERACTIVE LESSON
+    # STEP 1: TOUCH & LEARN
     with book_tab1:
-        st.markdown("""
-        <div class="instruction-card">
-            <div style="font-size:1.6rem; font-weight:900; color:#1e40af;">🎓 Lesson: What Makes a Book?</div>
-            <div style="font-size:1.15rem; font-weight:700; color:#475569;">Every book has special parts! Let's explore each one:</div>
-        </div>
-        """, unsafe_allow_html=True)
+        mascot_msg_step1 = "Welcome to book school Gracyn! Tap each glowing part of the book below so I can show you what it does!"
+        show_mascot(mascot_msg_step1, "Bella", "🐶")
+        if "spoken_book_step1" not in st.session_state:
+            speak(mascot_msg_step1)
+            st.session_state.spoken_book_step1 = True
 
-        l_c1, l_c2 = st.columns(2)
-        with l_c1:
-            st.markdown("""
-            <div style="background:#ffffff; border:4px solid #3b82f6; border-radius:24px; padding:16px; margin-bottom:12px;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="font-size:2.8rem;">📕</div>
-                    <div>
-                        <b style="font-size:1.3rem; color:#1e3a8a;">1. The Front Cover</b><br>
-                        <span style="font-size:1.05rem; color:#475569; font-weight:600;">The heavy front door that protects all the pages inside and shows you the big picture!</span>
-                    </div>
-                </div>
-            </div>
+        st.markdown("#### 👇 Tap any book part to inspect it:")
+        p_c1, p_c2, p_c3 = st.columns(3)
+        p_c4, p_c5, p_c6 = st.columns(3)
 
-            <div style="background:#ffffff; border:4px solid #f59e0b; border-radius:24px; padding:16px; margin-bottom:12px;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="font-size:2.8rem;">🏷️</div>
-                    <div>
-                        <b style="font-size:1.3rem; color:#b45309;">2. The Title</b><br>
-                        <span style="font-size:1.05rem; color:#475569; font-weight:600;">The big name of the book that tells you what the whole story is about!</span>
-                    </div>
-                </div>
-            </div>
-
-            <div style="background:#ffffff; border:4px solid #10b981; border-radius:24px; padding:16px;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="font-size:2.8rem;">🧑‍🏫</div>
-                    <div>
-                        <b style="font-size:1.3rem; color:#065f46;">3. The Author</b><br>
-                        <span style="font-size:1.05rem; color:#475569; font-weight:600;">The person who writes all the wonderful words and thoughts in the story!</span>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with l_c2:
-            st.markdown("""
-            <div style="background:#ffffff; border:4px solid #ec4899; border-radius:24px; padding:16px; margin-bottom:12px;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="font-size:2.8rem;">🎨</div>
-                    <div>
-                        <b style="font-size:1.3rem; color:#9d174d;">4. The Illustrator</b><br>
-                        <span style="font-size:1.05rem; color:#475569; font-weight:600;">The artist who paints and draws all the colorful illustrations and pictures!</span>
-                    </div>
-                </div>
-            </div>
-
-            <div style="background:#ffffff; border:4px solid #8b5cf6; border-radius:24px; padding:16px; margin-bottom:12px;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="font-size:2.8rem;">📏</div>
-                    <div>
-                        <b style="font-size:1.3rem; color:#5b21b6;">5. The Spine</b><br>
-                        <span style="font-size:1.05rem; color:#475569; font-weight:600;">The strong backbone on the side that binds and holds all the pages tightly together!</span>
-                    </div>
-                </div>
-            </div>
-
-            <div style="background:#ffffff; border:4px solid #64748b; border-radius:24px; padding:16px;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="font-size:2.8rem;">📘</div>
-                    <div>
-                        <b style="font-size:1.3rem; color:#334155;">6. The Back Cover</b><br>
-                        <span style="font-size:1.05rem; color:#475569; font-weight:600;">The back of the book that has the store barcode and a short summary of the story!</span>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        if st.button("🔊 Read All Lesson Parts Out Loud", use_container_width=True):
-            speak("Let's learn about books! The front cover protects the book. The title is the book's name. The author writes the words. The illustrator draws the pictures. The spine holds the pages together like your backbone, and the back cover has the barcode!")
+        with p_c1:
+            if st.button("📕 Front Cover", use_container_width=True):
+                speak("The front cover is the strong front door that protects the pages inside!")
+                st.info("📕 **Front Cover:** Heavy outside cardboard that keeps pages safe.")
+        with p_c2:
+            if st.button("🏷️ The Title", use_container_width=True):
+                speak("The title is the big name of the book that tells you what the story is about!")
+                st.info("🏷️ **Title:** The name of the story printed in big bold letters.")
+        with p_c3:
+            if st.button("🧑‍🏫 The Author", use_container_width=True):
+                speak("The author is the writer who creates all the words in the story!")
+                st.info("🧑‍🏫 **Author:** The person who writes the words.")
+        with p_c4:
+            if st.button("🎨 The Illustrator", use_container_width=True):
+                speak("The illustrator is the artist who paints all the colorful pictures!")
+                st.info("🎨 **Illustrator:** The creative artist drawing the artwork.")
+        with p_c5:
+            if st.button("📏 The Spine", use_container_width=True):
+                speak("The spine is the side edge that holds all the pages tightly together like your backbone!")
+                st.info("📏 **Spine:** The backbone binding all pages together.")
+        with p_c6:
+            if st.button("📘 The Back Cover", use_container_width=True):
+                speak("The back cover has the barcode and a quick sneak peek of the story!")
+                st.info("📘 **Back Cover:** Has the barcode and summary.")
 
     # STEP 2: MINI STORY & RECALL
     with book_tab2:
-        st.markdown("""
-        <div class="instruction-card">
-            <div style="font-size:1.6rem; font-weight:900; color:#0369a1;">📖 Story Time: Bella the Brave Pup</div>
-            <div style="font-size:1.15rem; font-weight:700; color:#475569;">Listen to the short story and remember what happens!</div>
-        </div>
-        """, unsafe_allow_html=True)
+        mascot_story = "Gracyn, listen to our mini story about Bella the Pup! Pay close attention to what happens!"
+        show_mascot(mascot_story, "Oliver Owl", "🦉")
 
         st.markdown("""
         <div style="background:#ffffff; border:4px solid #38bdf8; border-radius:28px; padding:22px; text-align:center; box-shadow:0 8px 22px rgba(0,0,0,0.08); margin-bottom:18px;">
@@ -665,7 +681,7 @@ elif active_game == "📚 Parts of a Book & Story Time":
                 Pop! The balloon floated up into the clouds, and Bella made a new friend named Oliver the Owl!
             </p>
             <div style="background:#f0fdf4; border-radius:18px; padding:10px; font-weight:800; color:#166534; font-size:1.15rem;">
-                Written by: Raeven Brown  •  Illustrated by: Gracyn
+                Written by: Raeven Brown (Author)  •  Illustrated by: Gracyn (Artist)
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -689,8 +705,8 @@ elif active_game == "📚 Parts of a Book & Story Time":
         book_questions = [
             {
                 "target": "Front Cover", "highlight": "cover",
-                "q": "Look at the big illustrated front. What part protects the book and welcomes you in?",
-                "wrong_exp": "The Front Cover is the whole front of the book! Look at the Front Cover card.",
+                "q": "Look at the big front picture! What part protects the book and welcomes you in?",
+                "wrong_exp": "The Front Cover protects the whole book! Look for the Front Cover card.",
                 "correct": "Front Cover",
                 "opts": [
                     {"name": "Front Cover", "icon": "📕", "desc": "Whole Front Cover with Puppy Picture"},
@@ -701,7 +717,7 @@ elif active_game == "📚 Parts of a Book & Story Time":
             },
             {
                 "target": "The Title", "highlight": "title",
-                "q": "Look at the bold words at the top: THE BRAVE PUPPY. What is the name of a book called?",
+                "q": "Look at THE BRAVE PUPPY at the top. What is the name of a book called?",
                 "wrong_exp": "The Title is the name of the book! Look for The Title card.",
                 "correct": "The Title",
                 "opts": [
@@ -752,11 +768,11 @@ elif active_game == "📚 Parts of a Book & Story Time":
         if "bq_idx" not in st.session_state: st.session_state.bq_idx = 0
         curr_q = book_questions[st.session_state.bq_idx % len(book_questions)]
 
+        show_mascot(f"Gracyn! {curr_q['q']}", "Chickie", "🐥")
         if "last_bq_spoken" not in st.session_state or st.session_state.last_bq_spoken != curr_q["q"]:
             speak(f"Gracyn! {curr_q['q']}")
             st.session_state.last_bq_spoken = curr_q["q"]
 
-        # Realistic Physical Book Mockup
         t_key = curr_q["highlight"]
         html_book = f"""
         <div style="display:flex; justify-content:center; align-items:center; margin:10px 0 20px 0;">
@@ -786,12 +802,6 @@ elif active_game == "📚 Parts of a Book & Story Time":
         """
         components.html(html_book, height=320)
 
-        st.markdown(f"""
-        <div style="background:#ffffff; border:4px solid #3b82f6; border-radius:24px; padding:18px; text-align:center; font-size:1.6rem; font-weight:800; color:#1e40af; margin-bottom:18px; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
-            ❓ {curr_q['q']}
-        </div>
-        """, unsafe_allow_html=True)
-
         cols_top = st.columns(2)
         cols_bot = st.columns(2)
         grid_cols = [cols_top[0], cols_top[1], cols_bot[0], cols_bot[1]]
@@ -817,18 +827,14 @@ elif active_game == "📚 Parts of a Book & Story Time":
                         track_performance("Parts of a Book", False, f"Chose {opt['name']}")
 
 # ==========================================
-# 3. NUMBER DETECTIVE (20 & UNDER) WITH REAL JARS & HIGH CONTRAST
+# 3. NUMBER DETECTIVE (20 & UNDER) WITH CANDY JARS
 # ==========================================
 elif active_game == "🕵️ Number Detective (20 & Under)":
-    st.markdown("""
-    <div class="instruction-card">
-        <div style="font-size:1.7rem; font-weight:900; color:#b45309;">🕵️ Number Detective: Target 18!</div>
-        <div style="font-size:1.15rem; font-weight:700; color:#475569;">Look inside the real glass candy jars and count the tallies! Tap the pictures that show EXACTLY 18!</div>
-    </div>
-    """, unsafe_allow_html=True)
+    mascot_num = "Gracyn! We are looking for the number 18! Count the jelly beans in the glass jars and the tallies!"
+    show_mascot(mascot_num, "Chickie", "🐥")
 
     if "last_num_spoken" not in st.session_state:
-        speak("Gracyn! We are looking for the number 18! Look at the shiny jelly bean jars, blocks, and wooden tallies. Tap the cards that equal 18!")
+        speak(mascot_num)
         st.session_state.last_num_spoken = True
 
     c1, c2 = st.columns(2)
@@ -917,13 +923,6 @@ elif active_game == "🕵️ Number Detective (20 & Under)":
 # 4. WORD FAMILY SPELLING LAB (-AT & -ALL FAMILIES)
 # ==========================================
 elif active_game == "🔤 Word Family Spelling Lab":
-    st.markdown("""
-    <div class="instruction-card">
-        <div style="font-size:1.7rem; font-weight:900; color:#7c3aed;">🔤 Word Family Phonics & Spelling Lab</div>
-        <div style="font-size:1.15rem; font-weight:700; color:#475569;">Pick a beginning letter to build and spell real rhyming words!</div>
-    </div>
-    """, unsafe_allow_html=True)
-
     family_choice = st.radio("Choose Word Family to Spell:", ["🐱 -AT Family (cat, bat, hat, rat, mat)", "🏀 -ALL Family (ball, call, tall, fall, hall)"], horizontal=True)
 
     if "-AT" in family_choice:
@@ -933,8 +932,11 @@ elif active_game == "🔤 Word Family Spelling Lab":
         ending = "all"
         letters = [("B", "🏀 Ball"), ("C", "📞 Call"), ("T", "🦒 Tall"), ("F", "🍂 Fall"), ("H", "🏛️ Hall")]
 
+    mascot_sp = f"Let's build words in the {ending.upper()} family! Tap a letter below to spell a new rhyming word!"
+    show_mascot(mascot_sp, "Chickie", "🐥")
+
     if "last_spelling_spoken" not in st.session_state or st.session_state.last_spelling_spoken != ending:
-        speak(f"Welcome to the {ending} word family! Tap a letter tile to spell a new rhyming word!")
+        speak(mascot_sp)
         st.session_state.last_spelling_spoken = ending
 
     st.markdown(f"""
@@ -961,19 +963,17 @@ elif active_game == "🔤 Word Family Spelling Lab":
 # 5. LETTER I-SPY SAFARI (DISAPPEARING BUBBLES)
 # ==========================================
 elif active_game == "🔍 Letter I-Spy Safari":
-    st.markdown("""
-    <div class="instruction-card">
-        <div style="font-size:1.7rem; font-weight:900; color:#db2777;">🔍 Letter I-Spy Safari Grid</div>
-        <div style="font-size:1.15rem; font-weight:700; color:#475569;">Pop all the matching bubbles! Once popped, they disappear!</div>
-    </div>
-    """, unsafe_allow_html=True)
-
     if "target_letter" not in st.session_state:
         st.session_state.target_letter = random.choice(["B", "M", "D", "S", "A", "T"])
         st.session_state.popped_indices = []
 
     t_let = st.session_state.target_letter
-    speak(f"Gracyn! I spy the letter {t_let}! Look at the bubbles and pop all the {t_let}'s you see!")
+    mascot_ispy = f"Gracyn! I spy the letter {t_let}! Tap and pop all the bubbles that match {t_let}!"
+    show_mascot(mascot_ispy, "Oliver Owl", "🦉")
+
+    if "last_ispy_spoken" not in st.session_state or st.session_state.last_ispy_spoken != t_let:
+        speak(mascot_ispy)
+        st.session_state.last_ispy_spoken = t_let
 
     st.markdown(f"""
     <div style="background:#ffffff; border:4px dashed #ec4899; border-radius:24px; padding:14px; text-align:center; font-size:1.8rem; font-weight:900; color:#db2777; margin-bottom:15px; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
@@ -1009,16 +1009,9 @@ elif active_game == "🔍 Letter I-Spy Safari":
         st.rerun()
 
 # ==========================================
-# 6. SEASONS WEATHER-CASTER (WITH ILLUSTRATED REAL-WORLD SCENES)
+# 6. SEASONS WEATHER-CASTER
 # ==========================================
 elif active_game == "🍁 Seasons & Nature Quest":
-    st.markdown("""
-    <div class="instruction-card">
-        <div style="font-size:1.7rem; font-weight:900; color:#166534;">🍂 Seasons & Nature Weather-Caster</div>
-        <div style="font-size:1.15rem; font-weight:700; color:#475569;">Look at the full picture card for each season and tap the matching answer!</div>
-    </div>
-    """, unsafe_allow_html=True)
-
     season_scenes = [
         {
             "season": "Winter",
@@ -1069,13 +1062,12 @@ elif active_game == "🍁 Seasons & Nature Quest":
     if "s_idx" not in st.session_state: st.session_state.s_idx = 0
     curr_sc = season_scenes[st.session_state.s_idx % len(season_scenes)]
 
-    speak(f"Look at the weather clue: {curr_sc['q']} Which season is it?")
+    mascot_season = f"Look at the weather clue: {curr_sc['q']} What season is it?"
+    show_mascot(mascot_season, "Bella", "🐶")
 
-    st.markdown(f"""
-    <div style="background:#ffffff; border:4px solid #22c55e; border-radius:28px; padding:22px; text-align:center; margin-bottom:18px; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
-        <div style="font-size:1.7rem; font-weight:800; color:#15803d;">{curr_sc['q']}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    if "last_season_spoken" not in st.session_state or st.session_state.last_season_spoken != curr_sc["season"]:
+        speak(mascot_season)
+        st.session_state.last_season_spoken = curr_sc["season"]
 
     sc_top = st.columns(2)
     sc_bot = st.columns(2)
@@ -1104,13 +1096,6 @@ elif active_game == "🍁 Seasons & Nature Quest":
 # 7. COOL MATH (10 AND UNDER)
 # ==========================================
 elif active_game == "➕ Cool Math (10 and Under)":
-    st.markdown("""
-    <div class="instruction-card">
-        <div style="font-size:1.7rem; font-weight:900; color:#7e22ce;">🧮 Cool Math: 10 and Under!</div>
-        <div style="font-size:1.15rem; font-weight:700; color:#475569;">Count the delicious apples and solve the problem!</div>
-    </div>
-    """, unsafe_allow_html=True)
-
     if "km_math" not in st.session_state:
         is_add = random.choice([True, False])
         if is_add:
@@ -1123,7 +1108,12 @@ elif active_game == "➕ Cool Math (10 and Under)":
             st.session_state.km_math = {"a": total, "b": sub, "op": "-", "ans": total - sub}
 
     m = st.session_state.km_math
-    speak(f"Gracyn! What is {m['a']} {m['op']} {m['b']}? Count the apples on the screen!")
+    mascot_math = f"Gracyn! What is {m['a']} {m['op']} {m['b']}? Count the apples to find the answer!"
+    show_mascot(mascot_math, "Chickie", "🐥")
+
+    if "last_math_spoken" not in st.session_state or st.session_state.last_math_spoken != str(m):
+        speak(mascot_math)
+        st.session_state.last_math_spoken = str(m)
 
     st.markdown(f"""
     <div style="background:#ffffff; border:5px solid #a855f7; border-radius:28px; padding:20px; text-align:center; font-size:4.2rem; font-weight:900; color:#7e22ce; margin-bottom:15px; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
