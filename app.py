@@ -4,155 +4,240 @@ import random
 from supabase import create_client, Client
 
 st.set_page_config(
-    page_title="Kindergarten Learning Studio",
-    page_icon="⭐",
-    layout="wide"
+    page_title="Gracyn's Learning Adventure Studio",
+    page_icon="👑",
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# Custom Styling
+# --- PLAYFUL ARCADE / HATCH IGNITE CSS ---
 st.markdown("""
 <style>
-    .main-title { font-size: 2.2rem; font-weight: 800; color: #f59e0b; margin-bottom: 0px; }
-    .sub-text { font-size: 1rem; color: #a89f91; margin-bottom: 20px; }
-    .card-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(245,158,11,0.25); padding: 18px; border-radius: 12px; margin-bottom: 15px; }
-    .instruction-box { background: rgba(56, 189, 248, 0.08); border-left: 4px solid #38bdf8; padding: 12px 16px; border-radius: 6px; margin-bottom: 18px; color: #e0f2fe; }
-    .explain-card { background: rgba(34, 197, 94, 0.1); border: 2px solid #22c55e; border-radius: 12px; padding: 18px; margin-top: 15px; margin-bottom: 15px; }
-    .ladder-card { background: rgba(245, 158, 11, 0.08); border-left: 6px solid #f59e0b; border-radius: 8px; padding: 16px; font-size: 1.6rem; font-weight: 800; color: #fef08a; margin-bottom: 12px; }
-    .ten-frame-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 320px; margin: 12px 0; }
-    .ten-frame-cell { border: 2px solid #f59e0b; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 6px; background: rgba(255,255,255,0.02); }
-    .letter-card { font-size: 3.5rem; font-weight: 800; color: #f59e0b; text-align: center; padding: 15px; border: 2px dashed rgba(245,158,11,0.4); border-radius: 12px; margin-bottom: 10px; background: rgba(0,0,0,0.2); width: 120px; }
-    .word-card { font-size: 2.8rem; font-weight: 800; color: #38bdf8; letter-spacing: 4px; text-align: center; padding: 15px; border: 2px solid #38bdf8; border-radius: 12px; margin-bottom: 15px; background: rgba(0,0,0,0.2); }
-    .audio-btn { background: #38bdf8; color: #000; font-weight: bold; border-radius: 8px; border: none; padding: 8px 14px; cursor: pointer; }
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@600;700;800&display=swap');
+
+    /* Global Game Theme */
+    .stApp {
+        background: linear-gradient(180deg, #38bdf8 0%, #a7f3d0 60%, #fef08a 100%);
+        font-family: 'Fredoka', 'Quicksand', cursive, sans-serif;
+    }
+
+    /* iPad Friendly Large Tap Targets */
+    .stButton > button {
+        border-radius: 24px !important;
+        font-size: 1.3rem !important;
+        font-weight: 700 !important;
+        padding: 14px 28px !important;
+        box-shadow: 0 8px 0 rgba(0,0,0,0.18) !important;
+        transition: all 0.1s ease !important;
+        border: 3px solid #ffffff !important;
+    }
+    .stButton > button:active {
+        transform: translateY(6px) !important;
+        box-shadow: 0 2px 0 rgba(0,0,0,0.18) !important;
+    }
+
+    /* Top HUD / Mascot Bar */
+    .hud-banner {
+        background: #ffffff;
+        border-radius: 28px;
+        padding: 16px 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 4px solid #facc15;
+    }
+
+    .badge-pill {
+        background: #fef08a;
+        color: #854d0e;
+        padding: 8px 18px;
+        border-radius: 20px;
+        font-size: 1.25rem;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 2px solid #facc15;
+    }
+
+    /* Game Cards */
+    .game-board {
+        background: #ffffff;
+        border-radius: 32px;
+        padding: 24px;
+        box-shadow: 0 14px 35px rgba(0,0,0,0.1);
+        border: 5px solid #60a5fa;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .game-title {
+        font-size: 2rem;
+        color: #1e3a8a;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .game-subtitle {
+        font-size: 1.2rem;
+        color: #4b5563;
+        margin-bottom: 18px;
+        font-weight: 600;
+    }
+
+    .avatar-preview {
+        font-size: 5rem;
+        background: #ecfeff;
+        border: 4px dashed #06b6d4;
+        border-radius: 50%;
+        width: 140px;
+        height: 140px;
+        line-height: 130px;
+        margin: 0 auto 10px auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# Helper HTML5 Natural Speech Audio Component
-def speak_button(text_to_speak, label="🔊 Listen"):
-    html_code = f"""
-    <button class="audio-btn" onclick="
-        window.speechSynthesis.cancel();
-        let utter = new SpeechSynthesisUtterance('{text_to_speak}');
-        utter.rate = 0.85;
-        utter.pitch = 1.15;
-        window.speechSynthesis.speak(utter);
-    ">{label}</button>
-    """
-    components.html(html_code, height=50)
+# --- WEB AUDIO SYNTH & SOUND ENGINE ---
+def play_sound_and_speak(text, sound_type="cheer"):
+    sound_fx = {
+        "cheer": "https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3",
+        "pop": "https://cdn.freesound.org/previews/536/536108_11565331-lq.mp3",
+        "tada": "https://cdn.freesound.org/previews/397/397355_4284968-lq.mp3"
+    }.get(sound_type, "")
 
-# Browser Speech Recognition Component with Expanded Frame Height
-def mic_checker_component(target_word):
-    clean_target = target_word.replace("'", "").replace(".", "").replace("!", "").strip().lower()
     html_code = f"""
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <div style="background: rgba(255,255,255,0.05); border: 2px solid rgba(56,189,248,0.4); border-radius: 12px; padding: 16px; box-sizing: border-box; width: 100%;">
-        <button id="micBtn" style="background: #ef4444; color: #ffffff; font-weight: bold; font-size: 1.05rem; border: none; border-radius: 10px; padding: 12px 20px; cursor: pointer;" onclick="runSpeechRec()">
-            🎙️ Tap to Speak
-        </button>
-        <div id="heardText" style="margin-top: 10px; font-size: 1.1rem; font-weight: 700; color: #38bdf8;"></div>
-        <div id="resultBanner" style="margin-top: 10px; font-size: 1.1rem; font-weight: 800;"></div>
-    </div>
-
     <script>
-    function triggerBalloonsAndConfetti() {{
-        var count = 200;
-        var defaults = {{ origin: {{ y: 0.7 }} }};
-        function fire(particleRatio, opts) {{
-            confetti(Object.assign({{}}, defaults, opts, {{
-                particleCount: Math.floor(count * particleRatio)
-            }}));
-        }}
-        fire(0.25, {{ spread: 26, startVelocity: 55, shapes: ['circle'] }});
-        fire(0.2, {{ spread: 60, shapes: ['circle'] }});
-        fire(0.35, {{ spread: 100, decay: 0.91, scalar: 1.2 }});
-        fire(0.1, {{ spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.5 }});
-        fire(0.1, {{ spread: 120, startVelocity: 45 }});
-    }}
+        // SFX
+        let sfx = new Audio("{sound_fx}");
+        sfx.volume = 0.6;
+        sfx.play().catch(e => console.log(e));
 
-    async function runSpeechRec() {{
-        const btn = document.getElementById('micBtn');
-        const heard = document.getElementById('heardText');
-        const banner = document.getElementById('resultBanner');
-
-        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRec) {{
-            banner.innerHTML = '<span style="color:#f87171;">⚠️ Speech recognition not supported in this browser. Please use Chrome or Safari.</span>';
-            return;
-        }}
-
-        try {{
-            await navigator.mediaDevices.getUserMedia({{ audio: true }});
-        }} catch(err) {{
-            banner.innerHTML = '<span style="color:#f87171;">⚠️ Microphone permission denied. Please allow microphone access.</span>';
-            return;
-        }}
-
-        const recognizer = new SpeechRec();
-        recognizer.lang = 'en-US';
-        recognizer.interimResults = false;
-        recognizer.maxAlternatives = 1;
-
-        btn.style.background = '#22c55e';
-        btn.innerText = '🔴 Listening... Say it now!';
-        heard.innerText = '';
-        banner.innerText = '';
-
-        recognizer.start();
-
-        recognizer.onresult = function(event) {{
-            const said = event.results[0][0].transcript.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
-            const expected = "{clean_target}";
-            
-            heard.innerHTML = '🗣️ You said: <u>"' + said + '"</u>';
-            
-            // Homophone mapping table for kindergarten speech transcription
-            const homophones = {{
-                "for": ["for", "four", "4", "fore", "fur"],
-                "to": ["to", "two", "too", "2"],
-                "i": ["i", "eye", "aye"],
-                "in": ["in", "inn"],
-                "see": ["see", "sea", "c"],
-                "be": ["be", "bee"],
-                "one": ["one", "1", "won"],
-                "we": ["we", "wee"],
-                "no": ["no", "know"]
-            }};
-
-            let isMatch = (said.includes(expected) || expected.includes(said));
-            if (homophones[expected] && homophones[expected].includes(said)) {{
-                isMatch = true;
-            }}
-            
-            if (isMatch) {{
-                banner.innerHTML = '<div style="background: rgba(34,197,94,0.25); border: 2px solid #22c55e; color: #4ade80; padding: 12px; border-radius: 8px;">🎉 YOU SAID IT CORRECTLY! Awesome job! ⭐🎈</div>';
-                triggerBalloonsAndConfetti();
-                let audio = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
-                audio.play();
-            }} else {{
-                banner.innerHTML = '<div style="background: rgba(239,68,68,0.25); border: 2px solid #ef4444; color: #f87171; padding: 12px; border-radius: 8px;">❌ Not quite! Try saying it again clearly.</div>';
-            }}
-
-            btn.style.background = '#ef4444';
-            btn.innerText = '🎙️ Tap to Speak Again';
-        }};
-
-        recognizer.onerror = function(event) {{
-            btn.style.background = '#ef4444';
-            btn.innerText = '🎙️ Tap to Speak';
-            if (event.error === 'no-speech') {{
-                banner.innerHTML = '<span style="color:#f87171;">⚠️ No voice heard. Tap and speak into your mic!</span>';
-            }} else {{
-                banner.innerHTML = '<span style="color:#f87171;">⚠️ Mic notice: ' + event.error + '. Try again!</span>';
-            }}
-        }};
-    }}
+        // Kid-friendly slow voice
+        window.speechSynthesis.cancel();
+        let msg = new SpeechSynthesisUtterance("{text}");
+        msg.rate = 0.82;
+        msg.pitch = 1.25;
+        window.speechSynthesis.speak(msg);
     </script>
     """
-    components.html(html_code, height=240)
+    components.html(html_code, height=0)
 
-# --- SUPABASE CONFIGURATION ---
+def kid_button(label, sound_text="", key=None):
+    btn = st.button(label, key=key, use_container_width=True)
+    if btn and sound_text:
+        play_sound_and_speak(sound_text)
+    return btn
+
+# --- IPAD DRAWING PAD FOR TRACING & HEART WORDS ---
+def kid_canvas(target_word):
+    html = f"""
+    <div style="background:#f8fafc; border:4px dashed #38bdf8; border-radius:24px; padding:12px; text-align:center;">
+        <canvas id="cPad" width="340" height="150" style="background:#ffffff; border-radius:18px; touch-action:none; cursor:crosshair;"></canvas>
+        <div style="margin-top:10px;">
+            <button onclick="clearPad()" style="background:#ef4444; color:#fff; font-size:1.1rem; font-weight:800; border:none; border-radius:14px; padding:8px 20px; box-shadow:0 4px 0 #b91c1c;">🧹 Erase</button>
+            <button onclick="cheerWrite()" style="background:#22c55e; color:#fff; font-size:1.1rem; font-weight:800; border:none; border-radius:14px; padding:8px 20px; box-shadow:0 4px 0 #15803d; margin-left:8px;">⭐ Check My Writing!</button>
+        </div>
+        <div id="cMsg" style="font-size:1.3rem; font-weight:bold; color:#16a34a; margin-top:8px;"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        const cvs = document.getElementById('cPad');
+        const ctx = cvs.getContext('2d');
+        let drawing = false;
+
+        function start(e) {{ drawing = true; draw(e); }}
+        function end() {{ drawing = false; ctx.beginPath(); }}
+        function draw(e) {{
+            if(!drawing) return;
+            e.preventDefault();
+            const rect = cvs.getBoundingClientRect();
+            const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+            const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#ec4899';
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }}
+        cvs.addEventListener('mousedown', start);
+        cvs.addEventListener('mouseup', end);
+        cvs.addEventListener('mousemove', draw);
+        cvs.addEventListener('touchstart', start);
+        cvs.addEventListener('touchend', end);
+        cvs.addEventListener('touchmove', draw);
+        function clearPad() {{ ctx.clearRect(0, 0, cvs.width, cvs.height); document.getElementById('cMsg').innerText = ''; }}
+        function cheerWrite() {{
+            confetti({{ particleCount: 80, spread: 70, origin: {{ y: 0.7 }} }});
+            document.getElementById('cMsg').innerText = "🌟 WOW! Beautiful handwriting!";
+            let a = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
+            a.play();
+        }}
+    </script>
+    """
+    components.html(html, height=250)
+
+# --- SPEECH RECOGNITION WITH CONFETTI ---
+def mic_speaker_box(target_word):
+    clean_target = target_word.strip().lower()
+    html = f"""
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <div style="text-align:center;">
+        <button id="micB" style="background:#f97316; color:#ffffff; font-size:1.3rem; font-weight:800; border:none; border-radius:24px; padding:14px 28px; box-shadow:0 6px 0 #c2410c; cursor:pointer;" onclick="startMic()">
+            🎙️ Tap & Say: "{target_word.upper()}"
+        </button>
+        <div id="mRes" style="font-size:1.4rem; font-weight:bold; margin-top:12px;"></div>
+    </div>
+    <script>
+        function startMic() {{
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const res = document.getElementById('mRes');
+            const btn = document.getElementById('micB');
+            if(!SpeechRec) {{ res.innerHTML = "<span style='color:red;'>Use Safari or Chrome for mic!</span>"; return; }}
+            const rec = new SpeechRec();
+            rec.lang = 'en-US';
+            btn.innerText = "👂 Listening to Gracyn...";
+            btn.style.background = "#22c55e";
+            rec.start();
+            rec.onresult = (e) => {{
+                let heard = e.results[0][0].transcript.toLowerCase().trim();
+                let target = "{clean_target}";
+                let match = (heard.includes(target) || target.includes(heard));
+                if (target === "to" && (heard === "two" || heard === "too" || heard === "2")) match = true;
+                if (target === "for" && (heard === "four" || heard === "4")) match = true;
+                if (target === "i" && (heard === "eye")) match = true;
+                if (target === "see" && (heard === "sea" || heard === "c")) match = true;
+                if (match) {{
+                    res.innerHTML = "<span style='color:#15803d;'>🎉 YES! You said it! 🌟🎈</span>";
+                    confetti({{ particleCount: 150, spread: 80, origin: {{ y: 0.7 }} }});
+                    let a = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
+                    a.play();
+                }} else {{
+                    res.innerHTML = "<span style='color:#b91c1c;'>👂 You said '" + heard + "' - Try once more!</span>";
+                }}
+                btn.innerText = '🎙️ Tap & Say Again';
+                btn.style.background = "#f97316";
+            }};
+            rec.onerror = () => {{
+                btn.innerText = '🎙️ Tap & Say';
+                btn.style.background = "#f97316";
+                res.innerHTML = "<span style='color:#ea580c;'>Tap and speak loud and clear!</span>";
+            }}
+        }}
+    </script>
+    """
+    components.html(html, height=130)
+
+# --- SUPABASE CONFIG ---
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
 SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", "")
-
 supabase: Client = None
 if SUPABASE_URL and SUPABASE_KEY:
     try:
@@ -160,869 +245,443 @@ if SUPABASE_URL and SUPABASE_KEY:
     except Exception:
         pass
 
-def log_milestone(student_name, activity, result):
+def log_progress(activity, result):
     if supabase:
         try:
             supabase.table("student_milestones").insert({
-                "student_name": student_name,
+                "student_name": "Gracyn",
                 "level": st.session_state.level,
                 "stars": st.session_state.stars,
                 "streak": st.session_state.streak,
-                "xp": st.session_state.xp,
+                "xp": st.session_state.coins,
                 "activity_type": activity,
                 "action_result": result
             }).execute()
         except Exception:
             pass
 
-# --- SESSION STATE INITIALIZATION ---
-if "xp" not in st.session_state:
-    st.session_state.xp = 0
-if "streak" not in st.session_state:
-    st.session_state.streak = 0
-if "level" not in st.session_state:
-    st.session_state.level = 1
-if "stars" not in st.session_state:
-    st.session_state.stars = 0
-if "student_name" not in st.session_state:
-    st.session_state.student_name = "Gracyn"
-if "active_nav" not in st.session_state:
-    st.session_state.active_nav = "🎵 Rhyme Quest"
-if "prev_nav" not in st.session_state:
-    st.session_state.prev_nav = "🎵 Rhyme Quest"
-if "feedback" not in st.session_state:
-    st.session_state.feedback = None
-if "vowel_submitted" not in st.session_state:
-    st.session_state.vowel_submitted = False
-if "vowel_explanation" not in st.session_state:
-    st.session_state.vowel_explanation = None
-if "ladder_step" not in st.session_state:
-    st.session_state.ladder_step = 1
+# --- SESSION STATE SETUP ---
+if "stars" not in st.session_state: st.session_state.stars = 0
+if "coins" not in st.session_state: st.session_state.coins = 50
+if "streak" not in st.session_state: st.session_state.streak = 0
+if "level" not in st.session_state: st.session_state.level = 1
+if "questions_done" not in st.session_state: st.session_state.questions_done = 0
+if "unlocked_treasure" not in st.session_state: st.session_state.unlocked_treasure = False
+if "current_game" not in st.session_state: st.session_state.current_game = "📖 Heart Words"
+if "avatar_head" not in st.session_state: st.session_state.avatar_head = "👑"
+if "avatar_pet" not in st.session_state: st.session_state.avatar_pet = "🐥"
+if "avatar_bg" not in st.session_state: st.session_state.avatar_bg = "#ecfeff"
 
-# --- DATASETS ---
-LEVEL_WORDS = {
-    1: [
-        {"target": "CAT", "rhymes": ["hat", "bat", "mat", "sat", "rat"], "wrong": ["dog", "sun", "pig", "cup"]},
-        {"target": "PIN", "rhymes": ["win", "tin", "fin", "bin"], "wrong": ["bed", "box", "hat", "rug"]},
-        {"target": "BED", "rhymes": ["red", "fed", "led"], "wrong": ["car", "sun", "top", "pig"]}
-    ],
-    2: [
-        {"target": "HOP", "rhymes": ["mop", "top", "pop", "stop", "drop"], "wrong": ["bed", "fish", "cup", "pen"]},
-        {"target": "PIG", "rhymes": ["big", "dig", "wig", "fig"], "wrong": ["pan", "star", "hot", "sun"]},
-        {"target": "MUG", "rhymes": ["bug", "hug", "rug", "jug"], "wrong": ["cat", "pen", "leg", "top"]}
-    ],
-    3: [
-        {"target": "TRUCK", "rhymes": ["duck", "stuck", "cluck", "luck"], "wrong": ["shoe", "star", "tree", "milk"]},
-        {"target": "BOAT", "rhymes": ["goat", "coat", "float", "throat"], "wrong": ["kite", "fish", "jump", "lamp"]},
-        {"target": "TRAIN", "rhymes": ["rain", "brain", "chain", "pain"], "wrong": ["book", "door", "leaf", "bird"]}
-    ]
-}
-
-ALPHABET_PAIRS = [
-    ("A", "a"), ("B", "b"), ("C", "d"), ("D", "d"), ("E", "e"), ("F", "f"),
-    ("G", "g"), ("H", "h"), ("I", "i"), ("J", "j"), ("K", "k"), ("L", "l"),
-    ("M", "m"), ("N", "n"), ("O", "o"), ("P", "p"), ("Q", "q"), ("R", "r"),
-    ("S", "s"), ("T", "t"), ("U", "u"), ("V", "v"), ("W", "w"), ("X", "x"),
-    ("Y", "y"), ("Z", "z")
+# CURRICULUM VOCABULARY LISTS (Core List 1 & List 2)
+HEART_WORDS_LIST = [
+    "a", "the", "am", "at", "as", "to", "do", "I", "is", "was", "you", "and", 
+    "man", "in", "it", "did", "sit", "can", "of", "for", "from", "your", "said", "all",
+    "go", "like", "me", "see", "we", "dad", "mom", "my", "up", "he", "look", "are", 
+    "come", "got", "here", "not", "play", "day", "down", "into", "she", "they", "where", "went", "will"
 ]
 
-VOWEL_GAME_WORDS = [
-    {
-        "word": "GRACYN",
-        "vowels": ["A", "Y"],
-        "breakdown": "• **A**: Standard vowel in the first syllable ('GRA-').<br>• **Y**: Acts as a **vowel** because it makes the short /ih/ or /ee/ sound in '-CYN'.",
-        "why_y": "Y makes a vowel sound in this word, so it counts as a vowel!"
-    },
-    {
-        "word": "SKY",
-        "vowels": ["Y"],
-        "breakdown": "• **Y**: Acts as the **only vowel** in the word, making the long /I/ sound!",
-        "why_y": "Every word needs a vowel. In SKY, Y is the vowel sound!"
-    },
-    {
-        "word": "HAPPY",
-        "vowels": ["A", "Y"],
-        "breakdown": "• **A**: Standard short /a/ vowel in 'HAP-'.<br>• **Y**: Acts as a **vowel** making the long /E/ sound at the end of '-PY'.",
-        "why_y": "At the end of happy words, Y makes the 'ee' vowel sound!"
-    },
-    {
-        "word": "YELLOW",
-        "vowels": ["E", "O"],
-        "breakdown": "• **E**: Standard short /e/ vowel in 'YEL-'.<br>• **O**: Standard long /o/ vowel in '-LOW'.<br>• **Y**: Acts as a **CONSONANT** because it begins the word with the /y/ sound!",
-        "why_y": "Y is NOT a vowel here because it is at the start of the word making its consonant sound."
-    },
-    {
-        "word": "FROG",
-        "vowels": ["O"],
-        "breakdown": "• **O**: Standard short /o/ vowel in the middle of the word.",
-        "why_y": None
-    },
-    {
-        "word": "SUN",
-        "vowels": ["U"],
-        "breakdown": "• **U**: Standard short /u/ vowel in the middle of the word.",
-        "why_y": None
-    },
-    {
-        "word": "APPLE",
-        "vowels": ["A", "E"],
-        "breakdown": "• **A**: Standard short /a/ vowel at the beginning.<br>• **E**: Silent vowel at the end.",
-        "why_y": None
-    },
-    {
-        "word": "TIGER",
-        "vowels": ["I", "E"],
-        "breakdown": "• **I**: Standard long /i/ vowel in 'TI-'.<br>• **E**: Standard vowel in '-GER'.",
-        "why_y": None
-    },
-    {
-        "word": "CANDY",
-        "vowels": ["A", "Y"],
-        "breakdown": "• **A**: Standard short /a/ vowel in 'CAN-'.<br>• **Y**: Acts as a **vowel** making the long /E/ sound at the end of '-DY'.",
-        "why_y": "Y is a vowel here because it makes the 'ee' sound at the end!"
-    },
-    {
-        "word": "YARN",
-        "vowels": ["A"],
-        "breakdown": "• **A**: Standard vowel sound in the middle.<br>• **Y**: Acts as a **CONSONANT** because it starts the word with the /y/ sound.",
-        "why_y": "Y is NOT a vowel here because it begins the word making its consonant sound."
-    }
-]
-
-LADDER_STORIES = {
-    "🐱 The Fat Cat": [
-        "This",
-        "This is",
-        "This is a cat.",
-        "This is a fat cat.",
-        "This fat cat sat on the mat."
-    ],
-    "🐷 The Big Pig": [
-        "I",
-        "I see",
-        "I see a pig.",
-        "I see a big pig.",
-        "I see the big pig dig in mud."
-    ],
-    "🐔 The Red Hen": [
-        "The",
-        "The red",
-        "The red hen",
-        "The red hen has ten",
-        "The red hen has ten eggs in the pen."
-    ],
-    "☀️ The Hot Sun": [
-        "The",
-        "The sun",
-        "The sun is hot.",
-        "We can run in the sun.",
-        "We can run and have fun in the hot sun."
-    ],
-    "🐛 The Little Bug": [
-        "The",
-        "The bug",
-        "The little bug",
-        "The little bug sat",
-        "The little bug sat on the big rug."
-    ]
-}
-
-SOUND_WALL_WORDS = {
-    "/p/ (Lips together, unvoiced)": {
-        "word": "pan",
-        "voice": "OFF (Unvoiced air burst)",
-        "tip": "Press lips together and release a crisp puff of air without vibrating your voice box."
-    },
-    "/b/ (Lips together, voiced)": {
-        "word": "bat",
-        "voice": "ON (Voiced vibration)",
-        "tip": "Press lips together and turn your voice box ON so your throat vibrates."
-    },
-    "/t/ (Tongue tap, unvoiced)": {
-        "word": "top",
-        "voice": "OFF (Unvoiced tap)",
-        "tip": "Tap the tip of your tongue behind your top front teeth with a puff of air."
-    },
-    "/d/ (Tongue tap, voiced)": {
-        "word": "duck",
-        "voice": "ON (Voiced tap)",
-        "tip": "Tap the tip of your tongue behind your front teeth with your voice box buzzing."
-    },
-    "/k/ (Back of tongue, unvoiced)": {
-        "word": "kite",
-        "voice": "OFF (Unvoiced)",
-        "tip": "Push the back of your tongue against the roof of your mouth and release air."
-    },
-    "/m/ (Lips closed, nasal hum)": {
-        "word": "map",
-        "voice": "ON (Nasal Humming)",
-        "tip": "Keep your lips closed and hum gently through your nose."
-    },
-    "/s/ (Air hiss, unvoiced)": {
-        "word": "sun",
-        "voice": "OFF (Unvoiced)",
-        "tip": "Close your teeth lightly and hiss continuous air out like a friendly snake."
-    },
-    "/sh/ (Rounded lips air)": {
-        "word": "ship",
-        "voice": "OFF (Unvoiced)",
-        "tip": "Round your lips forward into a circle and push gentle air through your teeth."
-    }
-}
-
-# --- NEWTON COUNTY HIGH FREQUENCY VOCABULARY LISTS (EXACT CURRICULUM) ---
-SIGHT_WORD_LISTS = {
-    "⭐ Newton County List 1 (19 Words)": [
-        "am", "at", "can", "go", "I", "on", "is", "like", "me", "see", "the", "to", "we", "dad", "in", "it", "mom", "my", "up"
-    ],
-    "🌟 Newton County List 2 (20 Words)": [
-        "he", "look", "and", "are", "come", "for", "got", "here", "not", "play", "said", "you", "day", "down", "into", "she", "they", "where", "went", "will"
-    ]
-}
-
-SYNONYMS_DATA = {
-    "bad": ["awful", "terrible", "horrific", "dreadful"],
-    "big": ["large", "huge", "gigantic", "giant"],
-    "eat": ["gobble", "munch", "chomp", "devour"],
-    "good": ["super", "excellent", "talented", "helpful"],
-    "like": ["love", "enjoy", "adore"],
-    "little": ["small", "tiny", "miniature"],
-    "nice": ["pleasant", "sweet", "delightful"],
-    "pretty": ["beautiful", "cute", "lovely"],
-    "said": ["whispered", "shouted", "cried", "exclaimed"],
-    "saw": ["spotted", "noticed", "observed"]
-}
-
-# --- INITIALIZE QUESTION GENERATORS ---
-def init_rhyme_question():
-    pool = LEVEL_WORDS[st.session_state.level]
-    item = random.choice(pool)
-    correct = random.choice(item["rhymes"])
-    wrong_count = 2 if st.session_state.level == 1 else 3
-    wrongs = random.sample(item["wrong"], wrong_count)
-    opts = wrongs + [correct]
-    random.shuffle(opts)
-    st.session_state.current_rhyme = {
-        "target": item["target"],
-        "correct": correct,
-        "options": opts,
-        "valid_rhymes": item["rhymes"]
-    }
-
-def init_math_question():
-    if st.session_state.level == 1:
-        st.session_state.math_type = "count"
-        st.session_state.current_math_target = random.randint(1, 5)
-        st.session_state.sub_start = 0
-        st.session_state.sub_take = 0
-    elif st.session_state.level == 2:
-        st.session_state.math_type = "add"
-        a = random.randint(1, 5)
-        b = random.randint(1, 4)
-        st.session_state.add_a = a
-        st.session_state.add_b = b
-        st.session_state.current_math_target = a + b
+def award_win(points=10, stars=1):
+    st.session_state.coins += points
+    st.session_state.stars += stars
+    st.session_state.streak += 1
+    st.session_state.questions_done += 1
+    if st.session_state.questions_done % 10 == 0:
+        st.session_state.unlocked_treasure = True
+        st.session_state.celebrate_text = "🎉 10 QUESTIONS COMPLETE! TREASURE BOX UNLOCKED! 🎁"
     else:
-        st.session_state.math_type = "subtract"
-        start = random.randint(4, 9)
-        takeaway = random.randint(1, start - 1)
-        st.session_state.sub_start = start
-        st.session_state.sub_take = takeaway
-        st.session_state.current_math_target = start - takeaway
-
-def init_letter_question():
-    target = random.choice(ALPHABET_PAIRS)
-    other_lowers = [l for u, l in ALPHABET_PAIRS if l != target[1]]
-    distractors = random.sample(other_lowers, 3)
-    opts = distractors + [target[1]]
-    random.shuffle(opts)
-    st.session_state.current_letter_target = target
-    st.session_state.current_letter_options = opts
-
-def init_vowel_word_game():
-    st.session_state.current_vowel_game = random.choice(VOWEL_GAME_WORDS)
-    st.session_state.vowel_submitted = False
-    st.session_state.vowel_explanation = None
-
-if "current_rhyme" not in st.session_state:
-    init_rhyme_question()
-if "current_math_target" not in st.session_state:
-    init_math_question()
-if "current_letter_target" not in st.session_state:
-    init_letter_question()
-if "current_vowel_game" not in st.session_state:
-    init_vowel_word_game()
-
-# --- ADAPTIVE LEVEL PROGRESSION CHECK ---
-if st.session_state.stars >= 5 and st.session_state.level == 1:
-    st.session_state.level = 2
-    log_milestone(st.session_state.student_name, "Level Promotion", "Reached Level 2 (Addition Unlocked)")
-    st.session_state.feedback = {"type": "success", "msg": "🚀 LEVEL UP! You reached Level 2 (Addition Unlocked)!", "celebrate": True}
-    init_rhyme_question()
-    init_math_question()
-elif st.session_state.stars >= 12 and st.session_state.level == 2:
-    st.session_state.level = 3
-    log_milestone(st.session_state.student_name, "Level Promotion", "Reached Level 3 (Subtraction Unlocked)")
-    st.session_state.feedback = {"type": "success", "msg": "👑 MASTER LEVEL! You reached Level 3 (Subtraction Unlocked)!", "celebrate": True}
-    init_rhyme_question()
-    init_math_question()
-
-# --- SIDEBAR NAVIGATION ---
-st.sidebar.title("🎒 Navigation & Profile")
-st.session_state.student_name = st.sidebar.text_input("Student Name:", value=st.session_state.student_name)
-
-nav_options = [
-    "🎵 Rhyme Quest", 
-    "🔢 Ten-Frame Math", 
-    "🔤 Letter Match",
-    "🍎 Vowel Hunter",
-    "🪜 Sentence Ladder Fluency",
-    "🗣️ Sound Wall Lab",
-    "📝 Sentence Scaffolds",
-    "🦸 Super Synonyms",
-    "🗂️ Sight Word Test"
-]
-
-selected_nav = st.sidebar.radio(
-    "Choose Learning Area:", 
-    nav_options, 
-    index=nav_options.index(st.session_state.active_nav) if st.session_state.active_nav in nav_options else 0
-)
-
-if selected_nav != st.session_state.prev_nav:
-    st.session_state.feedback = None
-    st.session_state.active_nav = selected_nav
-    st.session_state.prev_nav = selected_nav
-
-if st.sidebar.button("🔄 Reset All Progress"):
-    st.session_state.xp = 0
-    st.session_state.streak = 0
-    st.session_state.level = 1
-    st.session_state.stars = 0
-    st.session_state.feedback = None
-    st.session_state.ladder_step = 1
-    init_rhyme_question()
-    init_math_question()
-    init_letter_question()
-    init_vowel_word_game()
+        st.session_state.celebrate_text = f"🌟 AWESOME JOB! +{points} Coins, +{stars} Star!"
     st.rerun()
 
-# Top Scoreboard Banner
-st.markdown(f"""
-<div style="background: rgba(245, 158, 11, 0.08); border: 2px solid #f59e0b; padding: 18px; border-radius: 12px; display: flex; justify-content: space-around; align-items: center; margin-bottom: 24px;">
-    <div style="text-align: center;"><span style="font-size: 0.8rem; color: #aaa;">STUDENT LEVEL</span><br><b style="font-size: 1.4rem; color: #f59e0b;">Level {st.session_state.level} {'🌱 (Counting 1-5)' if st.session_state.level==1 else '🌟 (Addition 1-10)' if st.session_state.level==2 else '🚀 (Subtraction 1-10)'}</b></div>
-    <div style="text-align: center;"><span style="font-size: 0.8rem; color: #aaa;">STARS COLLECTED</span><br><b style="font-size: 1.4rem; color: #fbbf24;">⭐ {st.session_state.stars}</b></div>
-    <div style="text-align: center;"><span style="font-size: 0.8rem; color: #aaa;">CURRENT STREAK</span><br><b style="font-size: 1.4rem; color: #34d399;">🔥 {st.session_state.streak}</b></div>
-    <div style="text-align: center;"><span style="font-size: 0.8rem; color: #aaa;">TOTAL XP</span><br><b style="font-size: 1.4rem; color: #38bdf8;">💎 {st.session_state.xp}</b></div>
-</div>
-""", unsafe_allow_html=True)
-
-# One-time feedback display
-if st.session_state.feedback:
-    fb = st.session_state.feedback
-    if fb.get("celebrate"):
-        st.balloons()
-    if fb["type"] == "success":
-        st.success(fb["msg"])
-    else:
-        st.error(fb["msg"])
-    st.session_state.feedback = None
-
-# ==========================================
-# MODULE 1: RHYME QUEST
-# ==========================================
-if st.session_state.active_nav == "🎵 Rhyme Quest":
-    st.subheader(f"Level {st.session_state.level} Rhyme Quest")
-    st.markdown('<div class="instruction-box">👉 <b>Instructions for Kindergartener:</b> Click the sound button under each word to hear how it sounds! Then pick the word that rhymes with the target word and click <b>Submit Rhyme</b>!</div>', unsafe_allow_html=True)
-    
-    q = st.session_state.current_rhyme
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.markdown(f"### Target Word: **{q['target']}**")
-        speak_button(q['target'], label=f"🔊 Say '{q['target']}'")
-    
-    with col2:
-        st.markdown("#### Listen to the choices:")
-        opt_cols = st.columns(len(q["options"]))
-        for i, opt in enumerate(q["options"]):
-            with opt_cols[i]:
-                st.markdown(f"**{opt.upper()}**")
-                speak_button(opt, label=f"🔊 {opt}")
-
-        with st.form("rhyme_form_locked", clear_on_submit=False):
-            selected_rhyme = st.radio("Which word rhymes?", q["options"], key="rhyme_radio_fixed")
-            submit_rhyme = st.form_submit_button("Submit Rhyme 🎯")
-            
-            if submit_rhyme:
-                if selected_rhyme in q["valid_rhymes"]:
-                    st.session_state.stars += 1
-                    st.session_state.streak += 1
-                    st.session_state.xp += 50
-                    log_milestone(st.session_state.student_name, "Rhyme Quest", f"Correct: {q['target']}->{selected_rhyme}")
-                    st.session_state.feedback = {
-                        "type": "success",
-                        "msg": f"🎉 AWESOME JOB! '{q['target']}' and '{selected_rhyme}' rhyme! (+50 XP, +1 ⭐) Here is your next question:",
-                        "celebrate": True
-                    }
-                    init_rhyme_question()
-                    st.rerun()
-                else:
-                    st.session_state.streak = 0
-                    log_milestone(st.session_state.student_name, "Rhyme Quest", f"Missed: {q['target']}->{selected_rhyme}")
-                    st.session_state.feedback = {
-                        "type": "error",
-                        "msg": f"❌ Not quite! Listen closely to the ending sound of '{q['target']}' and try again.",
-                        "celebrate": False
-                    }
-                    st.rerun()
-
-# ==========================================
-# MODULE 2: TEN-FRAME MATH LAB
-# ==========================================
-elif st.session_state.active_nav == "🔢 Ten-Frame Math":
-    st.subheader(f"Level {st.session_state.level} Ten-Frame Math Lab")
-    
-    if st.session_state.level == 1:
-        st.markdown('<div class="instruction-box">👉 <b>Instructions:</b> Count how many <b>yellow counters (🟡)</b> are in the 10-frame. Type your number and click <b>Check Count</b>!</div>', unsafe_allow_html=True)
-        target = st.session_state.current_math_target
-        cells = ["🟡" if i < target else "⬜" for i in range(10)]
-    elif st.session_state.level == 2:
-        st.markdown(f'<div class="instruction-box">👉 <b>Addition Challenge:</b> First we put <b>{st.session_state.add_a}</b> yellow dots (🟡), then we added <b>{st.session_state.add_b}</b> blue dots (🔵). How many dots in total?</div>', unsafe_allow_html=True)
-        target = st.session_state.current_math_target
-        cells = []
-        for i in range(10):
-            if i < st.session_state.add_a:
-                cells.append("🟡")
-            elif i < st.session_state.add_a + st.session_state.add_b:
-                cells.append("🔵")
-            else:
-                cells.append("⬜")
-    else:
-        st.markdown(f'<div class="instruction-box">👉 <b>Subtraction Challenge:</b> We started with <b>{st.session_state.sub_start}</b> dots, but we took away <b>{st.session_state.sub_take}</b> (shown with ❌). Count only the remaining 🟡 dots!</div>', unsafe_allow_html=True)
-        target = st.session_state.current_math_target
-        cells = []
-        for i in range(10):
-            if i < target:
-                cells.append("🟡")
-            elif i < st.session_state.sub_start:
-                cells.append("❌")
-            else:
-                cells.append("⬜")
-
-    r1 = "".join([f"<div class='ten-frame-cell'>{c}</div>" for c in cells[:5]])
-    r2 = "".join([f"<div class='ten-frame-cell'>{c}</div>" for c in cells[5:]])
-    st.markdown(f"<div class='ten-frame-grid'>{r1}{r2}</div>", unsafe_allow_html=True)
-
-    with st.form("math_form_locked", clear_on_submit=False):
-        user_num = st.number_input("What is your answer?", min_value=0, max_value=20, step=1, key="math_input_locked")
-        submit_math = st.form_submit_button("Check Math Answer ✅")
-        
-        if submit_math:
-            if user_num == target:
-                st.session_state.stars += 1
-                st.session_state.streak += 1
-                st.session_state.xp += 50
-                log_milestone(st.session_state.student_name, "Ten-Frame Math", f"Correct Answer: {target}")
-                st.session_state.feedback = {
-                    "type": "success",
-                    "msg": f"🎉 SPOT ON! The answer is {target}! (+50 XP, +1 ⭐) Here is your next math puzzle:",
-                    "celebrate": True
-                }
-                init_math_question()
-                st.rerun()
-            else:
-                st.session_state.streak = 0
-                log_milestone(st.session_state.student_name, "Ten-Frame Math", f"Missed Math: expected {target} got {user_num}")
-                st.session_state.feedback = {
-                    "type": "error",
-                    "msg": "❌ Not quite! Recount the active yellow dots (🟡) and try again.",
-                    "celebrate": False
-                }
-                st.rerun()
-
-# ==========================================
-# MODULE 3: LETTER MATCH
-# ==========================================
-elif st.session_state.active_nav == "🔤 Letter Match":
-    st.subheader(f"Level {st.session_state.level} Uppercase to Lowercase Match")
-    st.markdown('<div class="instruction-box">👉 <b>Instructions:</b> Look at the BIG uppercase letter. Listen to the small lowercase choices below, select the matching partner, and click <b>Check Letter</b>!</div>', unsafe_allow_html=True)
-    
-    target_pair = st.session_state.current_letter_target
-    options = st.session_state.current_letter_options
-    
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.markdown(f'<div class="letter-card">{target_pair[0]}</div>', unsafe_allow_html=True)
-        speak_button(f"Uppercase letter {target_pair[0]}", label=f"🔊 Say '{target_pair[0]}'")
-    
-    with col2:
-        st.markdown("#### Listen to the lowercase options:")
-        opt_cols = st.columns(len(options))
-        for i, opt in enumerate(options):
-            with opt_cols[i]:
-                st.markdown(f"<div style='font-size:1.8rem; font-weight:bold; color:#38bdf8;'>{opt}</div>", unsafe_allow_html=True)
-                speak_button(f"Lowercase {opt}", label=f"🔊 {opt}")
-
-        with st.form("letter_form_locked", clear_on_submit=False):
-            user_char = st.radio("Which lowercase letter matches?", options, horizontal=True, key="letter_radio_opt")
-            submit_let = st.form_submit_button("Check Letter 🔤")
-            
-            if submit_let:
-                if user_char == target_pair[1]:
-                    st.session_state.stars += 1
-                    st.session_state.streak += 1
-                    st.session_state.xp += 50
-                    log_milestone(st.session_state.student_name, "Letter Match", f"Matched: {target_pair[0]}->{target_pair[1]}")
-                    st.session_state.feedback = {
-                        "type": "success",
-                        "msg": f"🎉 PERFECT! Big '{target_pair[0]}' pairs with little '{target_pair[1]}'! (+50 XP, +1 ⭐) Ready for the next letter:",
-                        "celebrate": True
-                    }
-                    init_letter_question()
-                    st.rerun()
-                else:
-                    st.session_state.streak = 0
-                    log_milestone(st.session_state.student_name, "Letter Match", f"Missed: {target_pair[0]} picked {user_char}")
-                    st.session_state.feedback = {
-                        "type": "error",
-                        "msg": f"❌ Look closely! Big '{target_pair[0]}' pairs with lowercase '{target_pair[1]}'. Try another one!",
-                        "celebrate": False
-                    }
-                    st.rerun()
-
-# ==========================================
-# MODULE 4: VOWEL HUNTER LAB
-# ==========================================
-elif st.session_state.active_nav == "🍎 Vowel Hunter":
-    st.subheader("🍎 Interactive Vowel Hunter Lab")
-    st.markdown("""
-    <div class="instruction-box">
-        👉 <b>What are Vowels?</b> The vowels are <b>A, E, I, O, U</b> — and <b>SOMETIMES Y</b>!
-        <br>💡 <b>When is Y a Vowel?</b>
-        <ul>
-            <li><b>Y is a VOWEL</b> when it is in the middle or end of a word making a vowel sound like <i>'ee'</i> or <i>'eye'</i> (such as in <b>GRACYN</b>, <b>RUBY</b>, or <b>SKY</b>).</li>
-            <li><b>Y is a CONSONANT</b> when it begins a word or syllable making the <i>/y/</i> sound (such as in <b>YELLOW</b> or <b>YOYO</b>).</li>
-        </ul>
+# --- TOP HUD HEADER ---
+hud_col1, hud_col2, hud_col3 = st.columns([1.5, 2.5, 1.5])
+with hud_col1:
+    st.markdown(f"""
+    <div style="display:flex; align-items:center; gap:12px;">
+        <div style="font-size:3.5rem; background:{st.session_state.avatar_bg}; border-radius:50%; border:3px solid #38bdf8; width:70px; height:70px; display:flex; align-items:center; justify-content:center;">
+            {st.session_state.avatar_head}
+        </div>
+        <div>
+            <b style="font-size:1.4rem; color:#1e293b;">Gracyn's Quest</b><br>
+            <span style="color:#0284c7; font-weight:700;">Level {st.session_state.level} Superstar</span>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    v_game_tab, v_name_tab, v_audio_tab = st.tabs([
-        "🎮 Vowel Hunt Game & Explanation", 
-        "👧 Analyze My Name (Gracyn)", 
-        "🔊 Short vs. Long Vowel Sounds"
-    ])
-    
-    with v_game_tab:
-        vg = st.session_state.current_vowel_game
-        st.markdown(f'<div class="word-card">{vg["word"]}</div>', unsafe_allow_html=True)
-        speak_button(f"The word is {vg['word']}", label=f"🔊 Hear '{vg['word']}'")
-        
-        st.markdown("#### Check ALL the vowels inside this word:")
-        
-        with st.form("vowel_hunt_form", clear_on_submit=False):
-            c_a, c_e, c_i, c_o, c_u, c_y = st.columns(6)
-            check_a = c_a.checkbox("A")
-            check_e = c_e.checkbox("E")
-            check_i = c_i.checkbox("I")
-            check_o = c_o.checkbox("O")
-            check_u = c_u.checkbox("U")
-            check_y = c_y.checkbox("Y (Sometimes)")
-            
-            submit_vowels = st.form_submit_button("Check Vowels & Explain 🎯")
-            
-            if submit_vowels:
-                user_selected = []
-                if check_a: user_selected.append("A")
-                if check_e: user_selected.append("E")
-                if check_i: user_selected.append("I")
-                if check_o: user_selected.append("O")
-                if check_u: user_selected.append("U")
-                if check_y: user_selected.append("Y")
-                
-                correct_vowels = sorted(vg["vowels"])
-                user_selected_sorted = sorted(user_selected)
-                
-                st.session_state.vowel_submitted = True
-                is_correct = (user_selected_sorted == correct_vowels)
-                
-                if is_correct:
-                    st.session_state.stars += 1
-                    st.session_state.streak += 1
-                    st.session_state.xp += 50
-                    log_milestone(st.session_state.student_name, "Vowel Hunt", f"Found vowels in: {vg['word']}")
-                    st.session_state.vowel_explanation = {
-                        "status": "correct",
-                        "title": f"🎉 SPOT ON! The vowels in {vg['word']} are: {', '.join(correct_vowels)}!",
-                        "breakdown": vg["breakdown"],
-                        "why_y": vg.get("why_y")
-                    }
-                else:
-                    st.session_state.streak = 0
-                    log_milestone(st.session_state.student_name, "Vowel Hunt", f"Missed vowels in: {vg['word']}")
-                    st.session_state.vowel_explanation = {
-                        "status": "incorrect",
-                        "title": f"💡 Let's Learn: The vowels in {vg['word']} are actually: {', '.join(correct_vowels)}!",
-                        "breakdown": vg["breakdown"],
-                        "why_y": vg.get("why_y")
-                    }
-                st.rerun()
+with hud_col2:
+    progress_val = (st.session_state.questions_done % 10) / 10.0
+    st.progress(progress_val)
+    st.markdown(f"<div style='text-align:center; font-weight:700; color:#0369a1;'>🎯 {st.session_state.questions_done % 10}/10 to Open Treasure Box! (Streak: 🔥 {st.session_state.streak})</div>", unsafe_allow_html=True)
 
-        if st.session_state.vowel_submitted and st.session_state.vowel_explanation:
-            exp = st.session_state.vowel_explanation
-            if exp["status"] == "correct":
-                st.balloons()
-            
-            st.markdown(f"""
-            <div class="explain-card">
-                <h3>{exp['title']}</h3>
-                <h4>📖 Phonics Explanation:</h4>
-                <p>{exp['breakdown']}</p>
-                {f"<p><b>🌟 The 'Y' Rule for this word:</b> {exp['why_y']}</p>" if exp.get('why_y') else ""}
-            </div>
-            """, unsafe_allow_html=True)
-            
-            if st.button("➡️ Next Vowel Word 🎯"):
-                init_vowel_word_game()
-                st.rerun()
+with hud_col3:
+    c_coin, c_star = st.columns(2)
+    c_coin.markdown(f"<div class='badge-pill'>🪙 {st.session_state.coins}</div>", unsafe_allow_html=True)
+    c_star.markdown(f"<div class='badge-pill'>⭐ {st.session_state.stars}</div>", unsafe_allow_html=True)
 
-    with v_name_tab:
-        st.markdown(f"### 🔍 Vowel Breakdown for: **{st.session_state.student_name}**")
-        name_clean = st.session_state.student_name.upper().strip()
-        
-        found_standard = [c for c in name_clean if c in "AEIOU"]
-        has_y = "Y" in name_clean
-        
-        st.markdown(f"- Standard Vowels (A, E, I, O, U): **{', '.join(set(found_standard)) if found_standard else 'None'}**")
-        
-        if has_y:
-            if not name_clean.startswith("Y"):
-                st.success(f"⭐ **Y is acting as a VOWEL in {name_clean}!** Because it is inside the name making the short /ih/ or /ee/ sound, **{name_clean} has {len(found_standard) + name_clean.count('Y')} total vowels**: `{' + '.join(set(found_standard + ['Y']))}`!")
-            else:
-                st.info(f"In **{name_clean}**, Y starts the name, so it functions as a **consonant**.")
-        else:
-            st.write(f"- Total vowels in name: **{len(found_standard)}**")
-        
-        st.write("---")
-        custom_input = st.text_input("Type any other name or word to test:", "Gracyn")
-        if custom_input:
-            cw = custom_input.upper().strip()
-            cw_std = [c for c in cw if c in "AEIOU"]
-            cw_y = "Y" in cw
-            st.write(f"Vowel breakdown for **{cw}**:")
-            if cw_y and not cw.startswith("Y"):
-                st.write(f"• Includes **A,E,I,O,U**: `{', '.join(set(cw_std)) if cw_std else 'None'}`")
-                st.write(f"• Includes **Y as a vowel**: `Yes` (makes a vowel sound in this position)")
-                st.success(f"Total vowels in **{cw}**: **{len(cw_std) + cw.count('Y')}**")
-            else:
-                st.write(f"• Standard Vowels: `{', '.join(set(cw_std)) if cw_std else 'None'}`")
-                st.write(f"• Y included as vowel: `{'No (Consonant position)' if cw.startswith('Y') else 'No Y in word'}`")
-                st.success(f"Total vowels in **{cw}**: **{len(cw_std)}**")
+if st.session_state.unlocked_treasure:
+    st.balloons()
+    st.success("🎁 TREASURE BOX OPEN! Head to the Avatar Closet to spend your coins!")
 
-    with v_audio_tab:
-        vowel_choice = st.selectbox("Select a Vowel:", ["A (Short: Apple | Long: Acorn)", "E (Short: Egg | Long: Eagle)", "I (Short: Igloo | Long: Ice)", "O (Short: Octopus | Long: Ocean)", "U (Short: Umbrella | Long: Unicorn)", "Y (Vowel sound: Sky & Happy)"])
-        v_letter = vowel_choice[0]
-        speak_button(f"The letter {v_letter}. Short sound is {v_letter} like apple. Long sound is {v_letter} like acorn.", label=f"🔊 Listen to Vowel '{v_letter}' Sounds")
+# --- GAME SELECTOR TABS ---
+st.markdown("---")
+game_modes = [
+    "📖 Heart Words",
+    "📚 Parts of a Book",
+    "🕵️ Number Detective (18 & Beyond)",
+    "🔤 Letter I-Spy",
+    "🍁 Seasons & Nature Quest",
+    "➕ Kumon Math Challenge",
+    "🎁 Treasure Closet"
+]
+active_game = st.selectbox("🎮 Choose an Adventure Game:", game_modes, index=game_modes.index(st.session_state.current_game))
+st.session_state.current_game = active_game
 
 # ==========================================
-# MODULE 5: SENTENCE LADDER FLUENCY
+# 1. HEART WORDS: READ, TRACE, WRITE & SAY
 # ==========================================
-elif st.session_state.active_nav == "🪜 Sentence Ladder Fluency":
-    st.subheader("🪜 Sentence Ladder Fluency Reader")
+if active_game == "📖 Heart Words":
     st.markdown("""
-    <div class="instruction-box">
-        👉 <b>How to Practice:</b> 
-        1. Click <b>🔊 Listen</b> to hear the goal sentence.
-        2. Click <b>🎙️ Tap to Speak</b> and read the phrase aloud.
-        3. Watch for the 🎈 celebration, then click <b>⭐ Verified! Next Step</b> to climb the ladder!
+    <div class="game-board">
+        <div class="game-title">💖 Heart Word Explorer</div>
+        <div class="game-subtitle">Sight words you have to know by heart! Read it, trace it, write it, and say it loud!</div>
     </div>
     """, unsafe_allow_html=True)
 
-    story_name = st.selectbox("Choose a Sentence Ladder Story:", list(LADDER_STORIES.keys()))
-    ladder_steps = LADDER_STORIES[story_name]
-    max_step = len(ladder_steps)
-    current_idx = min(st.session_state.ladder_step - 1, max_step - 1)
-    current_phrase = ladder_steps[current_idx]
+    if "current_hw" not in st.session_state:
+        st.session_state.current_hw = random.choice(HEART_WORDS_LIST)
 
-    st.markdown(f"### 🪜 Ladder Step {current_idx + 1} of {max_step}:")
-    st.markdown(f'<div class="ladder-card">{current_phrase}</div>', unsafe_allow_html=True)
+    word = st.session_state.current_hw
+    col_w1, col_w2 = st.columns([1, 1.2])
 
-    col_tts, col_rec = st.columns([1, 2])
-    with col_tts:
-        speak_button(current_phrase, label=f"🔊 Hear '{current_phrase}'")
-    
-    with col_rec:
-        mic_checker_component(current_phrase)
-
-    st.write("---")
-    
-    c_verify, c_restart, _ = st.columns([2, 1, 2])
-    with c_verify:
-        if current_idx < max_step - 1:
-            if st.button("⭐ Verified! Next Step (+50 XP, +1 ⭐) ➡️"):
-                st.session_state.stars += 1
-                st.session_state.streak += 1
-                st.session_state.xp += 50
-                log_milestone(st.session_state.student_name, "Sentence Ladder", f"Read Step {current_idx+1}: {current_phrase}")
-                st.session_state.ladder_step += 1
-                st.session_state.feedback = {
-                    "type": "success",
-                    "msg": f"🎉 EXCELLENT READING! '{current_phrase}' was read correctly! (+50 XP, +1 ⭐) Moving to Step {st.session_state.ladder_step}...",
-                    "celebrate": True
-                }
-                st.rerun()
-        else:
-            if st.button("👑 Finished Entire Story! (+100 XP, +2 ⭐) 🎉"):
-                st.session_state.stars += 2
-                st.session_state.streak += 1
-                st.session_state.xp += 100
-                log_milestone(st.session_state.student_name, "Sentence Ladder", f"Mastered Whole Story: {story_name}")
-                st.session_state.feedback = {
-                    "type": "success",
-                    "msg": f"🏆 STORY MASTER! You read all steps of '{story_name}' aloud perfectly! (+100 XP, +2 ⭐)",
-                    "celebrate": True
-                }
-                st.session_state.ladder_step = 1
-                st.rerun()
-
-    with c_restart:
-        if st.button("🔄 Restart Story"):
-            st.session_state.ladder_step = 1
-            st.session_state.feedback = None
-            st.rerun()
-
-# ==========================================
-# MODULE 6: SOUND WALL LAB
-# ==========================================
-elif st.session_state.active_nav == "🗣️ Sound Wall Lab":
-    st.subheader("🗣️ Kindergarten Personal Sound Wall & Speech Lab")
-    st.markdown("""
-    <div class="instruction-box">
-        👉 <b>How to Practice:</b> 
-        1. <b>Hear Word:</b> Click the blue button to hear the target word pronounced cleanly. 
-        2. <b>Say It:</b> Click <b>🎙️ Tap to Speak</b> and pronounce the word into your microphone!
-    </div>
-    """, unsafe_allow_html=True)
-
-    choice = st.selectbox("Select Target Sound:", list(SOUND_WALL_WORDS.keys()))
-    s_info = SOUND_WALL_WORDS[choice]
-
-    col_profile, col_audio = st.columns([1, 1])
-    with col_profile:
+    with col_w1:
         st.markdown(f"""
-        <div class="card-box">
-            <h4>👄 Sound Profile: <code>{choice.split()[0]}</code></h4>
-            <p><b>Target Word:</b> ✨ <b style="font-size: 1.8rem; color: #38bdf8;">{s_info['word'].upper()}</b></p>
-            <p><b>Voice Box Status:</b> <code>{s_info['voice']}</code></p>
-            <p><b>Mouth Gesture Tip:</b> {s_info['tip']}</p>
+        <div style="background:#fef2f2; border:5px solid #f87171; border-radius:30px; padding:30px; text-align:center; margin-bottom:15px;">
+            <div style="font-size:1.8rem; color:#ef4444; font-weight:800;">❤️ HEART WORD:</div>
+            <div style="font-size:5rem; font-weight:900; color:#dc2626; letter-spacing:6px;">{word.upper()}</div>
         </div>
         """, unsafe_allow_html=True)
-        speak_button(s_info['word'], label=f"🔊 Hear Word '{s_info['word'].upper()}'")
+        mic_speaker_box(word)
 
-    with col_audio:
-        st.markdown("#### 🎙️ Student Speaking Practice:")
-        st.write(f"Say **'{s_info['word'].upper()}'** into your microphone:")
-        mic_checker_component(s_info["word"])
+    with col_w2:
+        st.markdown("#### ✏️ Trace & Write with Your Finger / Stylus:")
+        kid_canvas(word.upper())
         
-        if st.button(f"⭐ Add Stars for '{s_info['word'].upper()}' (+50 XP, +1 ⭐)"):
-            st.session_state.stars += 1
-            st.session_state.streak += 1
-            st.session_state.xp += 50
-            log_milestone(st.session_state.student_name, "Sound Wall", f"Mastered: {s_info['word']}")
-            st.session_state.feedback = {
-                "type": "success",
-                "msg": f"🎉 AWESOME! You practiced '{s_info['word'].upper()}'! (+50 XP, +1 ⭐)",
-                "celebrate": True
-            }
-            st.rerun()
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("🌟 I Mastered This Word! (+10 🪙)", use_container_width=True):
+                log_progress("Heart Word", f"Mastered {word}")
+                st.session_state.current_hw = random.choice(HEART_WORDS_LIST)
+                award_win(10, 1)
+        with c2:
+            if st.button("➡️ Next Word 🎲", use_container_width=True):
+                st.session_state.current_hw = random.choice(HEART_WORDS_LIST)
+                st.rerun()
 
 # ==========================================
-# MODULE 7: WRITING SCAFFOLDS
+# 2. PARTS OF A BOOK (i-Ready Kindergarten Reading)
 # ==========================================
-elif st.session_state.active_nav == "📝 Sentence Scaffolds":
-    st.subheader("📝 Kindergarten Interactive Sentence Scaffolds")
+elif active_game == "📚 Parts of a Book":
     st.markdown("""
-    <div class="instruction-box">
-        👉 <b>How Kindergarteners Build a 5-Star Sentence:</b>
-        Every good sentence starts with a <b>Capital letter</b>, has <b>Finger spaces</b> between words, and ends with a <b>Period (.)</b>!
+    <div class="game-board">
+        <div class="game-title">📚 Parts of a Book Detective</div>
+        <div class="game-subtitle">Tap the matching part of the book to help Chickie get ready to read!</div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("### 🧩 Build-A-Sentence Activity")
-    who = st.selectbox("Who is in the story? (Noun):", ["The cute puppy", "My big brother", "The happy frog", "Gracyn"])
-    did_what = st.selectbox("What did they do? (Verb):", ["ran quickly", "jumped high", "read a book", "ate sweet apples"])
-    where = st.selectbox("Where were they? (Setting):", ["in the green park.", "at kindergarten school.", "under the tall tree."])
+    book_questions = [
+        {"q": "Where is the FRONT COVER that protects the book?", "correct": "Front Cover", "opts": ["Front Cover", "Spine", "Back Cover", "Page Numbers"], "desc": "The front cover welcomes you to the story!"},
+        {"q": "What tells you what the book is called?", "correct": "The Title", "opts": ["The Title", "The Barcode", "The Spine", "The Illustrator"], "desc": "The Title is the name of the book!"},
+        {"q": "Who WRITES the words in the book?", "correct": "The Author", "opts": ["The Author", "The Illustrator", "The Character", "The Reader"], "desc": "The Author writes all the wonderful words!"},
+        {"q": "Who DRAWS the colorful pictures in the book?", "correct": "The Illustrator", "opts": ["The Illustrator", "The Author", "The Library", "The Teacher"], "desc": "The Illustrator creates the artwork!"},
+        {"q": "What holds the pages together tightly like your backbone?", "correct": "The Spine", "opts": ["The Spine", "The Cover", "The Bookmark", "The Glue"], "desc": "The spine connects and holds all the pages!"}
+    ]
 
-    built_sentence = f"{who} {did_what} {where}"
-    st.success(f"**Your Complete Sentence:** {built_sentence}")
-    speak_button(built_sentence, label="🔊 Hear Your Sentence Read Aloud")
+    if "book_q_idx" not in st.session_state:
+        st.session_state.book_q_idx = 0
 
-    st.markdown("#### ✅ Sentence Quality Checklist:")
-    c1, c2, c3 = st.columns(3)
-    c1.checkbox("Capital letter at the start", value=True)
-    c2.checkbox("Finger spaces used", value=True)
-    c3.checkbox("Punctuation mark at the end (.)", value=True)
+    bq = book_questions[st.session_state.book_q_idx % len(book_questions)]
+    
+    st.markdown(f"""
+    <div style="background:#eff6ff; border:4px solid #3b82f6; border-radius:24px; padding:24px; text-align:center; font-size:1.8rem; font-weight:800; color:#1e40af; margin-bottom:20px;">
+        ❓ {bq['q']}
+    </div>
+    """, unsafe_allow_html=True)
+
+    b_cols = st.columns(2)
+    for i, opt in enumerate(bq["opts"]):
+        with b_cols[i % 2]:
+            if st.button(f"👉 {opt}", key=f"bk_{opt}", use_container_width=True):
+                if opt == bq["correct"]:
+                    st.balloons()
+                    st.success(f"🎉 CORRECT! {bq['desc']}")
+                    log_progress("Parts of Book", f"Correct: {opt}")
+                    st.session_state.book_q_idx += 1
+                    award_win(15, 1)
+                else:
+                    st.error("❌ Try again! Think about what holds or names the book!")
 
 # ==========================================
-# MODULE 8: SUPER SYNONYMS
+# 3. NUMBER DETECTIVE: REPRESENTING 18 & BEYOND
 # ==========================================
-elif st.session_state.active_nav == "🦸 Super Synonyms":
-    st.subheader("🦸 Super Synonyms & Sentence Stretcher")
-    st.markdown('<div class="instruction-box">👉 <b>Instructions:</b> Trade boring, tired words for powerful words! Click any upgraded synonym to hear how it sounds in a sentence.</div>', unsafe_allow_html=True)
+elif active_game == "🕵️ Number Detective (18 & Beyond)":
+    st.markdown("""
+    <div class="game-board">
+        <div class="game-title">🕵️ Number Detective: Target 18!</div>
+        <div class="game-subtitle">Numbers can hide in tens frames, tallies, blocks, and addition! Spot the TRUE 18s!</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    base = st.selectbox("Pick a simple word to upgrade:", list(SYNONYMS_DATA.keys()))
-    syns = SYNONYMS_DATA[base]
+    st.markdown("""
+    <div style="background:#fef3c7; border:4px solid #f59e0b; border-radius:24px; padding:18px; text-align:center; font-size:3rem; font-weight:900; color:#b45309; margin-bottom:20px;">
+        🎯 TARGET NUMBER: 18 (Eighteen)
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown(f"### Super Words for **{base.upper()}**:")
-    cols = st.columns(len(syns))
-    for idx, s in enumerate(syns):
+    # 4 Cards for Gracyn to inspect
+    c1, c2 = st.columns(2)
+    c3, c4 = st.columns(2)
+
+    with c1:
+        st.markdown("""
+        <div style="background:#ffffff; border:3px solid #60a5fa; border-radius:20px; padding:16px; text-align:center;">
+            <b>Double Ten-Frame:</b><br>
+            [ 🟡 🟡 🟡 🟡 🟡 ] [ 🟡 🟡 🟡 🟡 🟡 ] (10)<br>
+            [ 🟡 🟡 🟡 🟡 🟡 ] [ 🟡 🟡 🟡 ⬜ ⬜ ] (8)<br>
+            <div style="font-size:1.2rem; color:#2563eb; font-weight:bold;">10 + 8</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("✅ Yes, this is 18!", key="tenframe_18"):
+            st.balloons()
+            st.success("🌟 YES! 1 full ten frame + 8 more counters = 18!")
+            award_win(10, 1)
+
+    with c2:
+        st.markdown("""
+        <div style="background:#ffffff; border:3px solid #60a5fa; border-radius:20px; padding:16px; text-align:center;">
+            <b>Base Ten Rods & Cubes:</b><br>
+            🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦 (1 Rod = 10)<br>
+            🟩 🟩 🟩 🟩 🟩 🟩 🟩 🟩 (8 ones)<br>
+            <div style="font-size:1.2rem; color:#2563eb; font-weight:bold;">1 Ten and 8 Ones</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("✅ Yes, this is 18!", key="base10_18"):
+            st.balloons()
+            st.success("🌟 YES! 1 Ten block and 8 One cubes make 18!")
+            award_win(10, 1)
+
+    with c3:
+        st.markdown("""
+        <div style="background:#ffffff; border:3px solid #f87171; border-radius:20px; padding:16px; text-align:center;">
+            <b>Cookie Jars:</b><br>
+            🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪 (10 cookies)<br>
+            🍪🍪🍪🍪 (4 cookies)<br>
+            <div style="font-size:1.2rem; color:#dc2626; font-weight:bold;">10 + 4</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Is this 18? 🤔", key="jars_14"):
+            st.error("❌ Count carefully! 10 + 4 is 14, not 18!")
+
+    with c4:
+        st.markdown("""
+        <div style="background:#ffffff; border:3px solid #60a5fa; border-radius:20px; padding:16px; text-align:center;">
+            <b>Tally Marks:</b><br>
+            卌 卌 卌 |||<br>
+            (5 + 5 + 5 + 3)<br>
+            <div style="font-size:1.2rem; color:#2563eb; font-weight:bold;">15 + 3</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("✅ Yes, this is 18!", key="tally_18"):
+            st.balloons()
+            st.success("🌟 YES! 5 + 5 + 5 is 15, plus 3 tallies makes 18!")
+            award_win(10, 1)
+
+# ==========================================
+# 4. LETTER I-SPY: UPPERCASE & LOWERCASE
+# ==========================================
+elif active_game == "🔤 Letter I-Spy":
+    st.markdown("""
+    <div class="game-board">
+        <div class="game-title">🔍 Letter I-Spy Safari</div>
+        <div class="game-subtitle">Find and tap all the lowercase matches to help the baby letters find their mommas!</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    pairs = [("G", "g"), ("B", "b"), ("D", "d"), ("M", "m"), ("R", "r"), ("E", "e"), ("A", "a")]
+    if "ispy_pair" not in st.session_state:
+        st.session_state.ispy_pair = random.choice(pairs)
+
+    big, small = st.session_state.ispy_pair
+
+    st.markdown(f"""
+    <div style="background:#fdf2f8; border:4px dashed #ec4899; border-radius:24px; padding:20px; text-align:center; font-size:2.8rem; font-weight:900; color:#db2777; margin-bottom:20px;">
+        I SPY THE BIG LETTER: <span style="font-size:4rem; color:#be185d;">{big}</span><br>
+        <span style="font-size:1.4rem; color:#475569;">Tap the lowercase baby letter partner:</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Distractors
+    other_letters = [l for _, l in pairs if l != small]
+    choices = random.sample(other_letters, 3) + [small]
+    random.shuffle(choices)
+
+    cols = st.columns(4)
+    for idx, c in enumerate(choices):
         with cols[idx]:
-            st.markdown(f"✨ **{s.upper()}**")
-            speak_button(f"Instead of {base}, we can say {s}.", label=f"🔊 {s}")
+            if st.button(f"🎈 {c}", key=f"ispy_{c}_{idx}", use_container_width=True):
+                if c == small:
+                    st.balloons()
+                    st.success(f"🎉 BINGO! Big {big} matches baby {small}!")
+                    log_progress("Letter ISpy", f"Matched {big} to {small}")
+                    st.session_state.ispy_pair = random.choice(pairs)
+                    award_win(10, 1)
+                else:
+                    st.error(f"❌ That's '{c}'. Look for '{small}'!")
 
 # ==========================================
-# MODULE 9: SIGHT WORD TEST (NEWTON COUNTY HIGH FREQUENCY VOCABULARY)
+# 5. SEASONS & NATURE QUEST
 # ==========================================
-elif st.session_state.active_nav == "🗂️ Sight Word Test":
-    st.subheader("🗂️ Newton County Sight Word Reading Test")
+elif active_game == "🍁 Seasons & Nature Quest":
     st.markdown("""
-    <div class="instruction-box">
-        👉 <b>Instructions:</b> Practicing <b>Newton County High Frequency Vocabulary</b>. 
-        Look at the word on the card, click <b>🎙️ Tap to Speak</b> and read it into your microphone!
+    <div class="game-board">
+        <div class="game-title">🍂 Seasons & Weather Weather-Caster</div>
+        <div class="game-subtitle">Look at the weather clue and pick the right season!</div>
     </div>
     """, unsafe_allow_html=True)
 
-    selected_list = st.selectbox("Choose Sight Word List:", list(SIGHT_WORD_LISTS.keys()), index=0)
-    word_bank = SIGHT_WORD_LISTS[selected_list]
+    season_questions = [
+        {"clue": "🎃 Leaves turn red, yellow, and brown and fall to the ground. We wear warm sweaters!", "ans": "Fall / Autumn", "opts": ["Fall / Autumn", "Summer", "Spring", "Winter"]},
+        {"clue": "❄️ It is freezing cold, snow falls, and we build snowmen and wear mittens!", "ans": "Winter", "opts": ["Winter", "Spring", "Summer", "Fall"]},
+        {"clue": "🌸 Flowers begin to bloom, baby birds hatch, and rain helps the green grass grow!", "ans": "Spring", "opts": ["Spring", "Winter", "Fall", "Summer"]},
+        {"clue": "☀️ It is hot and sunny! We go swimming in the pool and eat cold watermelon!", "ans": "Summer", "opts": ["Summer", "Winter", "Spring", "Fall"]}
+    ]
 
-    if "current_sight_word" not in st.session_state or st.session_state.current_sight_word not in word_bank:
-        st.session_state.current_sight_word = random.choice(word_bank)
+    if "season_idx" not in st.session_state:
+        st.session_state.season_idx = 0
 
-    sw = st.session_state.current_sight_word
-    col_x, col_y = st.columns([1, 2])
-    with col_x:
-        st.markdown(f'<div class="letter-card" style="font-size:3.2rem; width:220px; color:#fbbf24;">{sw}</div>', unsafe_allow_html=True)
-        speak_button(sw, label=f"🔊 Pronounce '{sw}'")
+    sq = season_questions[st.session_state.season_idx % len(season_questions)]
+    st.markdown(f"""
+    <div style="background:#f0fdf4; border:4px solid #22c55e; border-radius:24px; padding:24px; text-align:center; font-size:1.8rem; font-weight:800; color:#166534; margin-bottom:20px;">
+        {sq['clue']}
+    </div>
+    """, unsafe_allow_html=True)
 
-    with col_y:
-        st.markdown("#### 🎙️ Speech Mic Check:")
-        mic_checker_component(sw)
-        
-        c_yes, c_next = st.columns(2)
-        with c_yes:
-            if st.button("⭐ Verified & Mastered (+50 XP, +1 ⭐)"):
-                st.session_state.stars += 1
-                st.session_state.streak += 1
-                st.session_state.xp += 50
-                log_milestone(st.session_state.student_name, "Sight Word Test", f"Mastered {selected_list}: {sw}")
-                st.session_state.feedback = {
-                    "type": "success",
-                    "msg": f"🎉 AWESOME! You read '{sw}' correctly! (+50 XP, +1 ⭐)",
-                    "celebrate": True
-                }
-                st.session_state.current_sight_word = random.choice(word_bank)
-                st.rerun()
-        with c_next:
-            if st.button("➡️ Next Word"):
-                st.session_state.feedback = None
-                st.session_state.current_sight_word = random.choice(word_bank)
-                st.rerun()
+    scols = st.columns(2)
+    for i, opt in enumerate(sq["opts"]):
+        with scols[i % 2]:
+            if st.button(f"🌤️ {opt}", key=f"s_{opt}", use_container_width=True):
+                if opt == sq["ans"]:
+                    st.balloons()
+                    st.success(f"🎉 CORRECT! That is what happens in {opt}!")
+                    log_progress("Seasons", f"Correct: {opt}")
+                    st.session_state.season_idx += 1
+                    award_win(15, 1)
+                else:
+                    st.error("❌ Not quite! Think about the temperature and nature clues!")
+
+# ==========================================
+# 6. KUMON MATH CHALLENGE (BEYOND 10)
+# ==========================================
+elif active_game == "➕ Kumon Math Challenge":
+    st.markdown("""
+    <div class="game-board">
+        <div class="game-title">🧮 Kumon Speed Math: Beyond 10!</div>
+        <div class="game-subtitle">Solve the math problem using blocks to power up your brain!</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if "math_q" not in st.session_state:
+        # Generate addition or subtraction beyond 10
+        is_add = random.choice([True, False])
+        if is_add:
+            a = random.randint(7, 12)
+            b = random.randint(3, 8)
+            st.session_state.math_q = {"a": a, "b": b, "op": "+", "ans": a + b}
+        else:
+            total = random.randint(12, 19)
+            sub = random.randint(3, 7)
+            st.session_state.math_q = {"a": total, "b": sub, "op": "-", "ans": total - sub}
+
+    mq = st.session_state.math_q
+
+    st.markdown(f"""
+    <div style="background:#faf5ff; border:5px solid #a855f7; border-radius:28px; padding:24px; text-align:center; font-size:4.5rem; font-weight:900; color:#7e22ce; margin-bottom:20px;">
+        {mq['a']} {mq['op']} {mq['b']} = ?
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Visual aids
+    if mq["op"] == "+":
+        st.markdown(f"<div style='text-align:center; font-size:1.5rem; margin-bottom:15px;'>{'🟦 ' * mq['a']} + {'🟨 ' * mq['b']}</div>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<div style='text-align:center; font-size:1.5rem; margin-bottom:15px;'>{'🟦 ' * mq['ans']} {'❌ ' * mq['b']}</div>", unsafe_allow_html=True)
+
+    wrong1 = mq["ans"] + random.choice([-2, -1, 1, 2])
+    wrong2 = mq["ans"] + random.choice([-3, 3])
+    opts = list(set([mq["ans"], wrong1, wrong2]))
+    random.shuffle(opts)
+
+    mcols = st.columns(len(opts))
+    for i, opt in enumerate(opts):
+        with mcols[i]:
+            if st.button(f"🔢 {opt}", key=f"ans_{opt}", use_container_width=True):
+                if opt == mq["ans"]:
+                    st.balloons()
+                    st.success(f"🎉 BRAVO! {mq['a']} {mq['op']} {mq['b']} is {mq['ans']}!")
+                    log_progress("Kumon Math", f"Solved {mq['a']} {mq['op']} {mq['b']} = {mq['ans']}")
+                    del st.session_state.math_q
+                    award_win(15, 1)
+                else:
+                    st.error("❌ Recount the blocks and try again!")
+
+# ==========================================
+# 7. TREASURE CLOSET & AVATAR DRESS-UP
+# ==========================================
+elif active_game == "🎁 Treasure Closet":
+    st.markdown("""
+    <div class="game-board">
+        <div class="game-title">🛍️ Gracyn's Treasure Closet & Arcade</div>
+        <div class="game-subtitle">Spend your hard-earned Coins on cool hats, cute pet companions, and colorful stages!</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="avatar-preview" style="background:{st.session_state.avatar_bg};">
+        {st.session_state.avatar_head}
+    </div>
+    <div style="font-size:1.5rem; font-weight:800; color:#0369a1; text-align:center; margin-bottom:20px;">
+        Pet Companion: {st.session_state.avatar_pet}
+    </div>
+    """, unsafe_allow_html=True)
+
+    t_tab1, t_tab2, t_tab3 = st.tabs(["👑 Hats & Crowns", "🐾 Pet Companions", "🎨 Stage Colors"])
+
+    with t_tab1:
+        st.markdown("#### Pick Your Crown / Hat (Free with your earned points!):")
+        h_cols = st.columns(4)
+        hats = ["👑 Crown", "🎀 Bow", "🎓 Scholar", "🦄 Unicorn", "🌸 Flower", "🤠 Cowgirl", "🎩 Top Hat", "🦸 Superhero"]
+        for idx, h in enumerate(hats):
+            sym = h.split()[0]
+            with h_cols[idx % 4]:
+                if st.button(h, key=f"hat_{sym}", use_container_width=True):
+                    st.session_state.avatar_head = sym
+                    st.rerun()
+
+    with t_tab2:
+        st.markdown("#### Adopt a Learning Buddy Pet:")
+        p_cols = st.columns(4)
+        pets = ["🐥 Chickie", "🐶 Puppy", "🐱 Kitty", "🐰 Bunny", "🐼 Panda", "🦊 Fox", "🦄 Unicorn", "🐬 Dolphin"]
+        for idx, p in enumerate(pets):
+            sym = p.split()[0]
+            with p_cols[idx % 4]:
+                if st.button(p, key=f"pet_{sym}", use_container_width=True):
+                    st.session_state.avatar_pet = sym
+                    st.rerun()
+
+    with t_tab3:
+        st.markdown("#### Choose Your Stage Background:")
+        b_cols = st.columns(4)
+        bgs = [("Sky Blue", "#e0f2fe"), ("Pink Bubblegum", "#fce7f3"), ("Lemon Drop", "#fef9c3"), ("Mint Green", "#dcfce7")]
+        for idx, (name, hex_code) in enumerate(bgs):
+            with b_cols[idx]:
+                if st.button(f"🎨 {name}", key=f"bg_{idx}", use_container_width=True):
+                    st.session_state.avatar_bg = hex_code
+                    st.rerun()
