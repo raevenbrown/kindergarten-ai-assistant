@@ -165,14 +165,14 @@ def tracing_box(word):
     """
     components.html(html, height=330)
 
-# --- INSTANT ZERO-LATENCY SPEECH RECOGNITION BOX ---
+# --- INSTANT ZERO-LATENCY SPEECH RECOGNITION (NO SPOILERS) ---
 def speech_box(target_word):
     clean_target = target_word.strip().lower()
     html = f"""
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <div style="text-align:center; margin-top:8px;">
         <button id="micB" style="background:#f97316; color:#ffffff; font-size:1.35rem; font-weight:800; border:none; border-radius:26px; padding:14px 28px; box-shadow:0 6px 0 #c2410c; cursor:pointer;" onclick="listenNow()">
-            🎙️ Tap to Say: "{target_word.upper()}"
+            🎙️ Tap to Say Your Word
         </button>
         <div id="mRes" style="font-size:1.35rem; font-weight:800; margin-top:10px; min-height:30px;"></div>
     </div>
@@ -196,7 +196,7 @@ def speech_box(target_word):
             rec.continuous = false;
             rec.interimResults = true;
 
-            btn.innerText = "👂 Listening...";
+            btn.innerText = "👂 Listening to Gracyn...";
             btn.style.background = "#22c55e";
             res.innerHTML = "";
 
@@ -226,7 +226,7 @@ def speech_box(target_word):
                     let a = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
                     a.play();
 
-                    res.innerHTML = "<span style='color:#15803d;'>🎉 YES! You said " + target.toUpperCase() + "! 🌟</span>";
+                    res.innerHTML = "<span style='color:#15803d;'>🎉 YES! You read it correctly! 🌟</span>";
                     btn.innerText = '🎙️ Tap to Say Again';
                     btn.style.background = "#f97316";
                 }}
@@ -235,14 +235,14 @@ def speech_box(target_word):
             rec.onspeechend = () => {{
                 setTimeout(() => {{
                     if (!answered) {{
-                        btn.innerText = '🎙️ Tap to Say';
+                        btn.innerText = '🎙️ Tap to Say Your Word';
                         btn.style.background = "#f97316";
                     }}
                 }}, 400);
             }};
 
             rec.onerror = () => {{
-                btn.innerText = '🎙️ Tap to Say';
+                btn.innerText = '🎙️ Tap to Say Your Word';
                 btn.style.background = "#f97316";
                 if (!answered) {{
                     res.innerHTML = "<span style='color:#ea580c;'>Speak loud and clear!</span>";
@@ -349,7 +349,7 @@ with hud_c3:
     c1.markdown(f"<div class='hud-chip'>🪙 {st.session_state.coins}</div>", unsafe_allow_html=True)
     c2.markdown(f"<div class='hud-chip'>⭐ {st.session_state.stars}</div>", unsafe_allow_html=True)
 
-# --- TREASURE BOX POPUP MODAL (MILESTONE) ---
+# --- TREASURE BOX POPUP MODAL (6-WORD MILESTONE) ---
 if st.session_state.trigger_treasure:
     st.markdown("""
     <div style="background:#fffbeb; border:6px dashed #f59e0b; border-radius:32px; padding:24px; text-align:center; margin-bottom:25px; box-shadow:0 12px 30px rgba(0,0,0,0.15);">
@@ -404,7 +404,7 @@ if active_game != st.session_state.current_game:
     st.rerun()
 
 # ==========================================
-# 1. SIGHT WORDS WITH REFINED HIGH-CONTRAST UI
+# 1. SIGHT WORDS (INDEPENDENT READING - NO SPOILERS)
 # ==========================================
 if active_game == "📖 Sight Words":
     col_title, col_audio = st.columns([3, 1.2])
@@ -412,12 +412,12 @@ if active_game == "📖 Sight Words":
         st.markdown("""
         <div style="background:#ffffff; border-radius:22px; padding:12px 20px; border:3.5px solid #38bdf8; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
             <div style="font-size:1.6rem; font-weight:900; color:#0284c7;">📖 Sight Word Explorer</div>
-            <div style="font-size:1.05rem; font-weight:700; color:#475569;">1. Look at the word  •  2. Trace & Write it  •  3. Say it into the mic!</div>
+            <div style="font-size:1.05rem; font-weight:700; color:#475569;">1. Read the word  •  2. Tap orange button to say it  •  3. Trace and tap green button!</div>
         </div>
         """, unsafe_allow_html=True)
     with col_audio:
         if st.button("🔊 Hear Directions", use_container_width=True):
-            speak("Hey Gracyn! Read this word out loud, then trace it on your screen, and tap the microphone to say it!")
+            speak("Hey Gracyn! Read this word on your card. Tap the orange button to say your word, then trace it with your finger and tap the green button when you're done!")
 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
@@ -453,8 +453,9 @@ if active_game == "📖 Sight Words":
 
     word = st.session_state.current_sw
 
+    # Auto-read instructions ONLY (DO NOT pronounce the target word)
     if "last_sw_spoken" not in st.session_state or st.session_state.last_sw_spoken != word:
-        speak(f"Read this word: {word}!")
+        speak("Read this word! Tap the orange button to say your word into the microphone, then trace it with your finger and tap the green button!")
         st.session_state.last_sw_spoken = word
 
     st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
