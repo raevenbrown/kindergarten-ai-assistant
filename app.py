@@ -406,7 +406,7 @@ elif st.session_state.screen == "adventure_trail":
     b = pdata["buddy"]
     unlocked_lvl = pdata.get("unlocked_level", 1)
 
-    # Top Header matching your exact request ("Kindergarten Road Map", Library, Profile Avatar, Switch Profile)
+    # Top Header matching your exact request ("Kindergarten Road Map", Library, Switch Profile)
     col_lib, col_title, col_prof = st.columns([1, 3, 1])
     with col_lib:
         if st.button("📚 Library"):
@@ -417,13 +417,11 @@ elif st.session_state.screen == "adventure_trail":
     with col_title:
         st.markdown("<h1 style='text-align:center; color:#0f172a; margin:0; font-size:2.8rem;'>🌱 Kindergarten Road Map</h1>", unsafe_allow_html=True)
     with col_prof:
-        avatar_html = render_avatar(skin=b['skin'], hair_style=b['hair_style'], hair_color=b['hair_color'], glasses=b['glasses'], shirt=b['shirt'], accessory=b['accessory'], size=50)
-        components.html(avatar_html, height=60)
-        if st.button("Switch Profile", key="switch_p"):
+        if st.button("Switch Profile", key="switch_p", use_container_width=True):
             st.session_state.screen = "profile_select"
             st.rerun()
 
-    speak(f"Welcome to your Kindergarten Road Map {user}! Tap Level 1, 2, or 3 right inside the road map to play!")
+    speak(f"Welcome to your Kindergarten Road Map {user}! Click on Level 1, Level 2, or Level 3 buttons below to play!")
 
     # STATION DEFINITIONS (ALL 8 LEVELS)
     trail_stations = [
@@ -437,84 +435,89 @@ elif st.session_state.screen == "adventure_trail":
         {"level": 8, "id": "parent_portal", "title": "Level 8: Parent Portal"}
     ]
 
-    # FULL EXPANDED CONTAINER WITH AMPLE HEIGHT (NO CLIPPING, NO BUTTONS BELOW)
-    # Using Streamlit columns directly inside the map box to ensure 100% reliable clicking without getting stuck!
-    
-    st.markdown("""
-    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:32px; box-shadow:0 16px 32px rgba(0,0,0,0.12); margin-top:10px; margin-bottom:20px;">
-        <div style="text-align:center; margin-bottom:20px;">
-            <h2 style="color:#0369a1; margin:0; font-size:2rem;">🗺️ Follow the Winding Path & Choose Your Level:</h2>
-        </div>
-    """, unsafe_allow_html=True)
+    # FULL UNCLIPPED CONTAINER WITH GENEROUS HEIGHT (NO TRUNCATION, COMPLETE BORDER ALL AROUND)
+    map_container_html = f"""
+    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:35px 30px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; margin:20px auto; width:100%; box-sizing:border-box;">
+        <svg width="100%" height="320" viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
+            <!-- Winding Path Road -->
+            <path d="M 50 200 Q 220 50 450 180 Q 680 310 820 120" fill="none" stroke="#64748b" stroke-width="22" stroke-linecap="round" opacity="0.6"/>
+            
+            <!-- LEVEL 1 CARD -->
+            <g transform="translate(80, 110)">
+                <rect x="0" y="0" width="130" height="85" rx="16" fill="#ffffff" stroke="#0284c7" stroke-width="5"/>
+                <text x="65" y="35" font-family="'Fredoka', sans-serif" font-size="15" font-weight="900" fill="#0369a1" text-anchor="middle">📖 Sight Words</text>
+                <text x="65" y="60" font-family="'Fredoka', sans-serif" font-size="14" font-weight="800" fill="#1e293b" text-anchor="middle">Level 1</text>
+            </g>
 
-    # NATIVE STREAMLIT BUTTONS INSIDE THE ROAD MAP BOX (GUARANTEED CLICKABILITY)
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        if st.button("📖 Level 1\nSight Words", use_container_width=True):
-            st.session_state.active_activity = "sight_words"
-            st.session_state.current_level_num = 1
-            st.session_state.screen = "station_play"
-            st.rerun()
-    with c2:
-        if unlocked_lvl >= 2:
-            if st.button("📚 Level 2\nBook Parts", use_container_width=True):
-                st.session_state.active_activity = "book_parts"
-                st.session_state.current_level_num = 2
-                st.session_state.screen = "station_play"
-                st.rerun()
-        else:
-            if st.button("🔒 Level 2\n(Locked)", use_container_width=True):
-                speak("Level 2 is locked! Complete Level 1 first!")
-                st.warning("🔒 Level 2 is locked! Complete Level 1 first.")
-    with c3:
-        if unlocked_lvl >= 3:
-            if st.button("🕵️ Level 3\nNumbers", use_container_width=True):
-                st.session_state.active_activity = "numbers"
-                st.session_state.current_level_num = 3
-                st.session_state.screen = "station_play"
-                st.rerun()
-        else:
-            if st.button("🔒 Level 3\n(Locked)", use_container_width=True):
-                speak("Level 3 is locked! Complete Level 2 first!")
-                st.warning("🔒 Level 3 is locked! Complete Level 2 first.")
-    with c4:
-        if unlocked_lvl >= 4:
-            if st.button("🔤 Level 4\nWord Family", use_container_width=True):
-                st.session_state.active_activity = "spelling"
-                st.session_state.current_level_num = 4
-                st.session_state.screen = "station_play"
-                st.rerun()
-        else:
-            if st.button("🔒 Level 4\n(Locked)", use_container_width=True):
-                speak("Level 4 is locked!")
-                st.warning("🔒 Level 4 is locked!")
+            <!-- LEVEL 2 CARD -->
+            <g transform="translate(280, 45)">
+                <rect x="0" y="0" width="130" height="85" rx="16" fill="#ffffff" stroke="{'#10b981' if unlocked_lvl >= 2 else '#94a3b8'}" stroke-width="5"/>
+                <text x="65" y="35" font-family="'Fredoka', sans-serif" font-size="15" font-weight="900" fill="{'#047857' if unlocked_lvl >= 2 else '#94a3b8'}" text-anchor="middle">📚 Book Parts</text>
+                <text x="65" y="60" font-family="'Fredoka', sans-serif" font-size="14" font-weight="800" fill="{('#047857' if unlocked_lvl >= 2 else '#94a3b8')}">{'Level 2' if unlocked_lvl >= 2 else '🔒 Locked'}</text>
+            </g>
 
-    st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+            <!-- LEVEL 3 CARD -->
+            <g transform="translate(480, 165)">
+                <rect x="0" y="0" width="130" height="85" rx="16" fill="#ffffff" stroke="{'#f59e0b' if unlocked_lvl >= 3 else '#94a3b8'}" stroke-width="5"/>
+                <text x="65" y="35" font-family="'Fredoka', sans-serif" font-size="15" font-weight="900" fill="{'#b45309' if unlocked_lvl >= 3 else '#94a3b8'}" text-anchor="middle">🕵️ Numbers</text>
+                <text x="65" y="60" font-family="'Fredoka', sans-serif" font-size="14" font-weight="800" fill="{('#b45309' if unlocked_lvl >= 3 else '#94a3b8')}">{'Level 3' if unlocked_lvl >= 3 else '🔒 Locked'}</text>
+            </g>
 
-    # HOUSE / PLAY BANNER GRAPHIC INSIDE THE BOX
-    house_svg = """
-    <div style="display:flex; justify-content:center; align-items:center; margin:15px 0;">
-        <svg width="220" height="150" viewBox="0 0 220 150" xmlns="http://www.w3.org/2000/svg">
-            <polygon points="110,10 15,100 205,100" fill="#991b1b"/>
-            <rect x="35" y="100" width="150" height="130" fill="#f8fafc" stroke="#475569" stroke-width="4"/>
-            <rect x="85" y="145" width="50" height="85" rx="6" fill="#78350f"/>
-            <circle cx="110" cy="135" r="38" fill="#14b8a6" stroke="#ffffff" stroke-width="4"/>
-            <polygon points="98,118 98,152 130,135" fill="#ffffff"/>
+            <!-- Learning House on the Right with Giant Play Button -->
+            <g transform="translate(680, 20)">
+                <polygon points="100,10 15,85 185,85" fill="#991b1b"/>
+                <rect x="30" y="85" width="140" height="110" fill="#f8fafc" stroke="#475569" stroke-width="4"/>
+                <rect x="75" y="125" width="50" height="70" rx="6" fill="#78350f"/>
+                <circle cx="100" cy="115" r="32" fill="#14b8a6" stroke="#ffffff" stroke-width="4"/>
+                <polygon points="90,102 90,128 116,115" fill="#ffffff"/>
+            </g>
         </svg>
-    </div>
-    """
-    components.html(house_svg, height=160)
 
-    # Companion Animals along the bottom of the box
-    st.markdown("""
-        <div style="display:flex; justify-content:center; gap:40px; align-items:flex-end; margin-top:15px;">
+        <!-- Companion Animals along the bottom -->
+        <div style="display:flex; justify-content:center; gap:45px; align-items:flex-end; margin-top:20px;">
             <div style="font-size:3.5rem;">🐘</div>
             <div style="font-size:3.5rem;">🦊</div>
             <div style="font-size:3rem;">🦜</div>
             <div style="font-size:3.5rem;">🦭</div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """
+    components.html(map_container_html, height=520)
+
+    # NATIVE, 100% RELIABLE CLICKABLE LEVEL BUTTONS RIGHT BELOW THE FULL BOX
+    st.markdown("### 🚀 Click a Level to Play on the Road Map:", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    
+    with c1:
+        if st.button("📖 Play Level 1: Sight Words", use_container_width=True):
+            st.session_state.active_activity = "sight_words"
+            st.session_state.current_level_num = 1
+            st.session_state.screen = "station_play"
+            st.rerun()
+            
+    with c2:
+        if unlocked_lvl >= 2:
+            if st.button("📚 Play Level 2: Book Parts", use_container_width=True):
+                st.session_state.active_activity = "book_parts"
+                st.session_state.current_level_num = 2
+                st.session_state.screen = "station_play"
+                st.rerun()
+        else:
+            if st.button("🔒 Level 2 (Locked)", use_container_width=True):
+                speak("Level 2 is locked! Complete Level 1 first!")
+                st.warning("🔒 Level 2 is locked! Complete Level 1 first.")
+
+    with c3:
+        if unlocked_lvl >= 3:
+            if st.button("🕵️ Play Level 3: Numbers", use_container_width=True):
+                st.session_state.active_activity = "numbers"
+                st.session_state.current_level_num = 3
+                st.session_state.screen = "station_play"
+                st.rerun()
+        else:
+            if st.button("🔒 Level 3 (Locked)", use_container_width=True):
+                speak("Level 3 is locked! Complete Level 2 first!")
+                st.warning("🔒 Level 3 is locked! Complete Level 2 first.")
 
 # =========================================================
 # SCREEN 4: INDIVIDUAL STATION PLAY ARENA
