@@ -11,10 +11,10 @@ st.set_page_config(
 )
 
 # =========================================================
-# 1. VECTOR GRAPHICS ENGINE (AVATARS & BOOKS)
+# 1. VECTOR GRAPHICS & REFERENCE MAP ENGINE
 # =========================================================
 
-def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glasses="gold_round", shirt="#ec4899", accessory="crown", size=180):
+def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glasses="gold_round", shirt="#ec4899", accessory="crown", size=60):
     hair_svg = ""
     if hair_style == "puffs":
         hair_svg = f"""
@@ -76,7 +76,7 @@ def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glas
                     <stop offset="100%" stop-color="#e0f2fe"/>
                 </radialGradient>
             </defs>
-            <circle cx="100" cy="100" r="95" fill="url(#glow_{size})" stroke="#38bdf8" stroke-width="6"/>
+            <circle cx="100" cy="100" r="95" fill="url(#glow_{size})" stroke="#38bdf8" stroke-width="5"/>
             {acc_svg if accessory == "cape" else ""}
             <path d="M 60 185 C 60 145, 140 145, 140 185 Z" fill="{shirt}"/>
             <path d="M 85 145 Q 100 160 115 145 Z" fill="{skin}"/>
@@ -99,7 +99,7 @@ def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glas
         </svg>
     </div>
     """
-    components.html(raw_html, height=size + 10)
+    return raw_html
 
 def render_book_diagram(part="spine"):
     spine_border = 'stroke="#facc15" stroke-width="6"' if part == "spine" else 'stroke="#1e3a8a" stroke-width="2"'
@@ -186,18 +186,6 @@ st.markdown("""
         box-shadow: 0 14px 30px rgba(0,0,0,0.1);
         text-align: center;
         margin-bottom: 18px;
-    }
-
-    .hud-bar {
-        background: #ffffff;
-        border-radius: 26px;
-        padding: 12px 24px;
-        border: 4px solid #facc15;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-        margin-bottom: 18px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
     }
 
     .stat-chip {
@@ -317,11 +305,12 @@ if st.session_state.screen == "profile_select":
         p_data = st.session_state.profiles[name]
         b = p_data["buddy"]
         with cols[i]:
-            render_avatar(skin=b["skin"], hair_style=b["hair_style"], hair_color=b["hair_color"], glasses=b["glasses"], shirt=b["shirt"], accessory=b["accessory"], size=180)
+            avatar_html = render_avatar(skin=b["skin"], hair_style=b["hair_style"], hair_color=b["hair_color"], glasses=b["glasses"], shirt=b["shirt"], accessory=b["accessory"], size=180)
+            components.html(avatar_html, height=190)
             if st.button(f"Play as {name}", key=f"prof_{name}", use_container_width=True):
                 st.session_state.active_user = name
                 st.session_state.screen = "adventure_trail"
-                speak(f"Welcome back {name}! Tap any unlocked level on your winding learning path to begin!")
+                speak(f"Welcome back {name}! Follow your winding learning path to play!")
                 st.rerun()
 
     with cols[-1]:
@@ -360,7 +349,8 @@ elif st.session_state.screen == "buddy_dressup":
     col_preview, col_options = st.columns([1.1, 1.4])
 
     with col_preview:
-        render_avatar(skin=tb['skin'], hair_style=tb['hair_style'], hair_color=tb['hair_color'], glasses=tb['glasses'], shirt=tb['shirt'], accessory=tb['accessory'], size=230)
+        avatar_html = render_avatar(skin=tb['skin'], hair_style=tb['hair_style'], hair_color=tb['hair_color'], glasses=tb['glasses'], shirt=tb['shirt'], accessory=tb['accessory'], size=230)
+        components.html(avatar_html, height=240)
         new_profile_name = st.text_input("Enter Profile Name:", value="Superstar")
         if st.button("Save & Start Learning!", use_container_width=True):
             clean_name = new_profile_name.strip() if new_profile_name.strip() else "Learner"
@@ -408,7 +398,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: KHAN ACADEMY KIDS ADVENTURE TRAIL MAP (HOUSE & INTERACTIVE PATH)
+# SCREEN 3: KHAN ACADEMY KIDS REFERENCE MAP & PATHWAY
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -416,100 +406,102 @@ elif st.session_state.screen == "adventure_trail":
     b = pdata["buddy"]
     unlocked_lvl = pdata.get("unlocked_level", 1)
 
-    # Top Navigation / HUD Bar
-    hud_l, hud_r = st.columns([3, 1])
-    with hud_l:
-        st.markdown(f"""
-        <div class="hud-bar" style="margin-bottom:0;">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <b style="font-size:1.35rem; color:#0f172a;">{user}'s Adventure Learning Trail</b>
-            </div>
-            <div style="display:flex; gap:12px;">
-                <div class="stat-chip">⭐ {pdata['stars']} Stars</div>
-                <div style="background:#dcfce7; color:#166534; padding:6px 16px; border-radius:20px; font-weight:800; border:2px solid #86efac;">🔥 {pdata['streak']} Streak</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    with hud_r:
-        if st.button("🏠 Switch Profile", use_container_width=True):
+    # Top Header matching reference image
+    col_lib, col_title, col_prof = st.columns([1, 3, 1])
+    with col_lib:
+        if st.button("📚 Library"):
+            st.session_state.screen = "hub"
+            st.rerun()
+    with col_title:
+        st.markdown("<h2 style='text-align:center; color:#0f172a; margin:0;'>💚 Khan Academy Kids</h2>", unsafe_allow_html=True)
+    with col_prof:
+        avatar_html = render_avatar(skin=b['skin'], hair_style=b['hair_style'], hair_color=b['hair_color'], glasses=b['glasses'], shirt=b['shirt'], accessory=b['accessory'], size=50)
+        components.html(avatar_html, height=60)
+        if st.button("Switch Profile", key="switch_p"):
             st.session_state.screen = "profile_select"
             st.rerun()
 
-    st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
-    speak(f"Welcome to your adventure trail {user}! Tap any unlocked level along your winding path to play!")
+    speak(f"Welcome to your adventure trail {user}! Follow the winding path and tap the house play button or any unlocked station to begin!")
 
-    # STATION DEFINITIONS
+    # STATION DEFINITIONS (ALL 8 LEVELS)
     trail_stations = [
-        {"level": 1, "id": "sight_words", "title": "1. Sight Words", "icon": "📖"},
-        {"level": 2, "id": "book_parts", "title": "2. Book Detective", "icon": "📚"},
-        {"level": 3, "id": "numbers", "title": "3. Number Detective", "icon": "🕵️"},
-        {"level": 4, "id": "spelling", "title": "4. Word Family Lab", "icon": "🔤"},
-        {"level": 5, "id": "ispy", "title": "5. Letter I-Spy", "icon": "🔍"},
-        {"level": 6, "id": "seasons", "title": "6. Seasons Quest", "icon": "🍁"},
-        {"level": 7, "id": "math", "title": "7. Cool Math", "icon": "➕"},
-        {"level": 8, "id": "parent_portal", "title": "8. Parent Progress", "icon": "📊"}
+        {"level": 1, "id": "sight_words", "title": "Sight Words", "icon": "📖"},
+        {"level": 2, "id": "book_parts", "title": "Book Parts", "icon": "📚"},
+        {"level": 3, "id": "numbers", "title": "Numbers", "icon": "🕵️"},
+        {"level": 4, "id": "spelling", "title": "Word Family", "icon": "🔤"},
+        {"level": 5, "id": "ispy", "title": "Letter I-Spy", "icon": "🔍"},
+        {"level": 6, "id": "seasons", "title": "Seasons", "icon": "🍁"},
+        {"level": 7, "id": "math", "title": "Cool Math", "icon": "➕"},
+        {"level": 8, "id": "parent_portal", "title": "Parent Portal", "icon": "📊"}
     ]
 
-    # CONTAINER HOLDING THE LEARNING HOUSE AND INTERACTIVE MAP PATH
-    st.markdown("""
-    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:24px; box-shadow:0 16px 32px rgba(0,0,0,0.12); margin-bottom:20px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <div style="background:#fff; border:3px solid #facc15; border-radius:18px; padding:6px 16px; font-family:'Fredoka',sans-serif; font-weight:800; font-size:1.05rem; color:#854d0e;">
-                📚 Library & Learning House
-            </div>
-            <div style="font-size:1.3rem; font-weight:900; color:#0369a1;">
-                🗺️ Follow the Winding Path to Learn!
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+    # KHAN ACADEMY KIDS REFERENCE MAP CONTAINER (WINDING PATH, PREVIEW CARDS, LEARNING HOUSE, ANIMALS)
+    map_container_html = f"""
+    <div style="background:linear-gradient(180deg, #f0fdf4 0%, #e0f2fe 100%); border:5px solid #0284c7; border-radius:36px; padding:20px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; overflow:hidden;">
+        <!-- SVG Winding Path and Previews matching reference -->
+        <svg width="100%" height="240" viewBox="0 0 900 240" xmlns="http://www.w3.org/2000/svg">
+            <!-- Winding Path Road -->
+            <path d="M 40 160 Q 180 60 320 150 Q 480 240 620 110" fill="none" stroke="#64748b" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+            
+            <!-- Milestone Preview Card 1 -->
+            <g transform="translate(60, 110)">
+                <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="#0284c7" stroke-width="4"/>
+                <text x="55" y="42" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#0369a1" text-anchor="middle">📖 Level 1</text>
+            </g>
 
-    # RENDER ALL 8 LEVELS INSIDE THE HOUSE CONTAINER BOX AS CLICKABLE BUTTONS
-    row1_cols = st.columns(4)
-    for idx in range(4):
-        node = trail_stations[idx]
-        lvl = node["level"]
-        is_unlocked = lvl <= unlocked_lvl
-        with row1_cols[idx]:
-            if is_unlocked:
-                if st.button(f"{node['icon']} Level {lvl}: {node['title'].split('. ')[1]}", key=f"house_btn_{node['id']}", use_container_width=True):
-                    st.session_state.active_activity = node['id']
-                    st.session_state.current_level_num = lvl
-                    st.session_state.screen = "station_play"
-                    st.rerun()
-            else:
-                if st.button(f"🔒 Level {lvl} (Locked)", key=f"house_lock_{node['id']}", use_container_width=True):
-                    speak(f"Level {lvl} is locked! Complete the previous level first!")
-                    st.warning(f"🔒 **Level {lvl} Locked**")
+            <!-- Milestone Preview Card 2 -->
+            <g transform="translate(230, 85)">
+                <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="#10b981" stroke-width="4"/>
+                <text x="55" y="42" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#047857" text-anchor="middle">📚 Level 2</text>
+            </g>
 
-    st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
+            <!-- Milestone Preview Card 3 -->
+            <g transform="translate(410, 140)">
+                <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="#f59e0b" stroke-width="4"/>
+                <text x="55" y="42" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#b45309" text-anchor="middle">🕵️ Level 3</text>
+            </g>
 
-    row2_cols = st.columns(4)
-    for idx in range(4, 8):
-        node = trail_stations[idx]
-        lvl = node["level"]
-        is_unlocked = lvl <= unlocked_lvl
-        with row2_cols[idx - 4]:
-            if is_unlocked:
-                if st.button(f"{node['icon']} Level {lvl}: {node['title'].split('. ')[1]}", key=f"house_btn_{node['id']}", use_container_width=True):
-                    st.session_state.active_activity = node['id']
-                    st.session_state.current_level_num = lvl
-                    st.session_state.screen = "station_play"
-                    st.rerun()
-            else:
-                if st.button(f"🔒 Level {lvl} (Locked)", key=f"house_lock_{node['id']}", use_container_width=True):
-                    speak(f"Level {lvl} is locked! Complete the previous level first!")
-                    st.warning(f"🔒 **Level {lvl} Locked**")
+            <!-- Learning House on the Right with Giant Play Button -->
+            <g transform="translate(640, 15)">
+                <!-- Roof -->
+                <polygon points="100,10 20,80 180,80" fill="#991b1b"/>
+                <!-- House Body -->
+                <rect x="35" y="80" width="130" height="110" fill="#f8fafc" stroke="#475569" stroke-width="4"/>
+                <rect x="80" y="125" width="40" height="65" rx="6" fill="#78350f"/>
+                <!-- Giant Play Button -->
+                <circle cx="100" cy="115" r="32" fill="#14b8a6" stroke="#ffffff" stroke-width="4"/>
+                <polygon points="90,100 90,130 118,115" fill="#ffffff"/>
+            </g>
+        </svg>
 
-    # Companion Animals inside the house box
-    st.markdown("""
-        <div style="display:flex; justify-content:center; gap:26px; align-items:flex-end; margin-top:20px;">
-            <div style="font-size:2.6rem;">🐘</div>
-            <div style="font-size:2.6rem;">🦊</div>
-            <div style="font-size:2.4rem;">🦜</div>
-            <div style="font-size:2.6rem;">🦭</div>
+        <!-- Companion Animals along the bottom -->
+        <div style="display:flex; justify-content:center; gap:35px; align-items:flex-end; margin-top:5px;">
+            <div style="font-size:3rem;">🐘</div>
+            <div style="font-size:3rem;">🦊</div>
+            <div style="font-size:2.6rem;">🦜</div>
+            <div style="font-size:3rem;">🦭</div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """
+    components.html(map_container_html, height=330)
+
+    st.markdown("### 🎮 Tap an Unlocked Level to Play:")
+    cols_trail = st.columns(4)
+
+    for idx, node in enumerate(trail_stations):
+        lvl = node["level"]
+        is_unlocked = lvl <= unlocked_lvl
+        with cols_trail[idx % 4]:
+            if is_unlocked:
+                if st.button(f"{node['icon']} Level {lvl}: {node['title']}", key=f"trail_btn_{node['id']}", use_container_width=True):
+                    st.session_state.active_activity = node['id']
+                    st.session_state.current_level_num = lvl
+                    st.session_state.screen = "station_play"
+                    st.rerun()
+            else:
+                if st.button(f"🔒 Level {lvl} (Locked)", key=f"trail_lock_{node['id']}", use_container_width=True):
+                    speak(f"Level {lvl} is locked! Complete previous levels first!")
+                    st.warning(f"🔒 **Level {lvl} Locked**")
 
 # =========================================================
 # SCREEN 4: INDIVIDUAL STATION PLAY ARENA
@@ -733,7 +725,7 @@ elif st.session_state.screen == "station_play":
         m_a, m_b, m_c = st.columns(3)
         m_a.metric("Total Questions", tot)
         m_b.metric("Total Stars", pdata["stars"])
-        m_c.metric("First-Try Accuracy", f"{acc}%")
+        m_c.metric("First-Try Accuracy", f"%{acc}")
 
         st.markdown("#### Detailed Activity Stream:")
         if pdata["daily_log"]:
