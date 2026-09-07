@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- GLOBAL THEME & ACCESSIBILITY STYLING ---
+# --- KID ARCADE / HATCH THEMED STYLING ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;800&family=Quicksand:wght@600;700;800&display=swap');
@@ -21,7 +21,7 @@ st.markdown("""
         font-family: 'Fredoka', 'Quicksand', cursive, sans-serif !important;
     }
 
-    /* Streamlit Form Fixes: High-Contrast Crisp Selectors */
+    /* High-contrast dropdown cards */
     div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         border: 3.5px solid #0284c7 !important;
@@ -35,8 +35,14 @@ st.markdown("""
         color: #0f172a !important;
         font-weight: 800 !important;
     }
+    label[data-testid="stWidgetLabel"] p {
+        color: #0c4a6e !important;
+        font-size: 1.2rem !important;
+        font-weight: 800 !important;
+        text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+    }
 
-    /* iPad High-Sensitivity Big Touch Buttons */
+    /* Big Tactile Touch Buttons for iPad */
     .stButton > button {
         border-radius: 28px !important;
         font-size: 1.35rem !important;
@@ -85,7 +91,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- WEB SPEECH SYNTHESIS & IPAD AUDIO UNLOCK ENGINE ---
+# --- DIRECT UNIVERSAL AUTOPLAY (IPAD & LAPTOP NATIVE BRIDGE) ---
 def speak(text, sfx="pop"):
     sound_url = {
         "pop": "https://cdn.freesound.org/previews/536/536108_11565331-lq.mp3",
@@ -98,38 +104,45 @@ def speak(text, sfx="pop"):
     js = f"""
     <script>
         (function() {{
+            // 1. Play SFX
             try {{
                 let snd = new Audio("{sound_url}");
                 snd.volume = 0.55;
-                snd.play().catch(e => console.log('Audio autoplay policy on iOS:', e));
+                snd.play().catch(() => {{}});
             }} catch(e) {{}}
 
-            if ('speechSynthesis' in window) {{
-                window.speechSynthesis.cancel();
-                let utter = new SpeechSynthesisUtterance("{clean_text}");
-                utter.rate = 0.82;
+            // 2. Cross-window SpeechSynthesis for iOS Safari & Desktop
+            function runSpeech() {{
+                const synth = (window.parent && window.parent.speechSynthesis) ? window.parent.speechSynthesis : window.speechSynthesis;
+                if (!synth) return;
+                
+                try {{
+                    synth.cancel();
+                    if (synth.paused) synth.resume();
+                }} catch(e) {{}}
+
+                const utter = new SpeechSynthesisUtterance("{clean_text}");
+                utter.rate = 0.84;
                 utter.pitch = 1.25;
-                window.speechSynthesis.speak(utter);
+                utter.lang = 'en-US';
+
+                const voices = synth.getVoices();
+                if (voices && voices.length > 0) {{
+                    const preferred = voices.find(v => (v.name.includes("Samantha") || v.name.includes("Victoria") || v.name.includes("Karen") || v.lang === "en-US") && !v.name.includes("Bad"));
+                    if (preferred) utter.voice = preferred;
+                }}
+
+                synth.speak(utter);
             }}
+
+            runSpeech();
+            setTimeout(runSpeech, 150);
         }})();
     </script>
     """
     components.html(js, height=0)
 
-# --- AUDIO UNLOCK BANNER FOR IPAD SAFARI ---
-st.markdown("""
-<div style="background:#ffffff; border:3.5px solid #22c55e; border-radius:24px; padding:10px 18px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 6px 14px rgba(0,0,0,0.08);">
-    <div style="font-size:1.15rem; font-weight:800; color:#15803d;">
-        🔊 iPad Audio Speaker Ready
-    </div>
-    <button onclick="window.speechSynthesis.speak(new SpeechSynthesisUtterance('Audio active!')); this.style.background='#16a34a'; this.innerText='✅ Audio Ready';" 
-            style="background:#22c55e; color:#fff; font-size:1.05rem; font-weight:800; border:none; border-radius:18px; padding:8px 20px; box-shadow:0 4px 0 #15803d; cursor:pointer;">
-        ▶️ Tap to Unmute iPad
-    </button>
-</div>
-""", unsafe_allow_html=True)
-
-# --- FINGER TRACING BOX WITH CLEAN DISCRETE MOUSE & TOUCH DOWN STROKES ---
+# --- FINGER TRACING PAD (DISCRETE STROKES ONLY ON ACTIVE MOUSE/TOUCH DOWN) ---
 def tracing_box(word):
     html = f"""
     <div style="background:#f8fafc; border:4px dashed #0284c7; border-radius:26px; padding:14px; text-align:center;">
@@ -211,7 +224,7 @@ def tracing_box(word):
             confetti({{ particleCount: 90, spread: 75, origin: {{ y: 0.75 }} }});
             document.getElementById('cMsg').innerText = "🌟 WOW Gracyn! Great handwriting!";
             let a = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
-            a.play();
+            a.play().catch(() => {{}});
         }}
     </script>
     """
@@ -276,7 +289,7 @@ def speech_box(target_word):
                     
                     confetti({{ particleCount: 120, spread: 80, origin: {{ y: 0.7 }} }});
                     let a = new Audio('https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3');
-                    a.play();
+                    a.play().catch(() => {{}});
 
                     res.innerHTML = "<span style='color:#15803d;'>🎉 YES! You read it correctly! 🌟</span>";
                     btn.innerText = '🎙️ Tap to Say Again';
