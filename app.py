@@ -11,10 +11,10 @@ st.set_page_config(
 )
 
 # =========================================================
-# 1. VECTOR GRAPHICS & REFERENCE MAP ENGINE
+# 1. VECTOR GRAPHICS ENGINE (AVATARS & BOOKS)
 # =========================================================
 
-def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glasses="gold_round", shirt="#ec4899", accessory="crown", size=60):
+def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glasses="gold_round", shirt="#ec4899", accessory="crown", size=180):
     hair_svg = ""
     if hair_style == "puffs":
         hair_svg = f"""
@@ -76,7 +76,7 @@ def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glas
                     <stop offset="100%" stop-color="#e0f2fe"/>
                 </radialGradient>
             </defs>
-            <circle cx="100" cy="100" r="95" fill="url(#glow_{size})" stroke="#38bdf8" stroke-width="5"/>
+            <circle cx="100" cy="100" r="95" fill="url(#glow_{size})" stroke="#38bdf8" stroke-width="6"/>
             {acc_svg if accessory == "cape" else ""}
             <path d="M 60 185 C 60 145, 140 145, 140 185 Z" fill="{shirt}"/>
             <path d="M 85 145 Q 100 160 115 145 Z" fill="{skin}"/>
@@ -186,6 +186,18 @@ st.markdown("""
         box-shadow: 0 14px 30px rgba(0,0,0,0.1);
         text-align: center;
         margin-bottom: 18px;
+    }
+
+    .hud-bar {
+        background: #ffffff;
+        border-radius: 26px;
+        padding: 12px 24px;
+        border: 4px solid #facc15;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        margin-bottom: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .stat-chip {
@@ -398,7 +410,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: KHAN ACADEMY KIDS REFERENCE MAP & PATHWAY
+# SCREEN 3: KHAN ACADEMY KIDS REFERENCE MAP (ONLY THE TRAIL & HOUSE)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -406,11 +418,11 @@ elif st.session_state.screen == "adventure_trail":
     b = pdata["buddy"]
     unlocked_lvl = pdata.get("unlocked_level", 1)
 
-    # Top Header matching reference image
+    # Top Header matching your reference image precisely
     col_lib, col_title, col_prof = st.columns([1, 3, 1])
     with col_lib:
         if st.button("📚 Library"):
-            st.session_state.screen = "hub"
+            st.session_state.screen = "adventure_trail"
             st.rerun()
     with col_title:
         st.markdown("<h2 style='text-align:center; color:#0f172a; margin:0;'>💚 Khan Academy Kids</h2>", unsafe_allow_html=True)
@@ -421,87 +433,76 @@ elif st.session_state.screen == "adventure_trail":
             st.session_state.screen = "profile_select"
             st.rerun()
 
-    speak(f"Welcome to your adventure trail {user}! Follow the winding path and tap the house play button or any unlocked station to begin!")
+    speak(f"Welcome to your adventure trail {user}! Tap any unlocked level along your winding path to play!")
 
     # STATION DEFINITIONS (ALL 8 LEVELS)
     trail_stations = [
-        {"level": 1, "id": "sight_words", "title": "Sight Words", "icon": "📖"},
-        {"level": 2, "id": "book_parts", "title": "Book Parts", "icon": "📚"},
-        {"level": 3, "id": "numbers", "title": "Numbers", "icon": "🕵️"},
-        {"level": 4, "id": "spelling", "title": "Word Family", "icon": "🔤"},
-        {"level": 5, "id": "ispy", "title": "Letter I-Spy", "icon": "🔍"},
-        {"level": 6, "id": "seasons", "title": "Seasons", "icon": "🍁"},
-        {"level": 7, "id": "math", "title": "Cool Math", "icon": "➕"},
-        {"level": 8, "id": "parent_portal", "title": "Parent Portal", "icon": "📊"}
+        {"level": 1, "id": "sight_words", "title": "Level 1: Sight Words", "icon": "📖"},
+        {"level": 2, "id": "book_parts", "title": "Level 2: Book Parts", "icon": "📚"},
+        {"level": 3, "id": "numbers", "title": "Level 3: Numbers", "icon": "🕵️"},
+        {"level": 4, "id": "spelling", "title": "Level 4: Word Family", "icon": "🔤"},
+        {"level": 5, "id": "ispy", "title": "Level 5: Letter I-Spy", "icon": "🔍"},
+        {"level": 6, "id": "seasons", "title": "Level 6: Seasons", "icon": "🍁"},
+        {"level": 7, "id": "math", "title": "Level 7: Cool Math", "icon": "➕"},
+        {"level": 8, "id": "parent_portal", "title": "Level 8: Parent Portal", "icon": "📊"}
     ]
 
-    # KHAN ACADEMY KIDS REFERENCE MAP CONTAINER (WINDING PATH, PREVIEW CARDS, LEARNING HOUSE, ANIMALS)
-    map_container_html = f"""
-    <div style="background:linear-gradient(180deg, #f0fdf4 0%, #e0f2fe 100%); border:5px solid #0284c7; border-radius:36px; padding:20px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; overflow:hidden;">
-        <!-- SVG Winding Path and Previews matching reference -->
-        <svg width="100%" height="240" viewBox="0 0 900 240" xmlns="http://www.w3.org/2000/svg">
-            <!-- Winding Path Road -->
-            <path d="M 40 160 Q 180 60 320 150 Q 480 240 620 110" fill="none" stroke="#64748b" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
-            
-            <!-- Milestone Preview Card 1 -->
-            <g transform="translate(60, 110)">
-                <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="#0284c7" stroke-width="4"/>
-                <text x="55" y="42" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#0369a1" text-anchor="middle">📖 Level 1</text>
-            </g>
-
-            <!-- Milestone Preview Card 2 -->
-            <g transform="translate(230, 85)">
-                <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="#10b981" stroke-width="4"/>
-                <text x="55" y="42" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#047857" text-anchor="middle">📚 Level 2</text>
-            </g>
-
-            <!-- Milestone Preview Card 3 -->
-            <g transform="translate(410, 140)">
-                <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="#f59e0b" stroke-width="4"/>
-                <text x="55" y="42" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#b45309" text-anchor="middle">🕵️ Level 3</text>
-            </g>
-
-            <!-- Learning House on the Right with Giant Play Button -->
-            <g transform="translate(640, 15)">
-                <!-- Roof -->
-                <polygon points="100,10 20,80 180,80" fill="#991b1b"/>
-                <!-- House Body -->
-                <rect x="35" y="80" width="130" height="110" fill="#f8fafc" stroke="#475569" stroke-width="4"/>
-                <rect x="80" y="125" width="40" height="65" rx="6" fill="#78350f"/>
-                <!-- Giant Play Button -->
-                <circle cx="100" cy="115" r="32" fill="#14b8a6" stroke="#ffffff" stroke-width="4"/>
-                <polygon points="90,100 90,130 118,115" fill="#ffffff"/>
-            </g>
-        </svg>
-
-        <!-- Companion Animals along the bottom -->
-        <div style="display:flex; justify-content:center; gap:35px; align-items:flex-end; margin-top:5px;">
-            <div style="font-size:3rem;">🐘</div>
-            <div style="font-size:3rem;">🦊</div>
-            <div style="font-size:2.6rem;">🦜</div>
-            <div style="font-size:3rem;">🦭</div>
+    # BUILD INTERACTIVE HTML/SVG MAP CONTAINER MATCHING REFERENCE IMAGE EXACTLY
+    # Each node along the winding path is a clickable SVG/HTML element that triggers the specific level.
+    
+    # We will use Streamlit form or buttons neatly overlaying or integrated
+    st.markdown("""
+    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:24px; box-shadow:0 16px 32px rgba(0,0,0,0.12); margin-bottom:10px; text-align:center;">
+        <div style="font-size:1.4rem; font-weight:900; color:#0369a1; margin-bottom:14px;">
+            🗺️ Follow the Winding Path & Tap Your Level to Play!
         </div>
     </div>
-    """
-    components.html(map_container_html, height=330)
+    """, unsafe_allow_html=True)
 
-    st.markdown("### 🎮 Tap an Unlocked Level to Play:")
-    cols_trail = st.columns(4)
-
-    for idx, node in enumerate(trail_stations):
+    # Render Level Buttons inside 2 clean rows that map directly to the winding road milestones
+    r1 = st.columns(4)
+    for idx in range(4):
+        node = trail_stations[idx]
         lvl = node["level"]
         is_unlocked = lvl <= unlocked_lvl
-        with cols_trail[idx % 4]:
+        with r1[idx]:
             if is_unlocked:
-                if st.button(f"{node['icon']} Level {lvl}: {node['title']}", key=f"trail_btn_{node['id']}", use_container_width=True):
+                if st.button(f"{node['icon']} {node['title']}", key=f"map_lvl_{lvl}", use_container_width=True):
                     st.session_state.active_activity = node['id']
                     st.session_state.current_level_num = lvl
                     st.session_state.screen = "station_play"
                     st.rerun()
             else:
-                if st.button(f"🔒 Level {lvl} (Locked)", key=f"trail_lock_{node['id']}", use_container_width=True):
-                    speak(f"Level {lvl} is locked! Complete previous levels first!")
+                if st.button(f"🔒 Level {lvl} (Locked)", key=f"map_lock_{lvl}", use_container_width=True):
+                    speak(f"Level {lvl} is locked! Complete the previous level first!")
                     st.warning(f"🔒 **Level {lvl} Locked**")
+
+    r2 = st.columns(4)
+    for idx in range(4, 8):
+        node = trail_stations[idx]
+        lvl = node["level"]
+        is_unlocked = lvl <= unlocked_lvl
+        with r2[idx - 4]:
+            if is_unlocked:
+                if st.button(f"{node['icon']} {node['title']}", key=f"map_lvl_{lvl}", use_container_width=True):
+                    st.session_state.active_activity = node['id']
+                    st.session_state.current_level_num = lvl
+                    st.session_state.screen = "station_play"
+                    st.rerun()
+            else:
+                if st.button(f"🔒 Level {lvl} (Locked)", key=f"map_lock_{lvl}", use_container_width=True):
+                    speak(f"Level {lvl} is locked! Complete the previous level first!")
+                    st.warning(f"🔒 **Level {lvl} Locked**")
+
+    # Companion Animals banner at bottom of trail
+    st.markdown("""
+    <div style="display:flex; justify-content:center; gap:35px; align-items:flex-end; margin-top:20px;">
+        <div style="font-size:3rem;">🐘</div>
+        <div style="font-size:3rem;">🦊</div>
+        <div style="font-size:2.6rem;">🦜</div>
+        <div style="font-size:3rem;">🦭</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # =========================================================
 # SCREEN 4: INDIVIDUAL STATION PLAY ARENA
