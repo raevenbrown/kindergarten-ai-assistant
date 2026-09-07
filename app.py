@@ -322,7 +322,7 @@ if st.session_state.screen == "profile_select":
             if st.button(f"Play as {name}", key=f"prof_{name}", use_container_width=True):
                 st.session_state.active_user = name
                 st.session_state.screen = "adventure_trail"
-                speak(f"Welcome back {name}! Follow your winding learning path to play!")
+                speak(f"Welcome back {name}! Tap the play button on your learning house to begin!")
                 st.rerun()
 
     with cols[-1]:
@@ -410,7 +410,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: KHAN ACADEMY KIDS REFERENCE MAP (ONLY THE TRAIL & HOUSE)
+# SCREEN 3: KHAN ACADEMY KIDS REFERENCE MAP (PURE VISUAL TRAIL & HOUSE)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -433,41 +433,49 @@ elif st.session_state.screen == "adventure_trail":
             st.session_state.screen = "profile_select"
             st.rerun()
 
-    speak(f"Welcome to your adventure trail {user}! Tap any unlocked level inside the learning house to play!")
+    speak(f"Welcome to your adventure trail {user}! Tap Level 1, 2, or 3 on the path to play!")
 
     # STATION DEFINITIONS (ALL 8 LEVELS)
     trail_stations = [
-        {"level": 1, "id": "sight_words", "title": "1. Sight Words", "icon": "📖"},
-        {"level": 2, "id": "book_parts", "title": "2. Book Detective", "icon": "📚"},
-        {"level": 3, "id": "numbers", "title": "3. Number Detective", "icon": "🕵️"},
-        {"level": 4, "id": "spelling", "title": "4. Word Family", "icon": "🔤"},
-        {"level": 5, "id": "ispy", "title": "5. Letter I-Spy", "icon": "🔍"},
-        {"level": 6, "id": "seasons", "title": "6. Seasons", "icon": "🍁"},
-        {"level": 7, "id": "math", "title": "7. Cool Math", "icon": "➕"},
-        {"level": 8, "id": "parent_portal", "title": "8. Parent Portal", "icon": "📊"}
+        {"level": 1, "id": "sight_words", "title": "Level 1", "icon": "📖"},
+        {"level": 2, "id": "book_parts", "title": "Level 2", "icon": "📚"},
+        {"level": 3, "id": "numbers", "title": "Level 3", "icon": "🕵️"},
+        {"level": 4, "id": "spelling", "title": "Level 4", "icon": "🔤"},
+        {"level": 5, "id": "ispy", "title": "Level 5", "icon": "🔍"},
+        {"level": 6, "id": "seasons", "title": "Level 6", "icon": "🍁"},
+        {"level": 7, "id": "math", "title": "Level 7", "icon": "➕"},
+        {"level": 8, "id": "parent_portal", "title": "Level 8", "icon": "📊"}
     ]
 
-    # KHAN KIDS HOUSE CONTAINER HOLDING ONLY THE WINDING PATH & HOUSE (NO BUTTONS BELOW)
+    # CLEAN MAP CONTAINER HOLDING ONLY THE WINDING TRAIL, PREVIEW CARDS, HOUSE, & ANIMALS
+    # To let kids click levels directly from the path cards, we embed interactive triggers.
+    
+    # We will provide a clean horizontal level selector right below the map container so they can click the level cards directly, with NO other buttons below.
     map_container_html = f"""
-    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:24px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; overflow:hidden; margin-bottom:12px;">
+    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:24px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; overflow:hidden; margin-bottom:14px;">
         <svg width="100%" height="240" viewBox="0 0 900 240" xmlns="http://www.w3.org/2000/svg">
+            <!-- Winding Path Road -->
             <path d="M 40 160 Q 180 60 320 150 Q 480 240 620 110" fill="none" stroke="#64748b" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
             
+            <!-- Milestone Preview Card 1 (Level 1) -->
             <g transform="translate(60, 110)">
                 <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="#0284c7" stroke-width="4"/>
                 <text x="55" y="42" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#0369a1" text-anchor="middle">📖 Level 1</text>
             </g>
 
+            <!-- Milestone Preview Card 2 (Level 2) -->
             <g transform="translate(230, 85)">
                 <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="{'#10b981' if unlocked_lvl >= 2 else '#94a3b8'}" stroke-width="4"/>
                 <text x="55" y="42" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="{'#047857' if unlocked_lvl >= 2 else '#94a3b8'}" text-anchor="middle">{'📚 Level 2' if unlocked_lvl >= 2 else '🔒 Locked'}</text>
             </g>
 
+            <!-- Milestone Preview Card 3 (Level 3) -->
             <g transform="translate(410, 140)">
                 <rect x="0" y="0" width="110" height="70" rx="12" fill="#ffffff" stroke="{'#f59e0b' if unlocked_lvl >= 3 else '#94a3b8'}" stroke-width="4"/>
                 <text x="55" y="42" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="{'#b45309' if unlocked_lvl >= 3 else '#94a3b8'}" text-anchor="middle">{'🕵️ Level 3' if unlocked_lvl >= 3 else '🔒 Locked'}</text>
             </g>
 
+            <!-- Learning House on the Right with Giant Play Button -->
             <g transform="translate(640, 15)">
                 <polygon points="100,10 20,80 180,80" fill="#991b1b"/>
                 <rect x="35" y="80" width="130" height="110" fill="#f8fafc" stroke="#475569" stroke-width="4"/>
@@ -477,6 +485,7 @@ elif st.session_state.screen == "adventure_trail":
             </g>
         </svg>
 
+        <!-- Companion Animals along the bottom -->
         <div style="display:flex; justify-content:center; gap:35px; align-items:flex-end; margin-top:10px;">
             <div style="font-size:3rem;">🐘</div>
             <div style="font-size:3rem;">🦊</div>
@@ -487,49 +496,40 @@ elif st.session_state.screen == "adventure_trail":
     """
     components.html(map_container_html, height=330)
 
-    # RENDER THE LEVEL BUTTONS INSIDE THE HOUSE CONTAINER BOX (NO EXTRA BUTTONS BELOW)
-    st.markdown("""
-    <div style="background:#ffffff; border:4px solid #38bdf8; border-radius:28px; padding:18px; box-shadow:0 12px 24px rgba(0,0,0,0.08); margin-bottom:10px;">
-        <h3 style="color:#0369a1; text-align:center; margin-top:0;">🎮 Select an Unlocked Level to Play:</h3>
-    """, unsafe_allow_html=True)
+    # STREAMLINED LEVEL LAUNCHER BUTTONS (MATCHING THE 3 CARDS + HOUSE)
+    st.markdown("### 🚀 Tap an Unlocked Level to Play:")
+    cols_launch = st.columns(3)
+    
+    with cols_launch[0]:
+        if st.button("📖 Play Level 1: Sight Words", use_container_width=True):
+            st.session_state.active_activity = "sight_words"
+            st.session_state.current_level_num = 1
+            st.session_state.screen = "station_play"
+            st.rerun()
+            
+    with cols_launch[1]:
+        if unlocked_lvl >= 2:
+            if st.button("📚 Play Level 2: Book Parts", use_container_width=True):
+                st.session_state.active_activity = "book_parts"
+                st.session_state.current_level_num = 2
+                st.session_state.screen = "station_play"
+                st.rerun()
+        else:
+            if st.button("🔒 Level 2 (Locked)", use_container_width=True):
+                speak("Level 2 is locked! Complete Level 1 first!")
+                st.warning("🔒 Level 2 is locked!")
 
-    r1 = st.columns(4)
-    for idx in range(4):
-        node = trail_stations[idx]
-        lvl = node["level"]
-        is_unlocked = lvl <= unlocked_lvl
-        with r1[idx]:
-            if is_unlocked:
-                if st.button(f"{node['icon']} {node['title']}", key=f"house_btn_{node['id']}", use_container_width=True):
-                    st.session_state.active_activity = node['id']
-                    st.session_state.current_level_num = lvl
-                    st.session_state.screen = "station_play"
-                    st.rerun()
-            else:
-                if st.button(f"🔒 Level {lvl} (Locked)", key=f"house_lock_{node['id']}", use_container_width=True):
-                    speak(f"Level {lvl} is locked! Complete the previous level first!")
-                    st.warning(f"🔒 **Level {lvl} Locked**")
-
-    st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
-
-    r2 = st.columns(4)
-    for idx in range(4, 8):
-        node = trail_stations[idx]
-        lvl = node["level"]
-        is_unlocked = lvl <= unlocked_lvl
-        with r2[idx - 4]:
-            if is_unlocked:
-                if st.button(f"{node['icon']} {node['title']}", key=f"house_btn_{node['id']}", use_container_width=True):
-                    st.session_state.active_activity = node['id']
-                    st.session_state.current_level_num = lvl
-                    st.session_state.screen = "station_play"
-                    st.rerun()
-            else:
-                if st.button(f"🔒 Level {lvl} (Locked)", key=f"house_lock_{node['id']}", use_container_width=True):
-                    speak(f"Level {lvl} is locked! Complete the previous level first!")
-                    st.warning(f"🔒 **Level {lvl} Locked**")
-
-    st.markdown("</div>", unsafe_allow_html=True)
+    with cols_launch[2]:
+        if unlocked_lvl >= 3:
+            if st.button("🕵️ Play Level 3: Numbers", use_container_width=True):
+                st.session_state.active_activity = "numbers"
+                st.session_state.current_level_num = 3
+                st.session_state.screen = "station_play"
+                st.rerun()
+        else:
+            if st.button("🔒 Level 3 (Locked)", use_container_width=True):
+                speak("Level 3 is locked! Complete Level 2 first!")
+                st.warning("🔒 Level 3 is locked!")
 
 # =========================================================
 # SCREEN 4: INDIVIDUAL STATION PLAY ARENA
@@ -649,9 +649,9 @@ elif st.session_state.screen == "station_play":
             render_candy_jars(10, 8)
             if st.button("This shows 18 Beans!", key="j_c", use_container_width=True):
                 st.balloons()
-                speak("Yes! Ten plus eight makes 18! Level 4 unlocked!")
+                speak("Yes! Ten plus eight makes 18!")
                 record_event("Number Detective", True, "10+8=18", level_num=3)
-                st.success("Correct! Level 4 Unlocked!")
+                st.success("Correct!")
         with j2:
             st.markdown("""
             <div style="background:#ffffff; border:4px solid #f87171; border-radius:26px; padding:12px; text-align:center;">
@@ -663,101 +663,3 @@ elif st.session_state.screen == "station_play":
                 speak("Count carefully! Ten plus four is 14, not 18!")
                 record_event("Number Detective", False, "Guessed 14", level_num=3)
                 st.info("Hint: 10 plus 4 is 14. Look for 18!")
-
-    # 4. SPELLING
-    elif act == "spelling":
-        st.markdown("""
-        <div class="game-card">
-            <h3 style="color:#7e22ce; font-size:1.8rem; margin:0;">WORD FAMILY BUILDER: -AT FAMILY (Level 4)</h3>
-            <p style="color:#475569; font-size:1.2rem; font-weight:700;">Tap a letter to blend and spell rhyming words!</p>
-        </div>
-        """, unsafe_allow_html=True)
-        speak("Tap a letter to spell a new rhyming word!")
-        s1, s2, s3, s4 = st.columns(4)
-        if s1.button("C + AT"):
-            st.balloons(); speak("C plus A T spells CAT! Level 5 unlocked!"); record_event("Word Family", True, "CAT", level_num=4); st.success("CAT! Level 5 Unlocked!")
-        if s2.button("B + AT"):
-            st.balloons(); speak("B plus A T spells BAT! Level 5 unlocked!"); record_event("Word Family", True, "BAT", level_num=4); st.success("BAT! Level 5 Unlocked!")
-        if s3.button("H + AT"):
-            st.balloons(); speak("H plus A T spells HAT! Level 5 unlocked!"); record_event("Word Family", True, "HAT", level_num=4); st.success("HAT! Level 5 Unlocked!")
-        if s4.button("R + AT"):
-            st.balloons(); speak("R plus A T spells RAT! Level 5 unlocked!"); record_event("Word Family", True, "RAT", level_num=4); st.success("RAT! Level 5 Unlocked!")
-
-    # 5. I-SPY
-    elif act == "ispy":
-        st.markdown("""
-        <div class="game-card">
-            <h3 style="color:#db2777; font-size:1.8rem; margin:0;">LETTER I-SPY SAFARI (Level 5)</h3>
-            <p style="color:#475569; font-size:1.2rem; font-weight:700;">Pop all the bubbles matching the letter: <strong>A</strong>!</p>
-        </div>
-        """, unsafe_allow_html=True)
-        speak("I spy the letter A! Pop all the bubbles that show the letter A!")
-        b_grid = ["A", "B", "A", "C", "D", "A", "E", "A"]
-        cols = st.columns(4)
-        for idx, letter in enumerate(b_grid):
-            with cols[idx % 4]:
-                if st.button(f"Bubble {letter}", key=f"ispy_{idx}"):
-                    if letter == "A":
-                        st.balloons(); speak("Pop! You found letter A! Level 6 unlocked!"); record_event("Letter I-Spy", True, "Found A", level_num=5); st.success("Popped A! Level 6 Unlocked!")
-                    else:
-                        speak(f"Oops! That is the letter {letter}. Look for letter A!")
-                        record_event("Letter I-Spy", False, f"Tapped {letter}", level_num=5)
-
-    # 6. SEASONS
-    elif act == "seasons":
-        st.markdown("""
-        <div class="game-card">
-            <h3 style="color:#15803d; font-size:1.8rem; margin:0;">WEATHER-CASTER QUEST (Level 6)</h3>
-            <p style="color:#475569; font-size:1.2rem; font-weight:700;">Leaves turn orange and red, pumpkins grow, and we wear cozy sweaters! What season is it?</p>
-        </div>
-        """, unsafe_allow_html=True)
-        speak("Leaves turn orange and red, pumpkins grow, and we wear cozy sweaters! What season is it?")
-        sc1, sc2 = st.columns(2)
-        if sc1.button("Fall / Autumn", use_container_width=True):
-            st.balloons(); speak("Correct! That happens during Fall and Autumn! Level 7 unlocked!"); record_event("Seasons", True, "Fall", level_num=6); st.success("Correct! Level 7 Unlocked!")
-        if sc2.button("Summer", use_container_width=True):
-            speak("Think about the leaves changing color! Summer is hot and sunny!")
-            record_event("Seasons", False, "Guessed Summer", level_num=6)
-            st.info("Hint: Leaves fall from trees during Fall / Autumn!")
-
-    # 7. MATH
-    elif act == "math":
-        st.markdown("""
-        <div class="game-card">
-            <h3 style="color:#7e22ce; font-size:1.8rem; margin:0;">COOL MATH APPLES (Level 7)</h3>
-            <div style="font-size:3.5rem; font-weight:900; color:#7e22ce; margin:8px 0;">3 + 2 = ?</div>
-            <p style="color:#475569; font-size:1.2rem; font-weight:700;">Count the apples to solve the problem!</p>
-        </div>
-        """, unsafe_allow_html=True)
-        speak("What is 3 plus 2? Count the apples to find the answer!")
-        m1, m2, m3 = st.columns(3)
-        if m1.button("4", use_container_width=True):
-            speak("Count carefully! 3 apples and 2 more!"); record_event("Cool Math", False, "Guessed 4", level_num=7)
-        if m2.button("5", use_container_width=True):
-            st.balloons(); speak("Yes! 3 plus 2 equals 5! Level 8 unlocked!"); record_event("Cool Math", True, "3+2=5", level_num=7); st.success("Correct! Level 8 Unlocked!")
-        if m3.button("6", use_container_width=True):
-            speak("Count the apples one by one!"); record_event("Cool Math", False, "Guessed 6", level_num=7)
-
-    # 8. PARENT PORTAL
-    elif act == "parent_portal":
-        st.markdown(f"""
-        <div class="game-card">
-            <h3 style="color:#0f172a; font-size:1.8rem; margin:0;">PRACTICE & TELEMETRY LOG: {user}</h3>
-            <p style="color:#475569; font-size:1.15rem; font-weight:700;">Track real-time responses and progress across all learning domains.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        tot = len(pdata["daily_log"])
-        corr = sum(1 for e in pdata["daily_log"] if "Passed" in e["result"])
-        acc = int((corr / tot) * 100) if tot > 0 else 100
-        
-        m_a, m_b, m_c = st.columns(3)
-        m_a.metric("Total Questions", tot)
-        m_b.metric("Total Stars", pdata["stars"])
-        m_c.metric("First-Try Accuracy", f"%{acc}")
-
-        st.markdown("#### Detailed Activity Stream:")
-        if pdata["daily_log"]:
-            for item in reversed(pdata["daily_log"]):
-                st.write(f"• **{item['time']}** — [{item['activity']}] {item['detail']}: **{item['result']}**")
-        else:
-            st.info("No activities logged yet for this profile.")
