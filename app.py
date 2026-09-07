@@ -321,7 +321,7 @@ if st.session_state.screen == "profile_select":
             if st.button(f"Play as {name}", key=f"prof_{name}", use_container_width=True):
                 st.session_state.active_user = name
                 st.session_state.screen = "adventure_trail"
-                speak(f"Welcome back {name}! Tap any unlocked level along your learning path to begin!")
+                speak(f"Welcome back {name}! Tap any unlocked level on your winding learning path to begin!")
                 st.rerun()
 
     with cols[-1]:
@@ -408,7 +408,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: KHAN ACADEMY KIDS ADVENTURE TRAIL MAP (MAIN HOUSE CONTAINER)
+# SCREEN 3: KHAN ACADEMY KIDS ADVENTURE TRAIL MAP (HOUSE & INTERACTIVE PATH)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -426,7 +426,7 @@ elif st.session_state.screen == "adventure_trail":
             </div>
             <div style="display:flex; gap:12px;">
                 <div class="stat-chip">⭐ {pdata['stars']} Stars</div>
-                <div class="stat-chip" style="background:#dcfce7; color:#166534; border-color:#86efac;">🔥 {pdata['streak']} Streak</div>
+                <div style="background:#dcfce7; color:#166534; padding:6px 16px; border-radius:20px; font-weight:800; border:2px solid #86efac;">🔥 {pdata['streak']} Streak</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -436,21 +436,21 @@ elif st.session_state.screen == "adventure_trail":
             st.rerun()
 
     st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
-    speak(f"Welcome to your adventure trail {user}! Tap any unlocked level inside the learning house to play!")
+    speak(f"Welcome to your adventure trail {user}! Tap any unlocked level along your winding path to play!")
 
-    # STATION DEFINITIONS (ALL 8 LEVELS)
+    # STATION DEFINITIONS
     trail_stations = [
-        {"level": 1, "id": "sight_words", "title": "Level 1: Sight Words", "icon": "📖", "desc": "Read & Trace"},
-        {"level": 2, "id": "book_parts", "title": "Level 2: Book Detective", "icon": "📚", "desc": "Parts of a Book"},
-        {"level": 3, "id": "numbers", "title": "Level 3: Number Detective", "icon": "🕵️", "desc": "Counting 20"},
-        {"level": 4, "id": "spelling", "title": "Level 4: Word Family Lab", "icon": "🔤", "desc": "Rhyming Lab"},
-        {"level": 5, "id": "ispy", "title": "Level 5: Letter I-Spy", "icon": "🔍", "desc": "Phonics Bubbles"},
-        {"level": 6, "id": "seasons", "title": "Level 6: Seasons Quest", "icon": "🍁", "desc": "Nature & Weather"},
-        {"level": 7, "id": "math", "title": "Level 7: Cool Math", "icon": "➕", "desc": "Addition Sums"},
-        {"level": 8, "id": "parent_portal", "title": "Level 8: Parent Progress", "icon": "📊", "desc": "Telemetry Logs"}
+        {"level": 1, "id": "sight_words", "title": "1. Sight Words", "icon": "📖"},
+        {"level": 2, "id": "book_parts", "title": "2. Book Detective", "icon": "📚"},
+        {"level": 3, "id": "numbers", "title": "3. Number Detective", "icon": "🕵️"},
+        {"level": 4, "id": "spelling", "title": "4. Word Family Lab", "icon": "🔤"},
+        {"level": 5, "id": "ispy", "title": "5. Letter I-Spy", "icon": "🔍"},
+        {"level": 6, "id": "seasons", "title": "6. Seasons Quest", "icon": "🍁"},
+        {"level": 7, "id": "math", "title": "7. Cool Math", "icon": "➕"},
+        {"level": 8, "id": "parent_portal", "title": "8. Parent Progress", "icon": "📊"}
     ]
 
-    # KHAN KIDS HOUSE CONTAINER HOLDING ALL LEVEL BUTTONS DIRECTLY
+    # CONTAINER HOLDING THE LEARNING HOUSE AND INTERACTIVE MAP PATH
     st.markdown("""
     <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:24px; box-shadow:0 16px 32px rgba(0,0,0,0.12); margin-bottom:20px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -463,7 +463,7 @@ elif st.session_state.screen == "adventure_trail":
         </div>
     """, unsafe_allow_html=True)
 
-    # Render all 8 levels neatly inside the house container box
+    # RENDER ALL 8 LEVELS INSIDE THE HOUSE CONTAINER BOX AS CLICKABLE BUTTONS
     row1_cols = st.columns(4)
     for idx in range(4):
         node = trail_stations[idx]
@@ -471,7 +471,7 @@ elif st.session_state.screen == "adventure_trail":
         is_unlocked = lvl <= unlocked_lvl
         with row1_cols[idx]:
             if is_unlocked:
-                if st.button(f"{node['icon']} {node['title']}", key=f"house_btn_{node['id']}", use_container_width=True):
+                if st.button(f"{node['icon']} Level {lvl}: {node['title'].split('. ')[1]}", key=f"house_btn_{node['id']}", use_container_width=True):
                     st.session_state.active_activity = node['id']
                     st.session_state.current_level_num = lvl
                     st.session_state.screen = "station_play"
@@ -490,7 +490,7 @@ elif st.session_state.screen == "adventure_trail":
         is_unlocked = lvl <= unlocked_lvl
         with row2_cols[idx - 4]:
             if is_unlocked:
-                if st.button(f"{node['icon']} {node['title']}", key=f"house_btn_{node['id']}", use_container_width=True):
+                if st.button(f"{node['icon']} Level {lvl}: {node['title'].split('. ')[1]}", key=f"house_btn_{node['id']}", use_container_width=True):
                     st.session_state.active_activity = node['id']
                     st.session_state.current_level_num = lvl
                     st.session_state.screen = "station_play"
@@ -502,7 +502,7 @@ elif st.session_state.screen == "adventure_trail":
 
     # Companion Animals inside the house box
     st.markdown("""
-        <div style="display:flex; justify-content:center; gap:26px; align-items:flex-end; margin-top:18px;">
+        <div style="display:flex; justify-content:center; gap:26px; align-items:flex-end; margin-top:20px;">
             <div style="font-size:2.6rem;">🐘</div>
             <div style="font-size:2.6rem;">🦊</div>
             <div style="font-size:2.4rem;">🦜</div>
