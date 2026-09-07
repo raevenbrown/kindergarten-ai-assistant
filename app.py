@@ -5,13 +5,13 @@ from datetime import datetime
 
 st.set_page_config(
     page_title="Adventure Learning Academy",
-    page_icon="🎨",
+    page_icon="🌟",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 # =========================================================
-# 1. CLEAN VECTOR GRAPHICS ENGINE (COMPONENTS.HTML MOUNTED)
+# 1. VECTOR SVG GRAPHICS ENGINE
 # =========================================================
 
 def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glasses="gold_round", shirt="#ec4899", accessory="crown", size=180):
@@ -149,7 +149,7 @@ def render_candy_jars(count1=10, count2=8):
     components.html(raw_html, height=150)
 
 # =========================================================
-# 2. APPLICATION STYLING & WEBAUDIO SYNTHESIZER
+# 2. STYLING & AUDIO SYNTHESIZER
 # =========================================================
 
 st.markdown("""
@@ -239,43 +239,61 @@ def speak(text):
     components.html(js, height=0)
 
 # =========================================================
-# 3. GAME STATE MANAGEMENT
+# 3. PERSISTENT STUDENT PROFILES & STATE MANAGEMENT
 # =========================================================
+
+if "profiles" not in st.session_state:
+    st.session_state.profiles = {
+        "Gracyn": {
+            "buddy": {
+                "skin": "#8d5524",
+                "hair_style": "puffs",
+                "hair_color": "#1a1110",
+                "glasses": "gold_round",
+                "shirt": "#ec4899",
+                "accessory": "crown"
+            },
+            "stars": 14,
+            "streak": 3,
+            "unlocked_node": 1,
+            "daily_log": []
+        },
+        "Jaxson": {
+            "buddy": {
+                "skin": "#e0ac69",
+                "hair_style": "short_fade",
+                "hair_color": "#271810",
+                "glasses": "none",
+                "shirt": "#3b82f6",
+                "accessory": "cape"
+            },
+            "stars": 8,
+            "streak": 2,
+            "unlocked_node": 1,
+            "daily_log": []
+        }
+    }
+
+if "active_user" not in st.session_state:
+    st.session_state.active_user = "Gracyn"
 
 if "screen" not in st.session_state:
     st.session_state.screen = "profile_select"
 
-if "buddy_config" not in st.session_state:
-    st.session_state.buddy_config = {
-        "skin": "#8d5524",
-        "hair_style": "puffs",
-        "hair_color": "#1a1110",
-        "glasses": "gold_round",
-        "shirt": "#ec4899",
-        "accessory": "crown"
-    }
-
-if "student_name" not in st.session_state:
-    st.session_state.student_name = "Gracyn"
-
-if "stars" not in st.session_state:
-    st.session_state.stars = 14
-
-if "streak" not in st.session_state:
-    st.session_state.streak = 3
-
 if "active_activity" not in st.session_state:
     st.session_state.active_activity = "sight_words"
 
-if "daily_log" not in st.session_state:
-    st.session_state.daily_log = []
-
-# Non-punitive evaluation tracker
+# Helper to record progress into the active profile
 def record_event(activity, is_correct, detail):
+    user = st.session_state.active_user
+    prof = st.session_state.profiles[user]
     if is_correct:
-        st.session_state.stars += 1
-        st.session_state.streak += 1
-    st.session_state.daily_log.append({
+        prof["stars"] += 1
+        prof["streak"] += 1
+        # Advance trail milestone node if they complete enough
+        if prof["unlocked_node"] < 7:
+            prof["unlocked_node"] += 1
+    prof["daily_log"].append({
         "time": datetime.now().strftime("%I:%M:%S %p"),
         "activity": activity,
         "detail": detail,
@@ -289,35 +307,26 @@ if st.session_state.screen == "profile_select":
     st.markdown("""
     <div style="text-align:center; padding: 18px 0 10px 0;">
         <h1 style="color:#0369a1; font-size:3.2rem; font-weight:900; margin-bottom:4px;">ADVENTURE LEARNING ACADEMY</h1>
-        <p style="font-size:1.5rem; color:#1e293b; font-weight:800;">Who is ready to learn today? Tap your character!</p>
+        <p style="font-size:1.5rem; color:#1e293b; font-weight:800;">Who is playing today? Tap your character!</p>
     </div>
     """, unsafe_allow_html=True)
     speak("Who is playing today? Tap your character or design a new buddy!")
 
-    c1, c2, c3 = st.columns([1, 1, 1])
+    prof_names = list(st.session_state.profiles.keys())
+    cols = st.columns(len(prof_names) + 1)
 
-    with c1:
-        render_avatar(
-            skin=st.session_state.buddy_config['skin'],
-            hair_style=st.session_state.buddy_config['hair_style'],
-            hair_color=st.session_state.buddy_config['hair_color'],
-            glasses=st.session_state.buddy_config['glasses'],
-            shirt=st.session_state.buddy_config['shirt'],
-            accessory=st.session_state.buddy_config['accessory'],
-            size=180
-        )
-        if st.button(f"Play as {st.session_state.student_name}", use_container_width=True):
-            st.session_state.screen = "hub"
-            st.rerun()
+    for i, name in enumerate(prof_names):
+        p_data = st.session_state.profiles[name]
+        b = p_data["buddy"]
+        with cols[i]:
+            render_avatar(skin=b["skin"], hair_style=b["hair_style"], hair_color=b["hair_color"], glasses=b["glasses"], shirt=b["shirt"], accessory=b["accessory"], size=180)
+            if st.button(f"Play as {name}", key=f"prof_{name}", use_container_width=True):
+                st.session_state.active_user = name
+                st.session_state.screen = "adventure_map"
+                speak(f"Welcome back {name}! Let's continue your adventure!")
+                st.rerun()
 
-    with c2:
-        render_avatar(skin="#e0ac69", hair_style="short_fade", hair_color="#271810", glasses="none", shirt="#3b82f6", accessory="cape", size=180)
-        if st.button("Play as Jaxson", use_container_width=True):
-            st.session_state.student_name = "Jaxson"
-            st.session_state.screen = "hub"
-            st.rerun()
-
-    with c3:
+    with cols[-1]:
         raw_plus = """
         <div style="display:flex; justify-content:center; align-items:center; width:100%;">
             <svg width="180" height="180" viewBox="0 0 200 200">
@@ -337,134 +346,136 @@ if st.session_state.screen == "profile_select":
 # =========================================================
 elif st.session_state.screen == "buddy_dressup":
     st.markdown("""
-    <div class="game-card" style="padding:14px;">
-        <h2 style="color:#0369a1; font-size:2.2rem; margin:0;">BUDDY DRESS-UP STUDIO</h2>
-        <p style="color:#475569; font-weight:700; font-size:1.15rem; margin:4px 0 0 0;">Pick your favorite hairstyles, colors, glasses, and royal outfits!</p>
+    <div class="game-card" style="padding:14px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <h2 style="color:#0369a1; font-size:2.2rem; margin:0;">BUDDY DRESS-UP STUDIO</h2>
+            <p style="color:#475569; font-weight:700; font-size:1.15rem; margin:4px 0 0 0;">Create a custom avatar for your new learning profile!</p>
+        </div>
     </div>
     """, unsafe_allow_html=True)
-    speak("Customize your learning buddy! Pick hairstyles, colors, and fun outfits!")
+    speak("Design your buddy! Pick hairstyles, skin tones, and outfits!")
 
+    if "temp_buddy" not in st.session_state:
+        st.session_state.temp_buddy = {"skin": "#c68642", "hair_style": "puffs", "hair_color": "#1a1110", "glasses": "gold_round", "shirt": "#0284c7", "accessory": "crown"}
+
+    tb = st.session_state.temp_buddy
     col_preview, col_options = st.columns([1.1, 1.4])
 
     with col_preview:
-        render_avatar(
-            skin=st.session_state.buddy_config['skin'],
-            hair_style=st.session_state.buddy_config['hair_style'],
-            hair_color=st.session_state.buddy_config['hair_color'],
-            glasses=st.session_state.buddy_config['glasses'],
-            shirt=st.session_state.buddy_config['shirt'],
-            accessory=st.session_state.buddy_config['accessory'],
-            size=230
-        )
-        if st.button("Ready to Play! Save Buddy", use_container_width=True):
-            st.session_state.screen = "hub"
+        render_avatar(skin=tb['skin'], hair_style=tb['hair_style'], hair_color=tb['hair_color'], glasses=tb['glasses'], shirt=tb['shirt'], accessory=tb['accessory'], size=230)
+        new_profile_name = st.text_input("Enter Profile Name:", value="Superstar")
+        if st.button("Save & Start Learning!", use_container_width=True):
+            clean_name = new_profile_name.strip() if new_profile_name.strip() else "Learner"
+            st.session_state.profiles[clean_name] = {
+                "buddy": tb,
+                "stars": 10,
+                "streak": 1,
+                "unlocked_node": 1,
+                "daily_log": []
+            }
+            st.session_state.active_user = clean_name
+            st.session_state.screen = "adventure_map"
+            speak(f"Awesome! Welcome to Adventure Academy, {clean_name}!")
+            st.rerun()
+
+        if st.button("⬅️ Back to Profiles", use_container_width=True):
+            st.session_state.screen = "profile_select"
             st.rerun()
 
     with col_options:
         tab_h, tab_s, tab_c, tab_a = st.tabs(["Hairstyle", "Skin Tone", "Outfit", "Accessories"])
-
         with tab_h:
-            st.markdown("#### Choose Haircut:")
             h1, h2 = st.columns(2)
-            if h1.button("Afro Puffs"):
-                st.session_state.buddy_config["hair_style"] = "puffs"
-                st.rerun()
-            if h2.button("Curly Bob"):
-                st.session_state.buddy_config["hair_style"] = "curly_bob"
-                st.rerun()
-            if h1.button("Fresh Fade"):
-                st.session_state.buddy_config["hair_style"] = "short_fade"
-                st.rerun()
-            if h2.button("High Ponytail"):
-                st.session_state.buddy_config["hair_style"] = "ponytail"
-                st.rerun()
-
+            if h1.button("Afro Puffs"): tb["hair_style"] = "puffs"; st.rerun()
+            if h2.button("Curly Bob"): tb["hair_style"] = "curly_bob"; st.rerun()
+            if h1.button("Fresh Fade"): tb["hair_style"] = "short_fade"; st.rerun()
+            if h2.button("Ponytail"): tb["hair_style"] = "ponytail"; st.rerun()
         with tab_s:
-            st.markdown("#### Complexion:")
             s1, s2, s3, s4 = st.columns(4)
-            if s1.button("Deep"):
-                st.session_state.buddy_config["skin"] = "#5c3818"
-                st.rerun()
-            if s2.button("Bronze"):
-                st.session_state.buddy_config["skin"] = "#8d5524"
-                st.rerun()
-            if s3.button("Tan"):
-                st.session_state.buddy_config["skin"] = "#c68642"
-                st.rerun()
-            if s4.button("Peach"):
-                st.session_state.buddy_config["skin"] = "#f1c27d"
-                st.rerun()
-
+            if s1.button("Deep"): tb["skin"] = "#5c3818"; st.rerun()
+            if s2.button("Bronze"): tb["skin"] = "#8d5524"; st.rerun()
+            if s3.button("Tan"): tb["skin"] = "#c68642"; st.rerun()
+            if s4.button("Peach"): tb["skin"] = "#f1c27d"; st.rerun()
         with tab_c:
-            st.markdown("#### Shirt Color:")
             c1, c2, c3, c4 = st.columns(4)
-            if c1.button("Pink"):
-                st.session_state.buddy_config["shirt"] = "#ec4899"
-                st.rerun()
-            if c2.button("Sky"):
-                st.session_state.buddy_config["shirt"] = "#0284c7"
-                st.rerun()
-            if c3.button("Gold"):
-                st.session_state.buddy_config["shirt"] = "#eab308"
-                st.rerun()
-            if c4.button("Green"):
-                st.session_state.buddy_config["shirt"] = "#16a34a"
-                st.rerun()
-
+            if c1.button("Pink"): tb["shirt"] = "#ec4899"; st.rerun()
+            if c2.button("Sky"): tb["shirt"] = "#0284c7"; st.rerun()
+            if c3.button("Gold"): tb["shirt"] = "#eab308"; st.rerun()
+            if c4.button("Green"): tb["shirt"] = "#16a34a"; st.rerun()
         with tab_a:
-            st.markdown("#### Eyewear & Royal Gear:")
             a1, a2 = st.columns(2)
-            if a1.button("Gold Glasses"):
-                st.session_state.buddy_config["glasses"] = "gold_round"
-                st.rerun()
-            if a2.button("Star Shades"):
-                st.session_state.buddy_config["glasses"] = "cool_shades"
-                st.rerun()
-            if a1.button("Royal Crown"):
-                st.session_state.buddy_config["accessory"] = "crown"
-                st.rerun()
-            if a2.button("Hero Cape"):
-                st.session_state.buddy_config["accessory"] = "cape"
-                st.rerun()
+            if a1.button("Gold Glasses"): tb["glasses"] = "gold_round"; st.rerun()
+            if a2.button("Star Shades"): tb["glasses"] = "cool_shades"; st.rerun()
+            if a1.button("Royal Crown"): tb["accessory"] = "crown"; st.rerun()
+            if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: ADVENTURE HUB & LEARNING STATIONS
+# SCREEN 3: KHAN-KIDS STYLE ADVENTURE TRAIL MAP & PLAY STATIONS
 # =========================================================
-elif st.session_state.screen == "hub":
-    # Top HUD Bar
-    st.markdown(f"""
-    <div class="hud-bar">
-        <div>
-            <b style="font-size:1.4rem; color:#0f172a;">{st.session_state.student_name}'s Adventure Studio</b><br>
-            <span style="color:#0284c7; font-weight:800; font-size:1.05rem;">Kindergarten Scholar</span>
+elif st.session_state.screen == "adventure_map":
+    user = st.session_state.active_user
+    pdata = st.session_state.profiles[user]
+    b = pdata["buddy"]
+
+    # Top HUD Bar with Home/Switch Profile button
+    hud_l, hud_r = st.columns([3, 1])
+    with hud_l:
+        st.markdown(f"""
+        <div class="hud-bar" style="margin-bottom:0;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <b style="font-size:1.35rem; color:#0f172a;">{user}'s Adventure Trail</b>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div class="stat-chip">⭐ {pdata['stars']} Stars</div>
+                <div class="stat-chip" style="background:#dcfce7; color:#166534; border-color:#86efac;">🔥 {pdata['streak']} Streak</div>
+            </div>
         </div>
-        <div style="display:flex; gap:12px;">
-            <div class="stat-chip">Stars: {st.session_state.stars}</div>
-            <div class="stat-chip" style="background:#dcfce7; color:#166534; border-color:#86efac;">Streak: {st.session_state.streak}</div>
-        </div>
+        """, unsafe_allow_html=True)
+    with hud_r:
+        if st.button("🏠 Switch Profile", use_container_width=True):
+            st.session_state.screen = "profile_select"
+            st.rerun()
+
+    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+
+    # Adventure Trail Nodes (Khan Academy Kids style progression map)
+    st.markdown("""
+    <div style="background:rgba(255,255,255,0.7); border:3px solid #38bdf8; border-radius:24px; padding:12px; text-align:center; margin-bottom:14px;">
+        <h3 style="color:#0369a1; margin:0; font-size:1.4rem;">🗺️ Tap any station along your learning path!</h3>
     </div>
     """, unsafe_allow_html=True)
 
-    # Station Selection Tabs
-    stations = [
-        "📖 Sight Words",
-        "📚 Parts of a Book",
-        "🕵️ Number Detective",
-        "🔤 Word Family Spelling",
-        "🔍 Letter I-Spy",
-        "🍁 Seasons & Nature",
-        "➕ Cool Math",
-        "📊 Parent Portal"
+    trail_nodes = [
+        {"id": "sight_words", "title": "1. Sight Words Explorer", "icon": "📖", "desc": "Read & Trace"},
+        {"id": "book_parts", "title": "2. Book Detective", "icon": "📚", "desc": "Parts of a Book"},
+        {"id": "numbers", "title": "3. Number Detective", "icon": "🕵️", "desc": "Counting & Quantities"},
+        {"id": "spelling", "title": "4. Word Family Lab", "icon": "🔤", "desc": "Onset-Rime Rhymes"},
+        {"id": "ispy", "title": "5. Letter I-Spy Safari", "icon": "🔍", "desc": "Bubble Pop Phonics"},
+        {"id": "seasons", "title": "6. Seasons Quest", "icon": "🍁", "desc": "Nature & Weather"},
+        {"id": "math", "title": "7. Cool Math Apples", "icon": "➕", "desc": "Addition Sums"},
+        {"id": "parent_portal", "title": "8. Parent Progress", "icon": "📊", "desc": "Telemetry & Logs"}
     ]
-    station_choice = st.selectbox("Select Learning Station", stations, label_visibility="collapsed")
 
-    # 1. SIGHT WORDS
-    if station_choice == "📖 Sight Words":
+    cols_map = st.columns(4)
+    for idx, node in enumerate(trail_nodes):
+        with cols_map[idx % 4]:
+            is_unlocked = (idx + 1) <= pdata["unlocked_node"]
+            btn_label = f"{node['icon']} {node['title']}"
+            if st.button(btn_label, key=f"node_{node['id']}", use_container_width=True):
+                st.session_state.active_activity = node['id']
+                st.rerun()
+
+    st.markdown("---")
+
+    # -------------------------------------------------------------
+    # ACTIVE LEARNING STATION ROUTER
+    # -------------------------------------------------------------
+    act = st.session_state.active_activity
+
+    if act == "sight_words":
         words_pool = ["THE", "AND", "YOU", "SEE", "CAN", "WAS"]
-        if "sw_current" not in st.session_state:
-            st.session_state.sw_current = "THE"
-
-        speak(f"Read this word out loud, then trace it with your finger: {st.session_state.sw_current}")
+        if "sw_current" not in st.session_state: st.session_state.sw_current = "THE"
+        speak(f"Read this word out loud, then trace it: {st.session_state.sw_current}")
 
         st.markdown(f"""
         <div class="game-card">
@@ -476,8 +487,8 @@ elif st.session_state.screen == "hub":
         </div>
         """, unsafe_allow_html=True)
 
-        trace_col, btn_col = st.columns([2, 1])
-        with trace_col:
+        col_pad, col_check = st.columns([2, 1])
+        with col_pad:
             trace_html = """
             <div style="background:#f8fafc; border:4px dashed #0284c7; border-radius:24px; padding:10px; text-align:center;">
                 <canvas id="c" width="460" height="170" style="background:#ffffff; border-radius:18px; touch-action:none; cursor:crosshair; border:2px solid #cbd5e1;"></canvas>
@@ -500,56 +511,48 @@ elif st.session_state.screen == "hub":
             """
             components.html(trace_html, height=250)
 
-        with btn_col:
+        with col_check:
             if st.button("I Read It! (+1 Star)", use_container_width=True):
                 st.balloons()
                 speak(f"Awesome reading! You mastered {st.session_state.sw_current}!")
                 record_event("Sight Words", True, f"Mastered {st.session_state.sw_current}")
                 st.session_state.sw_current = random.choice([w for w in words_pool if w != st.session_state.sw_current])
                 st.rerun()
-
             if st.button("Next Word", use_container_width=True):
                 st.session_state.sw_current = random.choice([w for w in words_pool if w != st.session_state.sw_current])
                 st.rerun()
 
-    # 2. PARTS OF A BOOK
-    elif station_choice == "📚 Parts of a Book":
+    elif act == "book_parts":
         st.markdown("""
         <div class="game-card">
             <h3 style="color:#1d4ed8; font-size:1.8rem; margin:0;">INTERACTIVE BOOK DETECTIVE</h3>
             <p style="color:#475569; font-size:1.2rem; font-weight:700;">Look at the book graphic and identify the highlighted part!</p>
         </div>
         """, unsafe_allow_html=True)
-
         b_img, b_quiz = st.columns([1.2, 1.4])
         with b_img:
             render_book_diagram(part="spine")
-
         with b_quiz:
-            speak("Look at the golden yellow border on the side edge! What holds the pages together tightly like your backbone?")
+            speak("What is the side edge called that holds all the pages together like your backbone?")
             st.markdown("#### What is the side edge called that holds all the pages together?")
-            
             p1, p2 = st.columns(2)
             if p1.button("The Spine", use_container_width=True):
                 st.balloons()
                 speak("Yes! The spine holds the pages together like your backbone!")
                 record_event("Parts of a Book", True, "Identified Spine")
                 st.success("Correct! The spine is the book's backbone.")
-
             if p2.button("Front Cover", use_container_width=True):
                 speak("Almost! The front cover is on the front. Look at the side edge!")
                 record_event("Parts of a Book", False, "Guessed Cover")
                 st.info("Hint: The spine is the backbone on the side edge!")
 
-    # 3. NUMBER DETECTIVE
-    elif station_choice == "🕵️ Number Detective":
+    elif act == "numbers":
         st.markdown("""
         <div class="game-card">
             <h3 style="color:#b45309; font-size:1.8rem; margin:0;">CANDY SHOP NUMBER DETECTIVE</h3>
             <p style="color:#475569; font-size:1.2rem; font-weight:700;">Count the jellybeans in each jar! Which card shows exactly 18?</p>
         </div>
         """, unsafe_allow_html=True)
-
         j1, j2 = st.columns(2)
         with j1:
             st.markdown("""
@@ -563,7 +566,6 @@ elif st.session_state.screen == "hub":
                 speak("Yes! Ten red beans plus eight green beans makes 18!")
                 record_event("Number Detective", True, "10+8=18")
                 st.success("Correct! 10 + 8 = 18!")
-
         with j2:
             st.markdown("""
             <div style="background:#ffffff; border:4px solid #f87171; border-radius:26px; padding:12px; text-align:center;">
@@ -572,12 +574,11 @@ elif st.session_state.screen == "hub":
             """, unsafe_allow_html=True)
             render_candy_jars(10, 4)
             if st.button("Is this 18?", key="j_w", use_container_width=True):
-                speak("Count carefully! Ten plus four is 14, not 18! Try the other jars!")
+                speak("Count carefully! Ten plus four is 14, not 18!")
                 record_event("Number Detective", False, "Guessed 14")
                 st.info("Hint: 10 plus 4 is 14. Look for 18!")
 
-    # 4. WORD FAMILY SPELLING
-    elif station_choice == "🔤 Word Family Spelling":
+    elif act == "spelling":
         st.markdown("""
         <div class="game-card">
             <h3 style="color:#7e22ce; font-size:1.8rem; margin:0;">WORD FAMILY BUILDER: -AT FAMILY</h3>
@@ -585,34 +586,17 @@ elif st.session_state.screen == "hub":
         </div>
         """, unsafe_allow_html=True)
         speak("Tap a letter to spell a new rhyming word!")
-
         s1, s2, s3, s4 = st.columns(4)
         if s1.button("C + AT"):
-            st.balloons()
-            speak("C plus A T spells CAT!")
-            record_event("Word Family", True, "CAT")
-            st.success("CAT! Great job!")
-
+            st.balloons(); speak("C plus A T spells CAT!"); record_event("Word Family", True, "CAT"); st.success("CAT! Great job!")
         if s2.button("B + AT"):
-            st.balloons()
-            speak("B plus A T spells BAT!")
-            record_event("Word Family", True, "BAT")
-            st.success("BAT! Wonderful spelling!")
-
+            st.balloons(); speak("B plus A T spells BAT!"); record_event("Word Family", True, "BAT"); st.success("BAT! Wonderful spelling!")
         if s3.button("H + AT"):
-            st.balloons()
-            speak("H plus A T spells HAT!")
-            record_event("Word Family", True, "HAT")
-            st.success("HAT! You made a word!")
-
+            st.balloons(); speak("H plus A T spells HAT!"); record_event("Word Family", True, "HAT"); st.success("HAT! You made a word!")
         if s4.button("R + AT"):
-            st.balloons()
-            speak("R plus A T spells RAT!")
-            record_event("Word Family", True, "RAT")
-            st.success("RAT! Super rhyming!")
+            st.balloons(); speak("R plus A T spells RAT!"); record_event("Word Family", True, "RAT"); st.success("RAT! Super rhyming!")
 
-    # 5. LETTER I-SPY
-    elif station_choice == "🔍 Letter I-Spy":
+    elif act == "ispy":
         st.markdown("""
         <div class="game-card">
             <h3 style="color:#db2777; font-size:1.8rem; margin:0;">LETTER I-SPY SAFARI</h3>
@@ -620,23 +604,18 @@ elif st.session_state.screen == "hub":
         </div>
         """, unsafe_allow_html=True)
         speak("I spy the letter A! Pop all the bubbles that show the letter A!")
-
         b_grid = ["A", "B", "A", "C", "D", "A", "E", "A"]
         cols = st.columns(4)
         for idx, letter in enumerate(b_grid):
             with cols[idx % 4]:
                 if st.button(f"Bubble {letter}", key=f"ispy_{idx}"):
                     if letter == "A":
-                        st.balloons()
-                        speak(f"Pop! You found letter A!")
-                        record_event("Letter I-Spy", True, "Found A")
-                        st.success("Popped A!")
+                        st.balloons(); speak("Pop! You found letter A!"); record_event("Letter I-Spy", True, "Found A"); st.success("Popped A!")
                     else:
                         speak(f"Oops! That is the letter {letter}. Look for letter A!")
                         record_event("Letter I-Spy", False, f"Tapped {letter}")
 
-    # 6. SEASONS & NATURE
-    elif station_choice == "🍁 Seasons & Nature":
+    elif act == "seasons":
         st.markdown("""
         <div class="game-card">
             <h3 style="color:#15803d; font-size:1.8rem; margin:0;">WEATHER-CASTER QUEST</h3>
@@ -644,21 +623,15 @@ elif st.session_state.screen == "hub":
         </div>
         """, unsafe_allow_html=True)
         speak("Leaves turn orange and red, pumpkins grow, and we wear cozy sweaters! What season is it?")
-
         sc1, sc2 = st.columns(2)
         if sc1.button("Fall / Autumn", use_container_width=True):
-            st.balloons()
-            speak("Correct! That happens during Fall and Autumn!")
-            record_event("Seasons", True, "Fall")
-            st.success("Correct! Pumpkins and orange leaves happen in Fall!")
-
+            st.balloons(); speak("Correct! That happens during Fall and Autumn!"); record_event("Seasons", True, "Fall"); st.success("Correct! Pumpkins and orange leaves happen in Fall!")
         if sc2.button("Summer", use_container_width=True):
             speak("Think about the leaves changing color! Summer is hot and sunny!")
             record_event("Seasons", False, "Guessed Summer")
             st.info("Hint: Leaves fall from trees during Fall / Autumn!")
 
-    # 7. COOL MATH
-    elif station_choice == "➕ Cool Math":
+    elif act == "math":
         st.markdown("""
         <div class="game-card">
             <h3 style="color:#7e22ce; font-size:1.8rem; margin:0;">COOL MATH APPLES</h3>
@@ -667,46 +640,33 @@ elif st.session_state.screen == "hub":
         </div>
         """, unsafe_allow_html=True)
         speak("What is 3 plus 2? Count the apples to find the answer!")
-
         m1, m2, m3 = st.columns(3)
         if m1.button("4", use_container_width=True):
-            speak("Count carefully! 3 apples and 2 more!")
-            record_event("Cool Math", False, "Guessed 4")
+            speak("Count carefully! 3 apples and 2 more!"); record_event("Cool Math", False, "Guessed 4")
         if m2.button("5", use_container_width=True):
-            st.balloons()
-            speak("Yes! 3 plus 2 equals 5!")
-            record_event("Cool Math", True, "3+2=5")
-            st.success("Correct! 3 + 2 = 5!")
+            st.balloons(); speak("Yes! 3 plus 2 equals 5!"); record_event("Cool Math", True, "3+2=5"); st.success("Correct! 3 + 2 = 5!")
         if m3.button("6", use_container_width=True):
-            speak("Count the apples one by one!")
-            record_event("Cool Math", False, "Guessed 6")
+            speak("Count the apples one by one!"); record_event("Cool Math", False, "Guessed 6")
 
-    # 8. PARENT PORTAL
-    elif station_choice == "📊 Parent Portal":
+    elif act == "parent_portal":
         st.markdown(f"""
         <div class="game-card">
-            <h3 style="color:#0f172a; font-size:1.8rem; margin:0;">PRACTICE & TELEMETRY LOG: {st.session_state.student_name}</h3>
+            <h3 style="color:#0f172a; font-size:1.8rem; margin:0;">PRACTICE & TELEMETRY LOG: {user}</h3>
             <p style="color:#475569; font-size:1.15rem; font-weight:700;">Track real-time responses and progress across all learning domains.</p>
         </div>
         """, unsafe_allow_html=True)
-
-        m_a, m_b, m_c = st.columns(3)
-        tot = len(st.session_state.daily_log)
-        corr = sum(1 for e in st.session_state.daily_log if "Passed" in e["result"])
+        tot = len(pdata["daily_log"])
+        corr = sum(1 for e in pdata["daily_log"] if "Passed" in e["result"])
         acc = int((corr / tot) * 100) if tot > 0 else 100
-
+        
+        m_a, m_b, m_c = st.columns(3)
         m_a.metric("Total Questions", tot)
-        m_b.metric("Total Stars", st.session_state.stars)
+        m_b.metric("Total Stars", pdata["stars"])
         m_c.metric("First-Try Accuracy", f"{acc}%")
 
         st.markdown("#### Detailed Activity Stream:")
-        if st.session_state.daily_log:
-            for item in reversed(st.session_state.daily_log):
+        if pdata["daily_log"]:
+            for item in reversed(pdata["daily_log"]):
                 st.write(f"• **{item['time']}** — [{item['activity']}] {item['detail']}: **{item['result']}**")
         else:
-            st.info("No activities logged yet in this session.")
-
-    st.markdown("---")
-    if st.button("Switch Character / Back to Profile"):
-        st.session_state.screen = "profile_select"
-        st.rerun()
+            st.info("No activities logged yet for this profile.")
