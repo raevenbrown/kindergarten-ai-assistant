@@ -5,13 +5,13 @@ from datetime import datetime
 from supabase import create_client, Client
 
 st.set_page_config(
-    page_title="Gracyn's Learning Adventure Studio",
+    page_title="Gracyn's Hatch Learning Studio",
     page_icon="🐣",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- KID ARCADE / HATCH THEMED STYLING ---
+# --- GLOBAL THEME & ACCESSIBILITY STYLING ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;800&family=Quicksand:wght@600;700;800&display=swap');
@@ -21,7 +21,7 @@ st.markdown("""
         font-family: 'Fredoka', 'Quicksand', cursive, sans-serif !important;
     }
 
-    /* High-contrast dropdown cards */
+    /* Streamlit Form Fixes: High-Contrast Crisp Selectors */
     div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         border: 3.5px solid #0284c7 !important;
@@ -35,14 +35,8 @@ st.markdown("""
         color: #0f172a !important;
         font-weight: 800 !important;
     }
-    label[data-testid="stWidgetLabel"] p {
-        color: #0c4a6e !important;
-        font-size: 1.2rem !important;
-        font-weight: 800 !important;
-        text-shadow: 0 1px 2px rgba(255,255,255,0.8);
-    }
 
-    /* Big Tactile Touch Buttons for iPad */
+    /* iPad High-Sensitivity Big Touch Buttons */
     .stButton > button {
         border-radius: 28px !important;
         font-size: 1.35rem !important;
@@ -73,26 +67,25 @@ st.markdown("""
     .instruction-card {
         background: #ffffff;
         border-radius: 26px;
-        padding: 14px 20px;
+        padding: 16px 22px;
         border: 3.5px solid #60a5fa;
         box-shadow: 0 8px 20px rgba(0,0,0,0.08);
         margin-bottom: 16px;
         text-align: center;
     }
 
-    .choice-card-img {
+    .jar-container {
         background: #ffffff;
-        border: 3.5px solid #93c5fd;
-        border-radius: 24px;
-        padding: 12px;
+        border: 4px solid #0284c7;
+        border-radius: 26px;
+        padding: 16px;
         text-align: center;
-        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-        margin-bottom: 8px;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.1);
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- WEB SPEECH SYNTHESIS ENGINE ---
+# --- WEB SPEECH SYNTHESIS & IPAD AUDIO UNLOCK ENGINE ---
 def speak(text, sfx="pop"):
     sound_url = {
         "pop": "https://cdn.freesound.org/previews/536/536108_11565331-lq.mp3",
@@ -107,8 +100,8 @@ def speak(text, sfx="pop"):
         (function() {{
             try {{
                 let snd = new Audio("{sound_url}");
-                snd.volume = 0.5;
-                snd.play().catch(e => console.log(e));
+                snd.volume = 0.55;
+                snd.play().catch(e => console.log('Audio autoplay policy on iOS:', e));
             }} catch(e) {{}}
 
             if ('speechSynthesis' in window) {{
@@ -123,7 +116,20 @@ def speak(text, sfx="pop"):
     """
     components.html(js, height=0)
 
-# --- FINGER TRACING PAD (FIXED: ONLY DRAWS ON ACTIVE MOUSE CLICK / FINGER TOUCH DOWN) ---
+# --- AUDIO UNLOCK BANNER FOR IPAD SAFARI ---
+st.markdown("""
+<div style="background:#ffffff; border:3.5px solid #22c55e; border-radius:24px; padding:10px 18px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 6px 14px rgba(0,0,0,0.08);">
+    <div style="font-size:1.15rem; font-weight:800; color:#15803d;">
+        🔊 iPad Audio Speaker Ready
+    </div>
+    <button onclick="window.speechSynthesis.speak(new SpeechSynthesisUtterance('Audio active!')); this.style.background='#16a34a'; this.innerText='✅ Audio Ready';" 
+            style="background:#22c55e; color:#fff; font-size:1.05rem; font-weight:800; border:none; border-radius:18px; padding:8px 20px; box-shadow:0 4px 0 #15803d; cursor:pointer;">
+        ▶️ Tap to Unmute iPad
+    </button>
+</div>
+""", unsafe_allow_html=True)
+
+# --- FINGER TRACING BOX WITH CLEAN DISCRETE MOUSE & TOUCH DOWN STROKES ---
 def tracing_box(word):
     html = f"""
     <div style="background:#f8fafc; border:4px dashed #0284c7; border-radius:26px; padding:14px; text-align:center;">
@@ -155,7 +161,6 @@ def tracing_box(word):
         }}
 
         function handlePointerDown(e) {{
-            // Mouse button check: Only draw on primary left-click
             if (e.type === 'mousedown' && e.button !== 0) return;
             e.preventDefault();
             isPressing = true;
@@ -171,7 +176,6 @@ def tracing_box(word):
         function handlePointerMove(e) {{
             if (!isPressing) return;
             e.preventDefault();
-            // Mouse safety fallback: if buttons are 0, user released mouse outside
             if (e.type === 'mousemove' && e.buttons === 0) {{
                 isPressing = false;
                 ctx.beginPath();
@@ -189,12 +193,10 @@ def tracing_box(word):
             }}
         }}
 
-        // Mouse listeners
         cvs.addEventListener('mousedown', handlePointerDown);
         cvs.addEventListener('mousemove', handlePointerMove);
         window.addEventListener('mouseup', handlePointerUp);
 
-        // Touch listeners for iPad
         cvs.addEventListener('touchstart', handlePointerDown, {{ passive: false }});
         cvs.addEventListener('touchmove', handlePointerMove, {{ passive: false }});
         window.addEventListener('touchend', handlePointerUp, {{ passive: false }});
@@ -215,7 +217,7 @@ def tracing_box(word):
     """
     components.html(html, height=330)
 
-# --- INSTANT ZERO-LATENCY SPEECH RECOGNITION (NO SPOILERS) ---
+# --- INSTANT SPEECH RECOGNITION (NO SPOILERS) ---
 def speech_box(target_word):
     clean_target = target_word.strip().lower()
     html = f"""
@@ -305,13 +307,13 @@ def speech_box(target_word):
     """
     components.html(html, height=125)
 
-# --- EXACT CURRICULUM SIGHT WORD REPOSITORY ---
+# --- SIGHT WORD REPOSITORY ---
 SIGHT_WORD_LISTS = {
     "⭐ List 1 (12 Words)": ["a", "at", "do", "was", "the", "as", "I", "you", "am", "to", "is", "an"],
     "🌟 List 2 (12 Words)": ["man", "did", "of", "your", "in", "sit", "for", "said", "it", "can", "from", "all"]
 }
 
-# --- SUPABASE & DAILY TELEMETRY TRACKER ---
+# --- SUPABASE & TELEMETRY ---
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
 SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", "")
 supabase: Client = None
@@ -353,7 +355,7 @@ def track_performance(activity, is_correct, detail=""):
         except Exception:
             pass
 
-# --- SESSION STATE INITIALIZATION ---
+# --- SESSION STATE ---
 if "stars" not in st.session_state: st.session_state.stars = 0
 if "coins" not in st.session_state: st.session_state.coins = 50
 if "streak" not in st.session_state: st.session_state.streak = 0
@@ -399,7 +401,7 @@ with hud_c3:
     c1.markdown(f"<div class='hud-chip'>🪙 {st.session_state.coins}</div>", unsafe_allow_html=True)
     c2.markdown(f"<div class='hud-chip'>⭐ {st.session_state.stars}</div>", unsafe_allow_html=True)
 
-# --- TREASURE BOX POPUP MODAL (6-WORD MILESTONE) ---
+# --- TREASURE BOX POPUP MODAL ---
 if st.session_state.trigger_treasure:
     st.markdown("""
     <div style="background:#fffbeb; border:6px dashed #f59e0b; border-radius:32px; padding:24px; text-align:center; margin-bottom:25px; box-shadow:0 12px 30px rgba(0,0,0,0.15);">
@@ -432,7 +434,7 @@ if st.session_state.trigger_treasure:
                     st.rerun()
     st.stop()
 
-# --- CARD SCAFFOLDED GAME NAVIGATION ---
+# --- PRIMARY NAVIGATION ---
 st.markdown("""
 <div class="instruction-card">
     <span style="font-size:1.3rem; font-weight:800; color:#0369a1;">🎮 Choose Your Learning Adventure Station:</span>
@@ -441,8 +443,9 @@ st.markdown("""
 
 game_modes = [
     "📖 Sight Words",
-    "📚 Parts of a Book",
-    "🕵️ Number Detective (18 & Beyond)",
+    "📚 Parts of a Book & Story Time",
+    "🕵️ Number Detective (20 & Under)",
+    "🔤 Word Family Spelling Lab",
     "🔍 Letter I-Spy Safari",
     "🍁 Seasons & Nature Quest",
     "➕ Cool Math (10 and Under)",
@@ -454,7 +457,7 @@ if active_game != st.session_state.current_game:
     st.rerun()
 
 # ==========================================
-# 1. SIGHT WORDS (INDEPENDENT READING - NO SPOILERS)
+# 1. SIGHT WORDS (AUTOMATIC AUDIO INSTRUCTIONS - NO SPOILERS)
 # ==========================================
 if active_game == "📖 Sight Words":
     col_title, col_audio = st.columns([3, 1.2])
@@ -466,8 +469,8 @@ if active_game == "📖 Sight Words":
         </div>
         """, unsafe_allow_html=True)
     with col_audio:
-        if st.button("🔊 Hear Directions", use_container_width=True):
-            speak("Hey Gracyn! Read this word on your card. Tap the orange button to say your word, then trace it with your finger and tap the green button when you're done!")
+        if st.button("🔊 Hear Directions Again", use_container_width=True):
+            speak("Hey Gracyn! Read this word on your card. Tap the orange button to say your word, then trace it with your finger and tap the green button when you are done!")
 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
@@ -503,6 +506,7 @@ if active_game == "📖 Sight Words":
 
     word = st.session_state.current_sw
 
+    # Automatic prompt on navigation without spoiling the word
     if "last_sw_spoken" not in st.session_state or st.session_state.last_sw_spoken != word:
         speak("Read this word! Tap the orange button to say your word into the microphone, then trace it with your finger and tap the green button!")
         st.session_state.last_sw_spoken = word
@@ -545,159 +549,273 @@ if active_game == "📖 Sight Words":
                 st.rerun()
 
 # ==========================================
-# 2. VISUAL PARTS OF A BOOK (WITH PICTURE CHOICES)
+# 2. PARTS OF A BOOK & STORY TIME (TEACH FIRST -> STORY RECALL -> TEST)
 # ==========================================
-elif active_game == "📚 Parts of a Book":
-    st.markdown("""
-    <div class="instruction-card">
-        <div style="font-size:1.7rem; font-weight:900; color:#1e40af;">📚 Interactive Book Detective</div>
-        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Look at where the yellow bouncy arrow points, look at the picture choices, and tap the right answer!</div>
-    </div>
-    """, unsafe_allow_html=True)
+elif active_game == "📚 Parts of a Book & Story Time":
+    book_tab1, book_tab2, book_tab3 = st.tabs(["🎓 Step 1: Learn the Parts", "📖 Step 2: Read Story & Recall", "🕵️ Step 3: Detective Quiz"])
 
-    book_questions = [
-        {
-            "target": "Front Cover", "highlight": "cover",
-            "q": "Look at the front of the book! What do we call this protective front part?",
-            "wrong_exp": "The front cover protects the book and welcomes you to the story! Look for the Front Cover card.",
-            "correct": "Front Cover",
-            "opts": [
-                {"name": "Front Cover", "img": "📕", "sub": "Whole Front Cover with Picture"},
-                {"name": "The Spine", "img": "📏", "sub": "Side Edge Backbone"},
-                {"name": "Back Cover", "img": "📘", "sub": "Back with Barcode"},
-                {"name": "Page Numbers", "img": "📄", "sub": "Bottom Corner Numbers"}
-            ]
-        },
-        {
-            "target": "Title", "highlight": "title",
-            "q": "The yellow arrow is pointing to THE BRAVE PUPPY. What is the name of a book called?",
-            "wrong_exp": "The title is the big name of the story! Look for The Title card.",
-            "correct": "The Title",
-            "opts": [
-                {"name": "The Title", "img": "🏷️", "sub": "Name of the Book"},
-                {"name": "The Author", "img": "✍️", "sub": "Writer of Words"},
-                {"name": "The Spine", "img": "📏", "sub": "Side Edge Backbone"},
-                {"name": "The Illustrator", "img": "🎨", "sub": "Picture Painter"}
-            ]
-        },
-        {
-            "target": "Author", "highlight": "author",
-            "q": "The arrow points to By Raeven Brown. Who writes the words in the book?",
-            "wrong_exp": "The author is the person who writes all the words! Look for The Author card.",
-            "correct": "The Author",
-            "opts": [
-                {"name": "The Author", "img": "✍️", "sub": "Writes the Words"},
-                {"name": "The Illustrator", "img": "🎨", "sub": "Draws Pictures"},
-                {"name": "Front Cover", "img": "📕", "sub": "Front of Book"},
-                {"name": "Page Numbers", "img": "📄", "sub": "Bottom Corner Numbers"}
-            ]
-        },
-        {
-            "target": "Illustrator", "highlight": "illustrator",
-            "q": "The arrow points to Art by Gracyn. Who draws all the colorful pictures in the book?",
-            "wrong_exp": "The illustrator draws all the beautiful pictures! Look for The Illustrator card.",
-            "correct": "The Illustrator",
-            "opts": [
-                {"name": "The Illustrator", "img": "🎨", "sub": "Draws Pictures"},
-                {"name": "The Author", "img": "✍️", "sub": "Writes Words"},
-                {"name": "The Title", "img": "🏷️", "sub": "Name of the Book"},
-                {"name": "The Spine", "img": "📏", "sub": "Side Edge Backbone"}
-            ]
-        },
-        {
-            "target": "Spine", "highlight": "spine",
-            "q": "The yellow arrow points to the side edge. What holds all the pages together like a backbone?",
-            "wrong_exp": "The spine holds the pages tightly together like your backbone! Look for The Spine card.",
-            "correct": "The Spine",
-            "opts": [
-                {"name": "The Spine", "img": "📏", "sub": "Holds Pages Together"},
-                {"name": "Front Cover", "img": "📕", "sub": "Protects Front"},
-                {"name": "Back Cover", "img": "📘", "sub": "Back with Barcode"},
-                {"name": "The Title", "img": "🏷️", "sub": "Name of the Book"}
-            ]
-        }
-    ]
+    # STEP 1: INTERACTIVE LESSON
+    with book_tab1:
+        st.markdown("""
+        <div class="instruction-card">
+            <div style="font-size:1.6rem; font-weight:900; color:#1e40af;">🎓 Lesson: What Makes a Book?</div>
+            <div style="font-size:1.15rem; font-weight:700; color:#475569;">Every book has special parts! Let's explore each one:</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    if "bq_idx" not in st.session_state: st.session_state.bq_idx = 0
-    curr_q = book_questions[st.session_state.bq_idx % len(book_questions)]
-
-    if "last_bq_spoken" not in st.session_state or st.session_state.last_bq_spoken != curr_q["q"]:
-        speak(f"Gracyn! {curr_q['q']}")
-        st.session_state.last_bq_spoken = curr_q["q"]
-
-    t_key = curr_q["highlight"]
-    html_book = f"""
-    <div style="display:flex; justify-content:center; align-items:center; margin:10px 0 20px 0;">
-        <div style="display:flex; width:380px; height:280px; box-shadow:0 16px 30px rgba(0,0,0,0.25); border-radius:12px 24px 24px 12px; position:relative;">
-            <div style="width:50px; background:linear-gradient(90deg, #1e3a8a, #3b82f6); border-radius:12px 0 0 12px; color:#fff; writing-mode:vertical-rl; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; letter-spacing:4px; border:{'4px solid #facc15' if t_key == 'spine' else 'none'};">
-                {'<span style="position:absolute; left:-55px; font-size:3rem;">👉</span>' if t_key == 'spine' else ''}
-                SPINE
+        l_c1, l_c2 = st.columns(2)
+        with l_c1:
+            st.markdown("""
+            <div style="background:#ffffff; border:4px solid #3b82f6; border-radius:24px; padding:16px; margin-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="font-size:2.8rem;">📕</div>
+                    <div>
+                        <b style="font-size:1.3rem; color:#1e3a8a;">1. The Front Cover</b><br>
+                        <span style="font-size:1.05rem; color:#475569; font-weight:600;">The heavy front door that protects all the pages inside and shows you the big picture!</span>
+                    </div>
+                </div>
             </div>
-            <div style="flex:1; background:linear-gradient(135deg, #60a5fa, #93c5fd); border-radius:0 20px 20px 0; padding:16px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; border:{'5px solid #facc15' if t_key == 'cover' else 'none'};">
-                {'<span style="position:absolute; top:-50px; font-size:3rem;">👇</span>' if t_key == 'cover' else ''}
-                <div style="background:#fff; border:{'4px solid #facc15' if t_key == 'title' else '2px solid #2563eb'}; border-radius:16px; padding:6px 14px; font-size:1.35rem; font-weight:900; color:#1e3a8a;">
-                    {'<span style="position:absolute; right:15px; font-size:2.8rem;">👈</span>' if t_key == 'title' else ''}
-                    📖 THE BRAVE PUPPY
+
+            <div style="background:#ffffff; border:4px solid #f59e0b; border-radius:24px; padding:16px; margin-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="font-size:2.8rem;">🏷️</div>
+                    <div>
+                        <b style="font-size:1.3rem; color:#b45309;">2. The Title</b><br>
+                        <span style="font-size:1.05rem; color:#475569; font-weight:600;">The big name of the book that tells you what the whole story is about!</span>
+                    </div>
                 </div>
-                <div style="font-size:3.8rem;">🐶🐾</div>
-                <div style="font-size:1.05rem; font-weight:800; color:#0f172a; background:{'#fef08a' if t_key == 'author' else '#ffffffcc'}; border-radius:12px; padding:4px 12px; border:{'3px solid #f59e0b' if t_key == 'author' else 'none'};">
-                    {'<span style="position:absolute; left:60px; font-size:2.6rem;">👉</span>' if t_key == 'author' else ''}
-                    ✍️ By Raeven Brown
+            </div>
+
+            <div style="background:#ffffff; border:4px solid #10b981; border-radius:24px; padding:16px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="font-size:2.8rem;">🧑‍🏫</div>
+                    <div>
+                        <b style="font-size:1.3rem; color:#065f46;">3. The Author</b><br>
+                        <span style="font-size:1.05rem; color:#475569; font-weight:600;">The person who writes all the wonderful words and thoughts in the story!</span>
+                    </div>
                 </div>
-                <div style="font-size:1rem; font-weight:800; color:#0f172a; background:{'#fef08a' if t_key == 'illustrator' else '#ffffffcc'}; border-radius:12px; padding:4px 12px; border:{'3px solid #f59e0b' if t_key == 'illustrator' else 'none'};">
-                    {'<span style="position:absolute; right:20px; font-size:2.6rem;">👈</span>' if t_key == 'illustrator' else ''}
-                    🎨 Art by Gracyn
+            </div>
+            """, unsafe_allow_html=True)
+
+        with l_c2:
+            st.markdown("""
+            <div style="background:#ffffff; border:4px solid #ec4899; border-radius:24px; padding:16px; margin-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="font-size:2.8rem;">🎨</div>
+                    <div>
+                        <b style="font-size:1.3rem; color:#9d174d;">4. The Illustrator</b><br>
+                        <span style="font-size:1.05rem; color:#475569; font-weight:600;">The artist who paints and draws all the colorful illustrations and pictures!</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background:#ffffff; border:4px solid #8b5cf6; border-radius:24px; padding:16px; margin-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="font-size:2.8rem;">📏</div>
+                    <div>
+                        <b style="font-size:1.3rem; color:#5b21b6;">5. The Spine</b><br>
+                        <span style="font-size:1.05rem; color:#475569; font-weight:600;">The strong backbone on the side that binds and holds all the pages tightly together!</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background:#ffffff; border:4px solid #64748b; border-radius:24px; padding:16px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="font-size:2.8rem;">📘</div>
+                    <div>
+                        <b style="font-size:1.3rem; color:#334155;">6. The Back Cover</b><br>
+                        <span style="font-size:1.05rem; color:#475569; font-weight:600;">The back of the book that has the store barcode and a short summary of the story!</span>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        if st.button("🔊 Read All Lesson Parts Out Loud", use_container_width=True):
+            speak("Let's learn about books! The front cover protects the book. The title is the book's name. The author writes the words. The illustrator draws the pictures. The spine holds the pages together like your backbone, and the back cover has the barcode!")
+
+    # STEP 2: MINI STORY & RECALL
+    with book_tab2:
+        st.markdown("""
+        <div class="instruction-card">
+            <div style="font-size:1.6rem; font-weight:900; color:#0369a1;">📖 Story Time: Bella the Brave Pup</div>
+            <div style="font-size:1.15rem; font-weight:700; color:#475569;">Listen to the short story and remember what happens!</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div style="background:#ffffff; border:4px solid #38bdf8; border-radius:28px; padding:22px; text-align:center; box-shadow:0 8px 22px rgba(0,0,0,0.08); margin-bottom:18px;">
+            <div style="font-size:4rem; margin-bottom:8px;">🐶🌈🎈</div>
+            <h3 style="color:#0369a1; margin-bottom:6px;">Title: Bella's Big Sunny Day</h3>
+            <p style="font-size:1.35rem; color:#1e293b; font-weight:700; line-height:1.6;">
+                Once upon a time, a fluffy golden pup named Bella found a bright red balloon stuck in a tree. 
+                Bella wagged her tail, jumped with all her puppy might, and tapped the balloon with her nose. 
+                Pop! The balloon floated up into the clouds, and Bella made a new friend named Oliver the Owl!
+            </p>
+            <div style="background:#f0fdf4; border-radius:18px; padding:10px; font-weight:800; color:#166534; font-size:1.15rem;">
+                Written by: Raeven Brown  •  Illustrated by: Gracyn
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("🔊 Read Story Aloud to Gracyn", use_container_width=True):
+            speak("Bella's Big Sunny Day! Once upon a time, a fluffy golden pup named Bella found a bright red balloon stuck in a tree. Bella wagged her tail, jumped with all her puppy might, and tapped the balloon with her nose! Pop! The balloon floated into the clouds and Bella made a new friend named Oliver the Owl! Written by Raeven Brown, Illustrated by Gracyn!")
+
+        st.markdown("#### 🧠 Story Recall Check:")
+        rc1, rc2 = st.columns(2)
+        with rc1:
+            if st.button("🐶 Who was the hero? (A) Bella the Pup", use_container_width=True):
+                st.balloons()
+                speak("Yes! Bella the fluffy pup was the main character!", "cheer")
+                award_score("Story Recall", "Bella the pup")
+        with rc2:
+            if st.button("🐱 Was the hero a Kitty named Cleo?", use_container_width=True):
+                speak("Think back to our story! It was about Bella the brave pup!", "tryagain")
+
+    # STEP 3: INTERACTIVE DETECTIVE QUIZ
+    with book_tab3:
+        book_questions = [
+            {
+                "target": "Front Cover", "highlight": "cover",
+                "q": "Look at the big illustrated front. What part protects the book and welcomes you in?",
+                "wrong_exp": "The Front Cover is the whole front of the book! Look at the Front Cover card.",
+                "correct": "Front Cover",
+                "opts": [
+                    {"name": "Front Cover", "icon": "📕", "desc": "Whole Front Cover with Puppy Picture"},
+                    {"name": "The Spine", "icon": "📏", "desc": "Side Edge Backbone"},
+                    {"name": "Back Cover", "icon": "📘", "desc": "Back of Book with Barcode"},
+                    {"name": "Page Numbers", "icon": "📄", "desc": "Bottom Corner Numbers"}
+                ]
+            },
+            {
+                "target": "The Title", "highlight": "title",
+                "q": "Look at the bold words at the top: THE BRAVE PUPPY. What is the name of a book called?",
+                "wrong_exp": "The Title is the name of the book! Look for The Title card.",
+                "correct": "The Title",
+                "opts": [
+                    {"name": "The Title", "icon": "🏷️", "desc": "Name of the Book at the top"},
+                    {"name": "The Author", "icon": "🧑‍🏫", "desc": "The Person who writes words"},
+                    {"name": "The Spine", "icon": "📏", "desc": "Side Edge Backbone"},
+                    {"name": "The Illustrator", "icon": "🎨", "desc": "Draws pictures"}
+                ]
+            },
+            {
+                "target": "The Author", "highlight": "author",
+                "q": "Look at 'By Raeven Brown'. Who writes all the words in the book?",
+                "wrong_exp": "The Author writes all the words in the story! Look for The Author card.",
+                "correct": "The Author",
+                "opts": [
+                    {"name": "The Author", "icon": "🧑‍🏫", "desc": "Person writing with glasses & paper"},
+                    {"name": "The Illustrator", "icon": "🎨", "desc": "Artist painting with brush"},
+                    {"name": "Front Cover", "icon": "📕", "desc": "Front of book"},
+                    {"name": "The Spine", "icon": "📏", "desc": "Side backbone"}
+                ]
+            },
+            {
+                "target": "The Illustrator", "highlight": "illustrator",
+                "q": "Look at 'Art by Gracyn'. Who draws all the colorful pictures in the book?",
+                "wrong_exp": "The Illustrator paints and draws all the pictures! Look for The Illustrator card.",
+                "correct": "The Illustrator",
+                "opts": [
+                    {"name": "The Illustrator", "icon": "🎨", "desc": "Artist with easel & paint palette"},
+                    {"name": "The Author", "icon": "🧑‍🏫", "desc": "Writes the words"},
+                    {"name": "Back Cover", "icon": "📘", "desc": "Back with barcode"},
+                    {"name": "The Title", "icon": "🏷️", "desc": "Name of book"}
+                ]
+            },
+            {
+                "target": "The Spine", "highlight": "spine",
+                "q": "Look at the side edge. What holds all the pages tightly together like your backbone?",
+                "wrong_exp": "The Spine binds and holds all the pages together! Look for The Spine card.",
+                "correct": "The Spine",
+                "opts": [
+                    {"name": "The Spine", "icon": "📏", "desc": "Side Binding Backbone"},
+                    {"name": "Front Cover", "icon": "📕", "desc": "Front Cover"},
+                    {"name": "Back Cover", "icon": "📘", "desc": "Back Cover with Barcode"},
+                    {"name": "The Title", "icon": "🏷️", "desc": "Name of the Book"}
+                ]
+            }
+        ]
+
+        if "bq_idx" not in st.session_state: st.session_state.bq_idx = 0
+        curr_q = book_questions[st.session_state.bq_idx % len(book_questions)]
+
+        if "last_bq_spoken" not in st.session_state or st.session_state.last_bq_spoken != curr_q["q"]:
+            speak(f"Gracyn! {curr_q['q']}")
+            st.session_state.last_bq_spoken = curr_q["q"]
+
+        # Realistic Physical Book Mockup
+        t_key = curr_q["highlight"]
+        html_book = f"""
+        <div style="display:flex; justify-content:center; align-items:center; margin:10px 0 20px 0;">
+            <div style="display:flex; width:400px; height:290px; box-shadow:0 18px 36px rgba(0,0,0,0.25); border-radius:14px 26px 26px 14px; position:relative; background:#fff;">
+                <div style="width:55px; background:linear-gradient(90deg, #1e3a8a, #3b82f6); border-radius:14px 0 0 14px; color:#fff; writing-mode:vertical-rl; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.15rem; letter-spacing:4px; border:{'5px solid #facc15' if t_key == 'spine' else 'none'};">
+                    {'<span style="position:absolute; left:-55px; font-size:3rem;">👉</span>' if t_key == 'spine' else ''}
+                    SPINE
+                </div>
+                <div style="flex:1; background:linear-gradient(135deg, #60a5fa, #93c5fd); border-radius:0 22px 22px 0; padding:16px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; border:{'5px solid #facc15' if t_key == 'cover' else 'none'};">
+                    {'<span style="position:absolute; top:-50px; font-size:3rem;">👇</span>' if t_key == 'cover' else ''}
+                    <div style="background:#fff; border:{'4px solid #facc15' if t_key == 'title' else '2px solid #2563eb'}; border-radius:16px; padding:6px 16px; font-size:1.35rem; font-weight:900; color:#1e3a8a;">
+                        {'<span style="position:absolute; right:15px; font-size:2.8rem;">👈</span>' if t_key == 'title' else ''}
+                        📖 THE BRAVE PUPPY
+                    </div>
+                    <div style="font-size:4rem;">🐶🐾</div>
+                    <div style="font-size:1.1rem; font-weight:800; color:#0f172a; background:{'#fef08a' if t_key == 'author' else '#ffffffcc'}; border-radius:12px; padding:4px 14px; border:{'3px solid #f59e0b' if t_key == 'author' else 'none'};">
+                        {'<span style="position:absolute; left:60px; font-size:2.6rem;">👉</span>' if t_key == 'author' else ''}
+                        🧑‍🏫 By Raeven Brown (Author)
+                    </div>
+                    <div style="font-size:1.05rem; font-weight:800; color:#0f172a; background:{'#fef08a' if t_key == 'illustrator' else '#ffffffcc'}; border-radius:12px; padding:4px 14px; border:{'3px solid #f59e0b' if t_key == 'illustrator' else 'none'};">
+                        {'<span style="position:absolute; right:20px; font-size:2.6rem;">👈</span>' if t_key == 'illustrator' else ''}
+                        🎨 Art by Gracyn (Illustrator)
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    """
-    components.html(html_book, height=310)
+        """
+        components.html(html_book, height=320)
 
-    st.markdown(f"""
-    <div style="background:#ffffff; border:4px solid #3b82f6; border-radius:24px; padding:18px; text-align:center; font-size:1.6rem; font-weight:800; color:#1e40af; margin-bottom:18px; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
-        ❓ {curr_q['q']}
-    </div>
-    """, unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="background:#ffffff; border:4px solid #3b82f6; border-radius:24px; padding:18px; text-align:center; font-size:1.6rem; font-weight:800; color:#1e40af; margin-bottom:18px; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
+            ❓ {curr_q['q']}
+        </div>
+        """, unsafe_allow_html=True)
 
-    # 4 Visual Picture Choices with Illustrated Cards
-    bcols_top = st.columns(2)
-    bcols_bot = st.columns(2)
-    all_bcols = [bcols_top[0], bcols_top[1], bcols_bot[0], bcols_bot[1]]
+        cols_top = st.columns(2)
+        cols_bot = st.columns(2)
+        grid_cols = [cols_top[0], cols_top[1], cols_bot[0], cols_bot[1]]
 
-    for i, choice in enumerate(curr_q["opts"]):
-        with all_bcols[i]:
-            st.markdown(f"""
-            <div class="choice-card-img">
-                <div style="font-size:3.5rem; margin-bottom:4px;">{choice['img']}</div>
-                <div style="font-size:1.35rem; font-weight:900; color:#0f172a;">{choice['name']}</div>
-                <div style="font-size:1.05rem; font-weight:700; color:#64748b;">{choice['sub']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button(f"👉 Select {choice['name']}", key=f"bk_opt_{choice['name']}_{st.session_state.bq_idx}", use_container_width=True):
-                if choice["name"] == curr_q["correct"]:
-                    st.balloons()
-                    speak(f"Yes! Awesome job Gracyn! That is {choice['name']}!", "cheer")
-                    award_score("Parts of a Book", f"Correct on {choice['name']}")
-                    st.session_state.bq_idx += 1
-                    st.rerun()
-                else:
-                    speak(f"Not quite. {curr_q['wrong_exp']}", "tryagain")
-                    track_performance("Parts of a Book", False, f"Chose {choice['name']}")
+        for i, opt in enumerate(curr_q["opts"]):
+            with grid_cols[i]:
+                st.markdown(f"""
+                <div style="background:#ffffff; border:3.5px solid #93c5fd; border-radius:22px; padding:14px; text-align:center; margin-bottom:8px; box-shadow:0 6px 14px rgba(0,0,0,0.06);">
+                    <div style="font-size:3.5rem; margin-bottom:4px;">{opt['icon']}</div>
+                    <div style="font-size:1.35rem; font-weight:900; color:#0f172a;">{opt['name']}</div>
+                    <div style="font-size:1.05rem; font-weight:700; color:#64748b;">{opt['desc']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button(f"👉 Select {opt['name']}", key=f"btn_bk_opt_{opt['name']}_{st.session_state.bq_idx}", use_container_width=True):
+                    if opt["name"] == curr_q["correct"]:
+                        st.balloons()
+                        speak(f"Yes! Awesome job Gracyn! That is {opt['name']}!", "cheer")
+                        award_score("Parts of a Book", f"Correct on {opt['name']}")
+                        st.session_state.bq_idx += 1
+                        st.rerun()
+                    else:
+                        speak(f"Not quite. {curr_q['wrong_exp']}", "tryagain")
+                        track_performance("Parts of a Book", False, f"Chose {opt['name']}")
 
 # ==========================================
-# 3. NUMBER DETECTIVE: 18 & BEYOND
+# 3. NUMBER DETECTIVE (20 & UNDER) WITH REAL JARS & HIGH CONTRAST
 # ==========================================
-elif active_game == "🕵️ Number Detective (18 & Beyond)":
+elif active_game == "🕵️ Number Detective (20 & Under)":
     st.markdown("""
     <div class="instruction-card">
         <div style="font-size:1.7rem; font-weight:900; color:#b45309;">🕵️ Number Detective: Target 18!</div>
-        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Find and tap the pictures that show EXACTLY 18!</div>
+        <div style="font-size:1.15rem; font-weight:700; color:#475569;">Look inside the real glass candy jars and count the tallies! Tap the pictures that show EXACTLY 18!</div>
     </div>
     """, unsafe_allow_html=True)
 
     if "last_num_spoken" not in st.session_state:
-        speak("Gracyn! We are hunting for the number 18! Look at the jelly beans, tallies, and blocks. Tap the pictures that show 18!")
+        speak("Gracyn! We are looking for the number 18! Look at the shiny jelly bean jars, blocks, and wooden tallies. Tap the cards that equal 18!")
         st.session_state.last_num_spoken = True
 
     c1, c2 = st.columns(2)
@@ -705,83 +823,144 @@ elif active_game == "🕵️ Number Detective (18 & Beyond)":
 
     with c1:
         st.markdown("""
-        <div style="background:#ffffff; border:4px solid #38bdf8; border-radius:22px; padding:16px; text-align:center; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
-            <b style="font-size:1.3rem; color:#0369a1;">🍬 Jelly Bean Jars:</b><br>
-            <div style="background:#e0f2fe; border-radius:18px; padding:12px; margin:8px 0; font-size:1.4rem;">
-                Jar 1: 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 (10 Beans)<br>
-                Jar 2: 🟢🟢🟢🟢🟢🟢🟢🟢 (8 Beans)
+        <div class="jar-container">
+            <b style="font-size:1.4rem; color:#0369a1;">🫙 Candy Shop Glass Jars:</b><br>
+            <div style="background:#e0f2fe; border:2.5px solid #0284c7; border-radius:18px; padding:14px; margin:10px 0;">
+                <div style="font-size:2rem; margin-bottom:4px;">🍬🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴</div>
+                <b style="font-size:1.25rem; color:#0f172a;">Jar 1: Exactly 10 Red Beans</b>
+                <div style="font-size:2rem; margin:8px 0 4px 0;">🍬🟢🟢🟢🟢🟢🟢🟢🟢</div>
+                <b style="font-size:1.25rem; color:#0f172a;">Jar 2: Exactly 8 Green Beans</b>
             </div>
-            <b style="font-size:1.2rem; color:#0284c7;">10 Beans + 8 Beans</b>
+            <div style="background:#fef08a; border-radius:14px; padding:6px; font-size:1.35rem; font-weight:900; color:#854d0e;">
+                10 Beans + 8 Beans
+            </div>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("✅ Yes! This is 18 Beans!", key="btn_beans_18", use_container_width=True):
+        if st.button("✅ Yes! This makes 18 Beans!", key="btn_jar_18", use_container_width=True):
             st.balloons()
-            speak("Yes! Ten beans plus eight beans equals 18!", "cheer")
+            speak("Yes! Ten beans in the big jar plus eight beans in the second jar equals 18!", "cheer")
             award_score("Number Detective", "10+8 Beans = 18")
 
     with c2:
         st.markdown("""
-        <div style="background:#ffffff; border:4px solid #38bdf8; border-radius:22px; padding:16px; text-align:center; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
-            <b style="font-size:1.3rem; color:#0369a1;">🟧 Base-Ten Tower & Cubes:</b><br>
-            <div style="background:#e0f2fe; border-radius:18px; padding:12px; margin:8px 0; font-size:1.4rem;">
-                🟦 1 Ten-Stick (10)<br>
-                🟩 🟩 🟩 🟩 🟩 🟩 🟩 🟩 (8 Ones)
+        <div class="jar-container">
+            <b style="font-size:1.4rem; color:#0369a1;">🟧 Base-Ten Rods & Ones:</b><br>
+            <div style="background:#e0f2fe; border:2.5px solid #0284c7; border-radius:18px; padding:14px; margin:10px 0;">
+                <div style="font-size:2rem; margin-bottom:4px;">🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦</div>
+                <b style="font-size:1.25rem; color:#0f172a;">1 Ten-Rod (Counts as 10)</b>
+                <div style="font-size:2rem; margin:8px 0 4px 0;">🟩 🟩 🟩 🟩 🟩 🟩 🟩 🟩</div>
+                <b style="font-size:1.25rem; color:#0f172a;">8 Individual Unit Cubes</b>
             </div>
-            <b style="font-size:1.2rem; color:#0284c7;">1 Ten and 8 Ones</b>
+            <div style="background:#fef08a; border-radius:14px; padding:6px; font-size:1.35rem; font-weight:900; color:#854d0e;">
+                1 Ten + 8 Ones
+            </div>
         </div>
         """, unsafe_allow_html=True)
         if st.button("✅ Yes! This is 18!", key="btn_base10_18", use_container_width=True):
             st.balloons()
-            speak("Super! One ten-rod and eight ones makes 18!", "cheer")
+            speak("Bingo! 1 ten rod and 8 single cubes makes 18!", "cheer")
             award_score("Number Detective", "Base Ten 18")
 
     with c3:
         st.markdown("""
-        <div style="background:#ffffff; border:4px solid #f87171; border-radius:22px; padding:16px; text-align:center; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
-            <b style="font-size:1.3rem; color:#dc2626;">🍪 Cookie Jar:</b><br>
-            <div style="background:#fee2e2; border-radius:18px; padding:12px; margin:8px 0; font-size:1.4rem;">
-                🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪 (10)<br>
-                🍪🍪🍪🍪 (4)
+        <div class="jar-container" style="border-color:#f87171;">
+            <b style="font-size:1.4rem; color:#dc2626;">🍪 Cookie Bakery Jar:</b><br>
+            <div style="background:#fee2e2; border:2.5px solid #ef4444; border-radius:18px; padding:14px; margin:10px 0;">
+                <div style="font-size:2rem; margin-bottom:4px;">🍪🍪🍪🍪🍪🍪🍪🍪🍪🍪</div>
+                <b style="font-size:1.25rem; color:#0f172a;">Jar 1: 10 Chocolate Cookies</b>
+                <div style="font-size:2rem; margin:8px 0 4px 0;">🍪🍪🍪🍪</div>
+                <b style="font-size:1.25rem; color:#0f172a;">Jar 2: 4 Sugar Cookies</b>
             </div>
-            <b style="font-size:1.2rem; color:#dc2626;">10 Cookies + 4 Cookies</b>
+            <div style="background:#fee2e2; border-radius:14px; padding:6px; font-size:1.35rem; font-weight:900; color:#b91c1c;">
+                10 Cookies + 4 Cookies
+            </div>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("Is this 18? 🤔", key="btn_cookies_14", use_container_width=True):
+        if st.button("Is this 18 Cookies? 🤔", key="btn_cookies_14", use_container_width=True):
             speak("Count carefully Gracyn! Ten plus four is 14, not 18!", "tryagain")
             track_performance("Number Detective", False, "Chose 14 instead of 18")
 
     with c4:
         st.markdown("""
-        <div style="background:#ffffff; border:4px solid #38bdf8; border-radius:22px; padding:16px; text-align:center; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
-            <b style="font-size:1.3rem; color:#0369a1;">🥢 Wooden Tallies:</b><br>
-            <div style="background:#e0f2fe; border-radius:18px; padding:12px; margin:8px 0; font-size:1.6rem; letter-spacing:4px;">
-                卌 卌 卌 |||<br>
-                <span style="font-size:1.1rem; color:#475569;">(5 + 5 + 5 + 3)</span>
+        <div class="jar-container">
+            <b style="font-size:1.4rem; color:#0369a1;">🥢 Wooden Campfire Tallies:</b><br>
+            <div style="background:#e0f2fe; border:2.5px solid #0284c7; border-radius:18px; padding:14px; margin:10px 0;">
+                <div style="font-size:2.2rem; letter-spacing:6px; margin-bottom:4px;">卌 卌 卌</div>
+                <b style="font-size:1.25rem; color:#0f172a;">3 Bundles of 5 = 15</b>
+                <div style="font-size:2.2rem; letter-spacing:6px; margin:8px 0 4px 0;">| | |</div>
+                <b style="font-size:1.25rem; color:#0f172a;">3 Extra Single Sticks</b>
             </div>
-            <b style="font-size:1.2rem; color:#0284c7;">15 + 3 Tallies</b>
+            <div style="background:#fef08a; border-radius:14px; padding:6px; font-size:1.35rem; font-weight:900; color:#854d0e;">
+                15 Tallies + 3 Tallies
+            </div>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("✅ Yes! This is 18 Tallies!", key="btn_tally_18", use_container_width=True):
+        if st.button("✅ Yes! This makes 18 Tallies!", key="btn_tally_18", use_container_width=True):
             st.balloons()
-            speak("Bingo! Fifteen plus three tallies is 18!", "cheer")
+            speak("Super job! Fifteen plus three tallies is 18!", "cheer")
             award_score("Number Detective", "Tallies 18")
 
 # ==========================================
-# 4. LETTER I-SPY: 16-BUBBLE SAFARI GRID
+# 4. WORD FAMILY SPELLING LAB (-AT & -ALL FAMILIES)
+# ==========================================
+elif active_game == "🔤 Word Family Spelling Lab":
+    st.markdown("""
+    <div class="instruction-card">
+        <div style="font-size:1.7rem; font-weight:900; color:#7c3aed;">🔤 Word Family Phonics & Spelling Lab</div>
+        <div style="font-size:1.15rem; font-weight:700; color:#475569;">Pick a beginning letter to build and spell real rhyming words!</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    family_choice = st.radio("Choose Word Family to Spell:", ["🐱 -AT Family (cat, bat, hat, rat, mat)", "🏀 -ALL Family (ball, call, tall, fall, hall)"], horizontal=True)
+
+    if "-AT" in family_choice:
+        ending = "at"
+        letters = [("C", "🐱 Cat"), ("B", "🦇 Bat"), ("H", "🎩 Hat"), ("R", "🐭 Rat"), ("M", "🧘 Mat")]
+    else:
+        ending = "all"
+        letters = [("B", "🏀 Ball"), ("C", "📞 Call"), ("T", "🦒 Tall"), ("F", "🍂 Fall"), ("H", "🏛️ Hall")]
+
+    if "last_spelling_spoken" not in st.session_state or st.session_state.last_spelling_spoken != ending:
+        speak(f"Welcome to the {ending} word family! Tap a letter tile to spell a new rhyming word!")
+        st.session_state.last_spelling_spoken = ending
+
+    st.markdown(f"""
+    <div style="background:#faf5ff; border:5px solid #a855f7; border-radius:28px; padding:22px; text-align:center; margin-bottom:18px;">
+        <div style="font-size:2rem; font-weight:900; color:#6b21a8;">Target Word Family: <span style="font-size:3.5rem; color:#7e22ce;">-{ending.upper()}</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    sp_cols = st.columns(len(letters))
+    for i, (l_char, desc) in enumerate(letters):
+        full_word = f"{l_char.lower()}{ending}"
+        with sp_cols[i]:
+            if st.button(f"🔤 {l_char}\n+{ending}", key=f"wf_{l_char}_{ending}", use_container_width=True):
+                st.balloons()
+                speak(f"{l_char} plus {ending} spells {full_word}! {desc}!", "cheer")
+                award_score("Word Family Spelling", f"Spelled {full_word}")
+                st.markdown(f"""
+                <div style="background:#ffffff; border:4px solid #22c55e; border-radius:20px; padding:12px; text-align:center; font-size:1.8rem; font-weight:900; color:#15803d; margin-top:8px;">
+                    ⭐ {full_word.upper()}! ({desc})
+                </div>
+                """, unsafe_allow_html=True)
+
+# ==========================================
+# 5. LETTER I-SPY SAFARI (DISAPPEARING BUBBLES)
 # ==========================================
 elif active_game == "🔍 Letter I-Spy Safari":
     st.markdown("""
     <div class="instruction-card">
         <div style="font-size:1.7rem; font-weight:900; color:#db2777;">🔍 Letter I-Spy Safari Grid</div>
-        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Find and pop all the bubbles matching our target letter!</div>
+        <div style="font-size:1.15rem; font-weight:700; color:#475569;">Pop all the matching bubbles! Once popped, they disappear!</div>
     </div>
     """, unsafe_allow_html=True)
 
     if "target_letter" not in st.session_state:
         st.session_state.target_letter = random.choice(["B", "M", "D", "S", "A", "T"])
+        st.session_state.popped_indices = []
 
     t_let = st.session_state.target_letter
-    speak(f"Gracyn! I spy the letter {t_let}! Look at the safari bubbles and pop all the {t_let}'s you see!")
+    speak(f"Gracyn! I spy the letter {t_let}! Look at the bubbles and pop all the {t_let}'s you see!")
 
     st.markdown(f"""
     <div style="background:#ffffff; border:4px dashed #ec4899; border-radius:24px; padding:14px; text-align:center; font-size:1.8rem; font-weight:900; color:#db2777; margin-bottom:15px; box-shadow:0 6px 16px rgba(0,0,0,0.06);">
@@ -791,91 +970,131 @@ elif active_game == "🔍 Letter I-Spy Safari":
 
     grid_letters = [t_let, t_let.lower(), "m", "P", t_let, "d", "c", t_let.lower(), "r", "O", t_let, "w", "e", t_let.lower(), "k", "L"]
     cols_grid = st.columns(4)
+
     for idx, char in enumerate(grid_letters):
         with cols_grid[idx % 4]:
-            if st.button(f"🎈 {char}", key=f"ispy_bubble_{idx}_{t_let}", use_container_width=True):
-                if char.upper() == t_let:
-                    st.balloons()
-                    speak(f"You popped a {char}! Great eye!", "pop")
-                    award_score("Letter I-Spy", f"Found {char}")
-                else:
-                    speak(f"Oops! That is the letter {char}. Look for {t_let}!", "tryagain")
+            if idx in st.session_state.popped_indices:
+                st.markdown("""
+                <div style="background:#f1f5f9; border:2px dashed #94a3b8; border-radius:24px; padding:16px; text-align:center; font-size:1.4rem; color:#94a3b8; font-weight:800;">
+                    ✅ Popped!
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                if st.button(f"🎈 {char}", key=f"ispy_bubble_{idx}_{t_let}", use_container_width=True):
+                    if char.upper() == t_let:
+                        st.session_state.popped_indices.append(idx)
+                        st.balloons()
+                        speak(f"Pop! You found {char}!", "pop")
+                        award_score("Letter I-Spy", f"Found {char}")
+                        st.rerun()
+                    else:
+                        speak(f"Oops! That is the letter {char}. Look for {t_let}!", "tryagain")
 
-    if st.button("🔄 Play with a New Letter!", use_container_width=True):
+    if st.button("🔄 Play with a New Target Letter!", use_container_width=True):
         st.session_state.target_letter = random.choice(["B", "M", "D", "S", "A", "T"])
+        st.session_state.popped_indices = []
         st.rerun()
 
 # ==========================================
-# 5. SEASONS WEATHER-CASTER
+# 6. SEASONS WEATHER-CASTER (WITH ILLUSTRATED REAL-WORLD SCENES)
 # ==========================================
 elif active_game == "🍁 Seasons & Nature Quest":
     st.markdown("""
     <div class="instruction-card">
-        <div style="font-size:1.7rem; font-weight:900; color:#166534;">🍂 Seasons Weather-Caster</div>
-        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Look at the picture clues and tap the right season!</div>
+        <div style="font-size:1.7rem; font-weight:900; color:#166534;">🍂 Seasons & Nature Weather-Caster</div>
+        <div style="font-size:1.15rem; font-weight:700; color:#475569;">Look at the full picture card for each season and tap the matching answer!</div>
     </div>
     """, unsafe_allow_html=True)
 
-    season_db = [
-        {
-            "season": "Fall / Autumn",
-            "img": "🍂🍁🎃🍎🧥",
-            "clue": "Leaves turn bright orange, red, and yellow and fall from trees! We pick pumpkins and wear cozy sweaters!",
-            "opts": ["Fall / Autumn", "Summer", "Spring", "Winter"]
-        },
+    season_scenes = [
         {
             "season": "Winter",
-            "img": "❄️⛄🧤🧣🧊",
-            "clue": "It is freezing cold outside! Snowflakes fall and we build cute snowmen with hats and warm mittens!",
-            "opts": ["Winter", "Spring", "Summer", "Fall / Autumn"]
-        },
-        {
-            "season": "Spring",
-            "img": "🌸🌷🌱🐣🌧️",
-            "clue": "April showers bring pretty flowers! Green grass grows and cute baby birds hatch in their nests!",
-            "opts": ["Spring", "Winter", "Fall / Autumn", "Summer"]
+            "q": "Freezing cold weather, snowmen with carrot noses, and warm cozy mittens!",
+            "correct": "Winter",
+            "choices": [
+                {"name": "Winter", "img": "⛄❄️🧤", "desc": "Snowman, ice skates & snowflakes"},
+                {"name": "Summer", "img": "☀️🏖️🍉", "desc": "Sunny beach & swimming"},
+                {"name": "Spring", "img": "🌸🌱🌧️", "desc": "Rain boots & baby flowers"},
+                {"name": "Fall / Autumn", "img": "🍂🍁🎃", "desc": "Orange leaves & pumpkin patch"}
+            ]
         },
         {
             "season": "Summer",
-            "img": "☀️🏖️🍉🕶️🏊‍♀️",
-            "clue": "It is hot and sunny! We jump in the swimming pool, wear sunglasses, and eat sweet watermelon!",
-            "opts": ["Summer", "Winter", "Spring", "Fall / Autumn"]
+            "q": "Super hot and sunny! Splashing in the swimming pool and eating cold watermelon!",
+            "correct": "Summer",
+            "choices": [
+                {"name": "Summer", "img": "☀️🏖️🍉", "desc": "Sunny beach & swimming"},
+                {"name": "Winter", "img": "⛄❄️🧤", "desc": "Snowman & snow boots"},
+                {"name": "Spring", "img": "🌸🌱🌧️", "desc": "Green grass & rain boots"},
+                {"name": "Fall / Autumn", "img": "🍂🍁🎃", "desc": "Crisp air & falling leaves"}
+            ]
+        },
+        {
+            "season": "Spring",
+            "q": "Rain showers, green grass sprouting, and baby chicks hatching in their nests!",
+            "correct": "Spring",
+            "choices": [
+                {"name": "Spring", "img": "🌸🌱🌧️", "desc": "Blooming flowers & rain boots"},
+                {"name": "Summer", "img": "☀️🏖️🍉", "desc": "Hot sun & swimming pool"},
+                {"name": "Winter", "img": "⛄❄️🧤", "desc": "Ice & snowman"},
+                {"name": "Fall / Autumn", "img": "🍂🍁🎃", "desc": "Pumpkin spice & sweaters"}
+            ]
+        },
+        {
+            "season": "Fall / Autumn",
+            "q": "Leaves turn red, orange, and gold and fall from the trees! Time for pumpkins and sweaters!",
+            "correct": "Fall / Autumn",
+            "choices": [
+                {"name": "Fall / Autumn", "img": "🍂🍁🎃", "desc": "Pumpkin patch & orange leaves"},
+                {"name": "Winter", "img": "⛄❄️🧤", "desc": "Snowflakes & freezing ice"},
+                {"name": "Summer", "img": "☀️🏖️🍉", "desc": "Hot pool day"},
+                {"name": "Spring", "img": "🌸🌱🌧️", "desc": "Flower blossoms"}
+            ]
         }
     ]
 
     if "s_idx" not in st.session_state: st.session_state.s_idx = 0
-    curr_s = season_db[st.session_state.s_idx % len(season_db)]
+    curr_sc = season_scenes[st.session_state.s_idx % len(season_scenes)]
 
-    speak(f"Look at the picture clue: {curr_s['clue']} What season is it?")
+    speak(f"Look at the weather clue: {curr_sc['q']} Which season is it?")
 
     st.markdown(f"""
-    <div style="background:#ffffff; border:4px solid #22c55e; border-radius:28px; padding:20px; text-align:center; margin-bottom:18px; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
-        <div style="font-size:4.8rem; margin-bottom:8px;">{curr_s['img']}</div>
-        <div style="font-size:1.55rem; font-weight:800; color:#15803d;">{curr_s['clue']}</div>
+    <div style="background:#ffffff; border:4px solid #22c55e; border-radius:28px; padding:22px; text-align:center; margin-bottom:18px; box-shadow:0 8px 20px rgba(0,0,0,0.08);">
+        <div style="font-size:1.7rem; font-weight:800; color:#15803d;">{curr_sc['q']}</div>
     </div>
     """, unsafe_allow_html=True)
 
-    scols = st.columns(2)
-    for i, opt in enumerate(curr_s["opts"]):
-        with scols[i % 2]:
-            if st.button(f"🌤️ {opt}", key=f"btn_s_{opt}_{st.session_state.s_idx}", use_container_width=True):
-                if opt == curr_s["season"]:
+    sc_top = st.columns(2)
+    sc_bot = st.columns(2)
+    sc_all = [sc_top[0], sc_top[1], sc_bot[0], sc_bot[1]]
+
+    for i, choice in enumerate(curr_sc["choices"]):
+        with sc_all[i]:
+            st.markdown(f"""
+            <div style="background:#ffffff; border:3.5px solid #86efac; border-radius:24px; padding:16px; text-align:center; margin-bottom:8px; box-shadow:0 6px 14px rgba(0,0,0,0.06);">
+                <div style="font-size:3.5rem; margin-bottom:4px;">{choice['img']}</div>
+                <div style="font-size:1.4rem; font-weight:900; color:#14532d;">{choice['name']}</div>
+                <div style="font-size:1.05rem; font-weight:700; color:#475569;">{choice['desc']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button(f"👉 Select {choice['name']}", key=f"btn_season_{choice['name']}_{st.session_state.s_idx}", use_container_width=True):
+                if choice["name"] == curr_sc["correct"]:
                     st.balloons()
-                    speak(f"Correct! That happens in {opt}!", "cheer")
-                    award_score("Seasons Quest", opt)
+                    speak(f"Correct! That is what happens in {choice['name']}!", "cheer")
+                    award_score("Seasons Quest", choice["name"])
                     st.session_state.s_idx += 1
                     st.rerun()
                 else:
                     speak("Look at the picture clues again! Think about the weather!", "tryagain")
 
 # ==========================================
-# 6. COOL MATH (10 AND UNDER)
+# 7. COOL MATH (10 AND UNDER)
 # ==========================================
 elif active_game == "➕ Cool Math (10 and Under)":
     st.markdown("""
     <div class="instruction-card">
         <div style="font-size:1.7rem; font-weight:900; color:#7e22ce;">🧮 Cool Math: 10 and Under!</div>
-        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Count the delicious apples and solve the problem!</div>
+        <div style="font-size:1.15rem; font-weight:700; color:#475569;">Count the delicious apples and solve the problem!</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -921,13 +1140,13 @@ elif active_game == "➕ Cool Math (10 and Under)":
                     speak("Count the apples one by one and try again!", "tryagain")
 
 # ==========================================
-# 7. PARENT PROGRESS PORTAL
+# 8. PARENT PROGRESS PORTAL
 # ==========================================
 elif active_game == "📊 Parent Progress Portal":
     st.markdown("""
     <div class="instruction-card">
         <div style="font-size:1.7rem; font-weight:900; color:#0f172a;">📊 Gracyn's Daily Learning Telemetry</div>
-        <div style="font-size:1.1rem; font-weight:700; color:#475569;">Track daily scores, accuracy, and i-Ready proficiency milestones.</div>
+        <div style="font-size:1.15rem; font-weight:700; color:#475569;">Track daily scores, accuracy, and i-Ready proficiency milestones.</div>
     </div>
     """, unsafe_allow_html=True)
 
