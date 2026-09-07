@@ -398,7 +398,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: KINDERGARTEN ROAD MAP (CLEAN FULL BOX WITH INTERACTIVE PATH)
+# SCREEN 3: KINDERGARTEN ROAD MAP (FULL CONTAINER WITH ZERO BUTTONS BELOW)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -406,14 +406,16 @@ elif st.session_state.screen == "adventure_trail":
     b = pdata["buddy"]
     unlocked_lvl = pdata.get("unlocked_level", 1)
 
-    # Top Header matching your reference image precisely
+    # Top Header matching your exact request ("Kindergarten Road Map", Library, Profile Avatar, Switch Profile)
     col_lib, col_title, col_prof = st.columns([1, 3, 1])
     with col_lib:
         if st.button("📚 Library"):
-            st.session_state.screen = "adventure_trail"
+            st.session_state.active_activity = "parent_portal"
+            st.session_state.current_level_num = 8
+            st.session_state.screen = "station_play"
             st.rerun()
     with col_title:
-        st.markdown("<h2 style='text-align:center; color:#0f172a; margin:0;'>🌱 Kindergarten Road Map</h2>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align:center; color:#0f172a; margin:0; font-size:2.8rem;'>🌱 Kindergarten Road Map</h1>", unsafe_allow_html=True)
     with col_prof:
         avatar_html = render_avatar(skin=b['skin'], hair_style=b['hair_style'], hair_color=b['hair_color'], glasses=b['glasses'], shirt=b['shirt'], accessory=b['accessory'], size=50)
         components.html(avatar_html, height=60)
@@ -423,7 +425,7 @@ elif st.session_state.screen == "adventure_trail":
 
     speak(f"Welcome to your Kindergarten Road Map {user}! Tap Level 1, 2, or 3 right on the winding path to play!")
 
-    # STATION DEFINITIONS (ALL 8 LEVELS)
+    # STATION DEFINITIONS
     trail_stations = [
         {"level": 1, "id": "sight_words", "title": "Level 1"},
         {"level": 2, "id": "book_parts", "title": "Level 2"},
@@ -435,54 +437,54 @@ elif st.session_state.screen == "adventure_trail":
         {"level": 8, "id": "parent_portal", "title": "Level 8"}
     ]
 
-    # FULL MAP CONTAINER WITH CLICKABLE HTML/SVG NODES ALONG THE ROAD AND HOUSE
+    # FULL EXPANDED MAP CONTAINER WITH 500px HEIGHT (NO CLIPPING, NO EXTRA BUTTONS BELOW)
     map_container_html = f"""
-    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:24px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; overflow:hidden;">
-        <svg width="100%" height="280" viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
+    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:28px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; overflow:hidden;">
+        <svg width="100%" height="420" viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg">
             <!-- Winding Path Road -->
-            <path d="M 40 170 Q 180 60 320 150 Q 480 250 620 110" fill="none" stroke="#64748b" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+            <path d="M 60 250 Q 220 80 450 220 Q 680 360 810 160" fill="none" stroke="#64748b" stroke-width="22" stroke-linecap="round" opacity="0.6"/>
             
             <!-- LEVEL 1 CARD (Clickable) -->
-            <g transform="translate(60, 110)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=1'">
-                <rect x="0" y="0" width="115" height="75" rx="14" fill="#ffffff" stroke="#0284c7" stroke-width="5"/>
-                <text x="57" y="32" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#0369a1" text-anchor="middle">📖 Sight Words</text>
-                <text x="57" y="55" font-family="'Fredoka', sans-serif" font-size="13" font-weight="800" fill="#1e293b" text-anchor="middle">Level 1</text>
+            <g transform="translate(80, 150)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=1'">
+                <rect x="0" y="0" width="130" height="90" rx="16" fill="#ffffff" stroke="#0284c7" stroke-width="5"/>
+                <text x="65" y="38" font-family="'Fredoka', sans-serif" font-size="15" font-weight="900" fill="#0369a1" text-anchor="middle">📖 Sight Words</text>
+                <text x="65" y="65" font-family="'Fredoka', sans-serif" font-size="14" font-weight="800" fill="#1e293b" text-anchor="middle">Level 1</text>
             </g>
 
             <!-- LEVEL 2 CARD (Clickable if Unlocked) -->
-            <g transform="translate(230, 85)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=2'">
-                <rect x="0" y="0" width="115" height="75" rx="14" fill="#ffffff" stroke="{'#10b981' if unlocked_lvl >= 2 else '#94a3b8'}" stroke-width="5"/>
-                <text x="57" y="32" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="{'#047857' if unlocked_lvl >= 2 else '#94a3b8'}" text-anchor="middle">📚 Book Parts</text>
-                <text x="57" y="55" font-family="'Fredoka', sans-serif" font-size="13" font-weight="800" fill="{('#047857' if unlocked_lvl >= 2 else '#94a3b8')}">{'Level 2' if unlocked_lvl >= 2 else '🔒 Locked'}</text>
+            <g transform="translate(280, 80)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=2'">
+                <rect x="0" y="0" width="130" height="90" rx="16" fill="#ffffff" stroke="{'#10b981' if unlocked_lvl >= 2 else '#94a3b8'}" stroke-width="5"/>
+                <text x="65" y="38" font-family="'Fredoka', sans-serif" font-size="15" font-weight="900" fill="{'#047857' if unlocked_lvl >= 2 else '#94a3b8'}" text-anchor="middle">📚 Book Parts</text>
+                <text x="65" y="65" font-family="'Fredoka', sans-serif" font-size="14" font-weight="800" fill="{('#047857' if unlocked_lvl >= 2 else '#94a3b8')}">{'Level 2' if unlocked_lvl >= 2 else '🔒 Locked'}</text>
             </g>
 
             <!-- LEVEL 3 CARD (Clickable if Unlocked) -->
-            <g transform="translate(410, 150)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=3'">
-                <rect x="0" y="0" width="115" height="75" rx="14" fill="#ffffff" stroke="{'#f59e0b' if unlocked_lvl >= 3 else '#94a3b8'}" stroke-width="5"/>
-                <text x="57" y="32" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="{'#b45309' if unlocked_lvl >= 3 else '#94a3b8'}" text-anchor="middle">🕵️ Numbers</text>
-                <text x="57" y="55" font-family="'Fredoka', sans-serif" font-size="13" font-weight="800" fill="{('#b45309' if unlocked_lvl >= 3 else '#94a3b8')}">{'Level 3' if unlocked_lvl >= 3 else '🔒 Locked'}</text>
+            <g transform="translate(480, 220)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=3'">
+                <rect x="0" y="0" width="130" height="90" rx="16" fill="#ffffff" stroke="{'#f59e0b' if unlocked_lvl >= 3 else '#94a3b8'}" stroke-width="5"/>
+                <text x="65" y="38" font-family="'Fredoka', sans-serif" font-size="15" font-weight="900" fill="{'#b45309' if unlocked_lvl >= 3 else '#94a3b8'}" text-anchor="middle">🕵️ Numbers</text>
+                <text x="65" y="65" font-family="'Fredoka', sans-serif" font-size="14" font-weight="800" fill="{('#b45309' if unlocked_lvl >= 3 else '#94a3b8')}">{'Level 3' if unlocked_lvl >= 3 else '🔒 Locked'}</text>
             </g>
 
-            <!-- Learning House on the Right with Giant Play Button (Clicks to active level) -->
-            <g transform="translate(640, 15)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl={unlocked_lvl}'">
-                <polygon points="100,10 20,80 180,80" fill="#991b1b"/>
-                <rect x="35" y="80" width="130" height="110" fill="#f8fafc" stroke="#475569" stroke-width="4"/>
-                <rect x="80" y="125" width="40" height="65" rx="6" fill="#78350f"/>
-                <circle cx="100" cy="115" r="32" fill="#14b8a6" stroke="#ffffff" stroke-width="4"/>
-                <polygon points="90,100 90,130 118,115" fill="#ffffff"/>
+            <!-- Learning House on the Right with Giant Play Button -->
+            <g transform="translate(680, 40)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl={unlocked_lvl}'">
+                <polygon points="100,10 15,90 185,90" fill="#991b1b"/>
+                <rect x="30" y="90" width="140" height="120" fill="#f8fafc" stroke="#475569" stroke-width="4"/>
+                <rect x="75" y="135" width="50" height="75" rx="6" fill="#78350f"/>
+                <circle cx="100" cy="125" r="35" fill="#14b8a6" stroke="#ffffff" stroke-width="4"/>
+                <polygon points="90,110 90,140 120,125" fill="#ffffff"/>
             </g>
         </svg>
 
         <!-- Companion Animals along the bottom -->
-        <div style="display:flex; justify-content:center; gap:35px; align-items:flex-end; margin-top:5px;">
-            <div style="font-size:3rem;">🐘</div>
-            <div style="font-size:3rem;">🦊</div>
-            <div style="font-size:2.6rem;">🦜</div>
-            <div style="font-size:3rem;">🦭</div>
+        <div style="display:flex; justify-content:center; gap:40px; align-items:flex-end; margin-top:10px;">
+            <div style="font-size:3.5rem;">🐘</div>
+            <div style="font-size:3.5rem;">🦊</div>
+            <div style="font-size:3rem;">🦜</div>
+            <div style="font-size:3.5rem;">🦭</div>
         </div>
     </div>
     """
-    components.html(map_html, height=360)
+    components.html(map_container_html, height=470)
 
     # Check if a card inside the map was clicked via URL query params
     params = st.query_params
