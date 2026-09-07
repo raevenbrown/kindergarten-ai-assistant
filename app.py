@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # =========================================================
-# 1. VECTOR SVG GRAPHICS ENGINE
+# 1. VECTOR GRAPHICS ENGINE (AVATAR, HOUSE, TRAIL)
 # =========================================================
 
 def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glasses="gold_round", shirt="#ec4899", accessory="crown", size=180):
@@ -239,7 +239,7 @@ def speak(text):
     components.html(js, height=0)
 
 # =========================================================
-# 3. PERSISTENT STUDENT PROFILES & STATE MANAGEMENT
+# 3. PERSISTENT PROFILES & STATE MANAGEMENT
 # =========================================================
 
 if "profiles" not in st.session_state:
@@ -255,7 +255,6 @@ if "profiles" not in st.session_state:
             },
             "stars": 14,
             "streak": 3,
-            "unlocked_node": 1,
             "daily_log": []
         },
         "Jaxson": {
@@ -269,7 +268,6 @@ if "profiles" not in st.session_state:
             },
             "stars": 8,
             "streak": 2,
-            "unlocked_node": 1,
             "daily_log": []
         }
     }
@@ -283,16 +281,12 @@ if "screen" not in st.session_state:
 if "active_activity" not in st.session_state:
     st.session_state.active_activity = "sight_words"
 
-# Helper to record progress into the active profile
 def record_event(activity, is_correct, detail):
     user = st.session_state.active_user
     prof = st.session_state.profiles[user]
     if is_correct:
         prof["stars"] += 1
         prof["streak"] += 1
-        # Advance trail milestone node if they complete enough
-        if prof["unlocked_node"] < 7:
-            prof["unlocked_node"] += 1
     prof["daily_log"].append({
         "time": datetime.now().strftime("%I:%M:%S %p"),
         "activity": activity,
@@ -322,8 +316,9 @@ if st.session_state.screen == "profile_select":
             render_avatar(skin=b["skin"], hair_style=b["hair_style"], hair_color=b["hair_color"], glasses=b["glasses"], shirt=b["shirt"], accessory=b["accessory"], size=180)
             if st.button(f"Play as {name}", key=f"prof_{name}", use_container_width=True):
                 st.session_state.active_user = name
-                st.session_state.screen = "adventure_map"
-                speak(f"Welcome back {name}! Let's continue your adventure!")
+                # DIRECTLY GO TO THE ADVENTURE TRAIL MAP (KHAN ACADEMY KIDS STYLE)
+                st.session_state.screen = "adventure_trail"
+                speak(f"Welcome back {name}! Tap any station along your learning path to begin!")
                 st.rerun()
 
     with cols[-1]:
@@ -370,11 +365,11 @@ elif st.session_state.screen == "buddy_dressup":
                 "buddy": tb,
                 "stars": 10,
                 "streak": 1,
-                "unlocked_node": 1,
                 "daily_log": []
             }
             st.session_state.active_user = clean_name
-            st.session_state.screen = "adventure_map"
+            # DIRECTLY GO TO ADVENTURE TRAIL
+            st.session_state.screen = "adventure_trail"
             speak(f"Awesome! Welcome to Adventure Academy, {clean_name}!")
             st.rerun()
 
@@ -410,22 +405,22 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: KHAN-KIDS STYLE ADVENTURE TRAIL MAP & PLAY STATIONS
+# SCREEN 3: ADVENTURE TRAIL MAP (KHAN ACADEMY KIDS STYLE MAIN MENU)
 # =========================================================
-elif st.session_state.screen == "adventure_map":
+elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
     pdata = st.session_state.profiles[user]
     b = pdata["buddy"]
 
-    # Top HUD Bar with Home/Switch Profile button
+    # Top Navigation / HUD Bar
     hud_l, hud_r = st.columns([3, 1])
     with hud_l:
         st.markdown(f"""
         <div class="hud-bar" style="margin-bottom:0;">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <b style="font-size:1.35rem; color:#0f172a;">{user}'s Adventure Trail</b>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <b style="font-size:1.4rem; color:#0f172a;">🗺️ {user}'s Learning Adventure Trail</b>
             </div>
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; gap:12px;">
                 <div class="stat-chip">⭐ {pdata['stars']} Stars</div>
                 <div class="stat-chip" style="background:#dcfce7; color:#166534; border-color:#86efac;">🔥 {pdata['streak']} Streak</div>
             </div>
@@ -436,16 +431,11 @@ elif st.session_state.screen == "adventure_map":
             st.session_state.screen = "profile_select"
             st.rerun()
 
-    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+    speak("Follow the adventure trail! Tap any station along your learning path to begin!")
 
-    # Adventure Trail Nodes (Khan Academy Kids style progression map)
-    st.markdown("""
-    <div style="background:rgba(255,255,255,0.7); border:3px solid #38bdf8; border-radius:24px; padding:12px; text-align:center; margin-bottom:14px;">
-        <h3 style="color:#0369a1; margin:0; font-size:1.4rem;">🗺️ Tap any station along your learning path!</h3>
-    </div>
-    """, unsafe_allow_html=True)
-
-    trail_nodes = [
+    # Visual Trail Map Stations (Khan Academy Kids style grid)
+    trail_stations = [
         {"id": "sight_words", "title": "1. Sight Words Explorer", "icon": "📖", "desc": "Read & Trace"},
         {"id": "book_parts", "title": "2. Book Detective", "icon": "📚", "desc": "Parts of a Book"},
         {"id": "numbers", "title": "3. Number Detective", "icon": "🕵️", "desc": "Counting & Quantities"},
@@ -456,22 +446,38 @@ elif st.session_state.screen == "adventure_map":
         {"id": "parent_portal", "title": "8. Parent Progress", "icon": "📊", "desc": "Telemetry & Logs"}
     ]
 
-    cols_map = st.columns(4)
-    for idx, node in enumerate(trail_nodes):
-        with cols_map[idx % 4]:
-            is_unlocked = (idx + 1) <= pdata["unlocked_node"]
-            btn_label = f"{node['icon']} {node['title']}"
-            if st.button(btn_label, key=f"node_{node['id']}", use_container_width=True):
+    cols_trail = st.columns(4)
+    for idx, node in enumerate(trail_stations):
+        with cols_trail[idx % 4]:
+            if st.button(f"{node['icon']} {node['title']}", key=f"trail_{node['id']}", use_container_width=True):
                 st.session_state.active_activity = node['id']
+                st.session_state.screen = "station_play"
                 st.rerun()
 
-    st.markdown("---")
-
-    # -------------------------------------------------------------
-    # ACTIVE LEARNING STATION ROUTER
-    # -------------------------------------------------------------
+# =========================================================
+# SCREEN 4: INDIVIDUAL STATION PLAY ARENA
+# =========================================================
+elif st.session_state.screen == "station_play":
+    user = st.session_state.active_user
+    pdata = st.session_state.profiles[user]
     act = st.session_state.active_activity
 
+    # Top Navigation Bar
+    b1, b2, b3 = st.columns([1, 1, 1])
+    with b1:
+        if st.button("🗺️ Back to Trail Map"):
+            st.session_state.screen = "adventure_trail"
+            st.rerun()
+    with b2:
+        if st.button("🏠 Switch Profile"):
+            st.session_state.screen = "profile_select"
+            st.rerun()
+    with b3:
+        st.markdown(f"<div class='stat-chip' style='text-align:center;'>⭐ {pdata['stars']} Stars</div>", unsafe_allow_html=True)
+
+    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+
+    # 1. SIGHT WORDS
     if act == "sight_words":
         words_pool = ["THE", "AND", "YOU", "SEE", "CAN", "WAS"]
         if "sw_current" not in st.session_state: st.session_state.sw_current = "THE"
@@ -522,6 +528,7 @@ elif st.session_state.screen == "adventure_map":
                 st.session_state.sw_current = random.choice([w for w in words_pool if w != st.session_state.sw_current])
                 st.rerun()
 
+    # 2. BOOK PARTS
     elif act == "book_parts":
         st.markdown("""
         <div class="game-card">
@@ -546,6 +553,7 @@ elif st.session_state.screen == "adventure_map":
                 record_event("Parts of a Book", False, "Guessed Cover")
                 st.info("Hint: The spine is the backbone on the side edge!")
 
+    # 3. NUMBERS
     elif act == "numbers":
         st.markdown("""
         <div class="game-card">
@@ -578,6 +586,7 @@ elif st.session_state.screen == "adventure_map":
                 record_event("Number Detective", False, "Guessed 14")
                 st.info("Hint: 10 plus 4 is 14. Look for 18!")
 
+    # 4. SPELLING
     elif act == "spelling":
         st.markdown("""
         <div class="game-card">
@@ -596,6 +605,7 @@ elif st.session_state.screen == "adventure_map":
         if s4.button("R + AT"):
             st.balloons(); speak("R plus A T spells RAT!"); record_event("Word Family", True, "RAT"); st.success("RAT! Super rhyming!")
 
+    # 5. I-SPY
     elif act == "ispy":
         st.markdown("""
         <div class="game-card">
@@ -615,6 +625,7 @@ elif st.session_state.screen == "adventure_map":
                         speak(f"Oops! That is the letter {letter}. Look for letter A!")
                         record_event("Letter I-Spy", False, f"Tapped {letter}")
 
+    # 6. SEASONS
     elif act == "seasons":
         st.markdown("""
         <div class="game-card">
@@ -626,11 +637,12 @@ elif st.session_state.screen == "adventure_map":
         sc1, sc2 = st.columns(2)
         if sc1.button("Fall / Autumn", use_container_width=True):
             st.balloons(); speak("Correct! That happens during Fall and Autumn!"); record_event("Seasons", True, "Fall"); st.success("Correct! Pumpkins and orange leaves happen in Fall!")
-        if sc2.button("Summer", use_container_width=True):
+        if sc2.button("Summer", use_keyword := True, use_container_width=True):
             speak("Think about the leaves changing color! Summer is hot and sunny!")
             record_event("Seasons", False, "Guessed Summer")
             st.info("Hint: Leaves fall from trees during Fall / Autumn!")
 
+    # 7. MATH
     elif act == "math":
         st.markdown("""
         <div class="game-card">
@@ -648,6 +660,7 @@ elif st.session_state.screen == "adventure_map":
         if m3.button("6", use_container_width=True):
             speak("Count the apples one by one!"); record_event("Cool Math", False, "Guessed 6")
 
+    # 8. PARENT PORTAL
     elif act == "parent_portal":
         st.markdown(f"""
         <div class="game-card">
