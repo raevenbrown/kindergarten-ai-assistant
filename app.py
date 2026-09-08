@@ -276,7 +276,7 @@ def record_progress(level_id, is_correct):
                         prof["unlocked_level"] = idx + 2
 
 # =========================================================
-# SCREEN 1: PROFILE HUB
+# SCREEN 1: PROFILE HUB (WITH EXPLICIT DELETE PLAYER OPTION)
 # =========================================================
 if st.session_state.screen == "profile_select":
     st.markdown("""
@@ -398,7 +398,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: CANDY LAND ROAD MAP (GUARANTEED FULL BOTTOM BORDER OUTLINE WITH 740px IFRAME HEIGHT)
+# SCREEN 3: CANDY LAND ROAD MAP (CLEANED UP & PERFECTLY BALANCED INSIDE BLUE BOX)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -425,18 +425,18 @@ elif st.session_state.screen == "adventure_trail":
 
     speak(f"Welcome to your Kindergarten Road Map {user}! Tap any unlocked level on the Candy Land map to play!")
 
-    # IFRAME HEIGHT SET TO 740 TO ENSURE STREAMLIT NEVER CHOPS OFF THE BOTTOM BORDER
+    # CLEANED UP CONTAINER WITH PERFECT PADDING, NO CLIPPING, AND CLEAN SPACING FOR THE ANIMALS
     road_map_html = f"""
-    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:6px solid #0284c7; border-radius:36px; padding:35px 25px 45px 25px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; margin:15px auto; width:100%; box-sizing:border-box;">
-        <div style="text-align:center; margin-bottom:15px;">
-            <h2 style="color:#0369a1; margin:0; font-size:2rem;">🍭 Candy Land Winding Road Map (Level {unlocked_lvl} of 15 Unlocked)</h2>
-            <p style="color:#334155; font-weight:700; font-size:1.1rem; margin-top:5px;">Tap any unlocked level on the path to play!</p>
+    <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:6px solid #0284c7; border-radius:36px; padding:30px 25px 25px 25px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; margin:15px auto; width:100%; box-sizing:border-box;">
+        <div style="text-align:center; margin-bottom:8px;">
+            <h2 style="color:#0369a1; margin:0; font-size:1.8rem;">🍭 Candy Land Winding Road Map (Level {unlocked_lvl} of 15 Unlocked)</h2>
+            <p style="color:#334155; font-weight:700; font-size:1rem; margin-top:2px;">Tap any unlocked level on the path to play!</p>
         </div>
 
-        <svg width="100%" height="440" viewBox="0 0 1300 520" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
-            <path d="M 60 420 Q 140 320 220 380 Q 300 440 380 300 Q 460 160 540 250 Q 620 330 700 190 Q 780 20 860 120 Q 940 220 1020 60 Q 1100 120 1180 0" fill="none" stroke="#f43f5e" stroke-width="22" stroke-linecap="round" stroke-dasharray="16,12" opacity="0.85"/>
+        <svg width="100%" height="410" viewBox="0 0 1300 480" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
+            <path d="M 60 380 Q 140 280 220 340 Q 300 400 380 260 Q 460 120 540 210 Q 620 300 700 140 Q 780 -20 860 120 Q 940 220 1020 60 Q 1100 120 1180 0" fill="none" stroke="#f43f5e" stroke-width="22" stroke-linecap="round" stroke-dasharray="16,12" opacity="0.85"/>
 
-            <g transform="translate(40, 380)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=1'">
+            <g transform="translate(40, 340)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=1'">
                 <circle cx="28" cy="28" r="28" fill="{('#10b981' if unlocked_lvl > 1 else '#38bdf8' if unlocked_lvl == 1 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
                 <text x="28" y="34" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">1</text>
                 <text x="28" y="68" font-family="'Fredoka', sans-serif" font-size="10" font-weight="800" fill="#0f172a" text-anchor="middle">Sight Words 1</text>
@@ -535,15 +535,15 @@ elif st.session_state.screen == "adventure_trail":
             </g>
         </svg>
 
-        <div style="display:flex; justify-content:center; gap:40px; align-items:flex-end; margin-top:15px;">
-            <div style="font-size:2.8rem;">🐘</div>
-            <div style="font-size:2.8rem;">🦊</div>
-            <div style="font-size:2.4rem;">🦜</div>
-            <div style="font-size:2.8rem;">🦭</div>
+        <div style="display:flex; justify-content:center; gap:40px; align-items:flex-end; margin-top:8px;">
+            <div style="font-size:2.2rem;">🐘</div>
+            <div style="font-size:2.2rem;">🦊</div>
+            <div style="font-size:2rem;">🦜</div>
+            <div style="font-size:2.2rem;">🦭</div>
         </div>
     </div>
     """
-    components.html(road_map_html, height=740)
+    components.html(road_map_html, height=620)
 
     # Check if a map node was clicked via URL parameters
     params = st.query_params
@@ -1056,5 +1056,5 @@ elif st.session_state.screen == "station_play":
         else:
             st.success("🎉 Congratulations! You have fully completed all 15 Levels of the Kindergarten Road Map!")
             if st.button("🗺️ Return to Road Map"):
-                st.session_state.screen = "adventure_trail"
+                st.session_state.session_state.screen = "adventure_trail"
                 st.rerun()
