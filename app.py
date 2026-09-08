@@ -400,7 +400,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: CANDY LAND ROAD MAP (FULL UNCLIPPED CONTAINER WITH PROPER HEIGHT)
+# SCREEN 3: CANDY LAND ROAD MAP (1 TO 15 SEQUENCED CLEANLY, NO BOTTOM CUT-OFF)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -427,7 +427,7 @@ elif st.session_state.screen == "adventure_trail":
 
     speak(f"Welcome to your Kindergarten Road Map {user}! Follow the Candy Land trail from 1 to 15 and tap any unlocked level to play!")
 
-    # CANDY LAND ROAD MAP CONTAINER WITH INCREASED HEIGHT TO PREVENT BOTTOM CUT-OFF
+    # CANDY LAND ROAD MAP CONTAINER WITH GENEROUS HEIGHT TO PREVENT BOTTOM CUT-OFF
     road_map_html = f"""
     <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:5px solid #0284c7; border-radius:36px; padding:35px 20px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; margin:20px auto; width:100%; box-sizing:border-box;">
         <div style="text-align:center; margin-bottom:15px;">
@@ -435,34 +435,34 @@ elif st.session_state.screen == "adventure_trail":
             <p style="color:#334155; font-weight:700; font-size:1.1rem; margin-top:5px;">Follow the path from Level 1 to Level 15 to reach the house!</p>
         </div>
 
-        <!-- SVG WITH 600px HEIGHT SO NOTHING AT THE BOTTOM IS EVER CUT OFF -->
-        <svg width="100%" height="600" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
+        <!-- SVG WITH 620px HEIGHT SO NOTHING AT THE BOTTOM IS EVER CUT OFF -->
+        <svg width="100%" height="620" viewBox="0 0 1300 620" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
             <!-- Winding Path Road -->
-            <path d="M 60 500 Q 140 400 220 460 Q 300 520 380 380 Q 460 240 540 320 Q 620 400 700 260 Q 780 120 860 200 Q 940 280 1020 140" fill="none" stroke="#f43f5e" stroke-width="22" stroke-linecap="round" stroke-dasharray="16,12" opacity="0.85"/>
+            <path d="M 60 520 Q 140 400 220 460 Q 300 520 380 380 Q 460 240 540 320 Q 620 400 700 260 Q 780 120 860 200 Q 940 280 1020 140 Q 1100 200 1180 100" fill="none" stroke="#f43f5e" stroke-width="22" stroke-linecap="round" stroke-dasharray="16,12" opacity="0.85"/>
 
             <!-- LEVEL 1 -->
-            <g transform="translate(40, 460)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=1'">
+            <g transform="translate(40, 480)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=1'">
                 <circle cx="28" cy="28" r="28" fill="{('#10b981' if unlocked_lvl > 1 else '#38bdf8' if unlocked_lvl == 1 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
                 <text x="28" y="34" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">1</text>
                 <text x="28" y="68" font-family="'Fredoka', sans-serif" font-size="10" font-weight="800" fill="#0f172a" text-anchor="middle">Sight Words 1</text>
             </g>
 
             <!-- LEVEL 2 -->
-            <g transform="translate(130, 390)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=2'">
+            <g transform="translate(130, 400)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=2'">
                 <circle cx="28" cy="28" r="28" fill="{('#10b981' if unlocked_lvl > 2 else '#38bdf8' if unlocked_lvl == 2 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
                 <text x="28" y="34" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">2</text>
                 <text x="28" y="68" font-family="'Fredoka', sans-serif" font-size="10" font-weight="800" fill="#0f172a" text-anchor="middle">Sight Words 2</text>
             </g>
 
             <!-- LEVEL 3 -->
-            <g transform="translate(220, 440)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=3'">
+            <g transform="translate(220, 450)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=3'">
                 <circle cx="28" cy="28" r="28" fill="{('#10b981' if unlocked_lvl > 3 else '#38bdf8' if unlocked_lvl == 3 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
                 <text x="28" y="34" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">3</text>
                 <text x="28" y="68" font-family="'Fredoka', sans-serif" font-size="10" font-weight="800" fill="#0f172a" text-anchor="middle">ABCs</text>
             </g>
 
             <!-- LEVEL 4 -->
-            <g transform="translate(310, 490)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=4'">
+            <g transform="translate(310, 500)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=4'">
                 <circle cx="28" cy="28" r="28" fill="{('#10b981' if unlocked_lvl > 4 else '#38bdf8' if unlocked_lvl == 4 else '#94a3b8')}" stroke="#fff" stroke-width="4"/>
                 <text x="28" y="34" font-family="'Fredoka', sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">4</text>
                 <text x="28" y="68" font-family="'Fredoka', sans-serif" font-size="10" font-weight="800" fill="#0f172a" text-anchor="middle">Count to 100</text>
@@ -544,6 +544,15 @@ elif st.session_state.screen == "adventure_trail":
                 <text x="28" y="34" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle">15</text>
                 <text x="28" y="68" font-family="'Fredoka', sans-serif" font-size="10" font-weight="800" fill="#0f172a" text-anchor="middle">Spell Name</text>
             </g>
+
+            <!-- Grand Learning House Castle at the End of the Trail -->
+            <g transform="translate(1160, 20)">
+                <polygon points="60,10 5,60 115,60" fill="#991b1b"/>
+                <rect x="15" y="60" width="90" height="80" fill="#f8fafc" stroke="#475569" stroke-width="3"/>
+                <rect x="45" y="95" width="30" height="45" rx="4" fill="#78350f"/>
+                <circle cx="60" cy="82" r="20" fill="#14b8a6" stroke="#ffffff" stroke-width="3"/>
+                <polygon points="53,72 53,92 70,82" fill="#ffffff"/>
+            </g>
         </svg>
 
         <!-- Companion Animals along the bottom of the map box -->
@@ -555,7 +564,7 @@ elif st.session_state.screen == "adventure_trail":
         </div>
     </div>
     """
-    components.html(road_map_html, height=680)
+    components.html(road_map_html, height=660)
 
     # Check if a map node was clicked via URL parameters
     params = st.query_params
@@ -1014,7 +1023,7 @@ elif st.session_state.screen == "station_play":
             c1, c2, c3 = st.columns(3)
             for i, opt in enumerate(q["opts"]):
                 with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l13_{current_step}_{opt}", use_keyword=True, use_container_width=True):
+                    if st.button(f"👉 {opt}", key=f"l13_{current_step}_{opt}", use_container_width=True):
                         if opt == q["correct"]:
                             record_progress(lvl_id, True)
                             st.balloons()
@@ -1078,3 +1087,15 @@ elif st.session_state.screen == "station_play":
                 with [c1, c2, c3][i]:
                     if st.button(f"👉 {opt}", key=f"l15_{current_step}_{opt}", use_container_width=True):
                         if opt == q["correct"]:
+                            record_progress(lvl_id, True)
+                            st.balloons()
+                            speak("Correct!")
+                            st.rerun()
+                        else:
+                            speak(f"Hint: {q['hint']}")
+                            st.warning(f"💡 Hint: {q['hint']}")
+        else:
+            st.success("🎉 Congratulations! You have fully completed all 15 Levels of the Kindergarten Road Map!")
+            if st.button("🗺️ Return to Road Map"):
+                st.session_state.screen = "adventure_trail"
+                st.rerun()
