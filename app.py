@@ -399,7 +399,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: 16-LEVEL MAP (ALL STATIONS & HOUSE FIT ON SCREEN)
+# SCREEN 3: 16-LEVEL MAP WITH HOUSE AS THE FINISH LINE
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -424,20 +424,20 @@ elif st.session_state.screen == "adventure_trail":
             st.session_state.screen = "profile_select"
             st.rerun()
 
-    speak(f"Welcome to your Kindergarten Road Map {user}! Tap any unlocked level on the path to play!")
+    speak(f"Welcome to your Kindergarten Road Map {user}! Tap any unlocked level on the path to reach the finish line house!")
 
-    # 16-LEVEL COMPACT CONTAINER (FITS 100% ON SCREEN)
+    # ROAD MAP CONTAINER WITH HOUSE SLID BACK AS THE FINISH LINE
     road_map_html = f"""
     <div style="background:linear-gradient(135deg, #f0fdf4, #e0f2fe); border:6px solid #0284c7; border-radius:32px; padding:18px 15px 22px 15px; box-shadow:0 14px 28px rgba(0,0,0,0.12); position:relative; margin:10px auto; width:100%; box-sizing:border-box;">
         <div style="text-align:center; margin-bottom:8px;">
             <h2 style="color:#0369a1; margin:0; font-size:1.6rem;">🌟 Learning Adventure Map (Level {unlocked_lvl} of 16 Unlocked)</h2>
-            <p style="color:#334155; font-weight:700; font-size:0.9rem; margin-top:2px;">Tap any unlocked station to start learning!</p>
+            <p style="color:#334155; font-weight:700; font-size:0.9rem; margin-top:2px;">Tap any unlocked station to reach the finish line house!</p>
         </div>
 
         <svg width="100%" height="320" viewBox="0 0 1500 420" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
-            <!-- Smooth Track Path for all 16 stations -->
-            <path d="M 30 320 Q 110 220 180 265 Q 250 310 320 200 Q 390 90 460 170 Q 530 250 600 130 Q 670 20 740 120 Q 810 220 880 110 Q 950 10 1020 90 Q 1090 170 1160 80 Q 1230 10 1300 70" fill="none" stroke="#64748b" stroke-width="13" stroke-linecap="round" opacity="0.6"/>
-            <path d="M 30 320 Q 110 220 180 265 Q 250 310 320 200 Q 390 90 460 170 Q 530 250 600 130 Q 670 20 740 120 Q 810 220 880 110 Q 950 10 1020 90 Q 1090 170 1160 80 Q 1230 10 1300 70" fill="none" stroke="#cbd5e1" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="9,9" opacity="0.8"/>
+            <!-- Smooth Track Path terminating directly at the house finish line -->
+            <path d="M 30 320 Q 110 220 180 265 Q 250 310 320 200 Q 390 90 460 170 Q 530 250 600 130 Q 670 20 740 120 Q 810 220 880 110 Q 950 10 1020 90 Q 1090 170 1160 80 Q 1200 60 1235 60" fill="none" stroke="#64748b" stroke-width="13" stroke-linecap="round" opacity="0.6"/>
+            <path d="M 30 320 Q 110 220 180 265 Q 250 310 320 200 Q 390 90 460 170 Q 530 250 600 130 Q 670 20 740 120 Q 810 220 880 110 Q 950 10 1020 90 Q 1090 170 1160 80 Q 1200 60 1235 60" fill="none" stroke="#cbd5e1" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="9,9" opacity="0.8"/>
 
             <!-- LEVEL 1 -->
             <g transform="translate(5, 280)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=1'">
@@ -551,8 +551,8 @@ elif st.session_state.screen == "adventure_trail":
                 <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Seasons/Days</text>
             </g>
 
-            <!-- GRAND LEARNING HOUSE CASTLE -->
-            <g transform="translate(1145, 10)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=16'">
+            <!-- GRAND LEARNING HOUSE FINISH LINE SLID BACK TO THE END OF THE ROAD -->
+            <g transform="translate(1220, 25)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=16'">
                 <polygon points="40,6 0,42 80,42" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
                 <rect x="12" y="42" width="56" height="56" fill="#f8fafc" stroke="#475569" stroke-width="2"/>
                 <rect x="27" y="64" width="22" height="34" rx="2" fill="#78350f"/>
@@ -1103,7 +1103,7 @@ elif st.session_state.screen == "station_play":
                             speak(f"Hint: {q['hint']}")
                             st.warning(f"💡 Hint: {q['hint']}")
         else:
-            st.success("🎉 Congratulations! You have fully completed all 16 Levels and reached the Learning House!")
+            st.success("🎉 Congratulations! You have fully completed all 16 Levels and reached the Learning House Finish Line!")
             if st.button("🗺️ Return to Road Map"):
                 st.session_state.screen = "adventure_trail"
                 st.rerun()
