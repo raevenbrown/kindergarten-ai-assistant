@@ -101,28 +101,6 @@ def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glas
     """
     return raw_html
 
-def render_book_diagram(part="spine"):
-    spine_border = 'stroke="#facc15" stroke-width="6"' if part == "spine" else 'stroke="#1e3a8a" stroke-width="2"'
-    cover_border = 'stroke="#facc15" stroke-width="6"' if part == "cover" else 'stroke="#2563eb" stroke-width="2"'
-    raw_html = f"""
-    <div style="display:flex; justify-content:center; align-items:center; width:100%;">
-        <svg width="280" height="210" viewBox="0 0 280 210" xmlns="http://www.w3.org/2000/svg">
-            <rect x="25" y="25" width="230" height="160" rx="14" fill="#60a5fa" {cover_border}/>
-            <rect x="25" y="25" width="40" height="160" rx="6" fill="#1d4ed8" {spine_border}/>
-            <line x1="38" y1="40" x2="38" y2="170" stroke="#93c5fd" stroke-width="3" stroke-dasharray="6,4"/>
-            <rect x="80" y="45" width="160" height="42" rx="8" fill="#ffffff"/>
-            <text x="160" y="71" font-family="'Fredoka', sans-serif" font-size="15" font-weight="900" fill="#1e40af" text-anchor="middle">THE BRAVE PUPPY</text>
-            <circle cx="160" cy="120" r="24" fill="#fef08a"/>
-            <ellipse cx="152" cy="116" rx="3.5" ry="4.5" fill="#0f172a"/>
-            <ellipse cx="168" cy="116" rx="3.5" ry="4.5" fill="#0f172a"/>
-            <ellipse cx="160" cy="124" rx="4.5" ry="3" fill="#78350f"/>
-            <rect x="90" y="152" width="140" height="22" rx="6" fill="#ffffffcc"/>
-            <text x="160" y="167" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#334155" text-anchor="middle">By Raeven Brown</text>
-        </svg>
-    </div>
-    """
-    components.html(raw_html, height=220)
-
 # =========================================================
 # 2. STYLING & AUDIO SYNTHESIZER
 # =========================================================
@@ -277,7 +255,7 @@ def record_progress(level_id, is_correct):
                         prof["unlocked_level"] = idx + 2
 
 # =========================================================
-# SCREEN 1: PROFILE HUB (WITH EXPLICIT DELETE PLAYER OPTION)
+# SCREEN 1: PROFILE HUB
 # =========================================================
 if st.session_state.screen == "profile_select":
     st.markdown("""
@@ -399,7 +377,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: KHAN-ACADEMY-STYLE PATH GEOMETRY & ROAD MAP
+# SCREEN 3: ROAD MAP (CLICK ROUTING FIXED)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -410,6 +388,24 @@ elif st.session_state.screen == "adventure_trail":
     pdata = st.session_state.profiles[user]
     b = pdata["buddy"]
     unlocked_lvl = pdata.get("unlocked_level", 1)
+
+    # Check if a map node was clicked via URL parameters and route immediately
+    params = st.query_params
+    if "lvl" in params:
+        try:
+            clicked_lvl = int(params["lvl"])
+            if clicked_lvl <= unlocked_lvl:
+                target_id = CURRICULUM_LEVELS[clicked_lvl - 1]["id"]
+                st.session_state.active_level_id = target_id
+                st.query_params.clear()
+                st.session_state.screen = "station_play"
+                st.rerun()
+            else:
+                st.query_params.clear()
+                speak(f"Level {clicked_lvl} is locked! Complete previous levels first!")
+                st.warning(f"🔒 Level {clicked_lvl} is locked!")
+        except Exception:
+            st.query_params.clear()
 
     col_lib, col_title, col_prof = st.columns([1, 3, 1])
     with col_lib:
@@ -426,14 +422,10 @@ elif st.session_state.screen == "adventure_trail":
 
     speak(f"Welcome to your Kindergarten Road Map {user}! Tap any unlocked level on the path to reach the finish line house!")
 
-    # ---- KHAN-ACADEMY-STYLE PATH GEOMETRY ----
-    # The road and the level nodes come from the SAME list of points,
-    # so every card sits directly ON the curve (peak, trough, peak, trough...)
-    # instead of floating above it.
     N = len(CURRICULUM_LEVELS)
     SVG_W, SVG_H = 1550, 440
     MIDLINE_Y = 210
-    PEAK_Y, TROUGH_Y = 95, 325              # top / bottom of the wave
+    PEAK_Y, TROUGH_Y = 110, 310
     MARGIN_LEFT, MARGIN_RIGHT = 90, 170
     BOX_W, BOX_H = 76, 62
 
@@ -449,8 +441,6 @@ elif st.session_state.screen == "adventure_trail":
     house_x = nodes[-1][0] + step_x * 0.9
     house_y = MIDLINE_Y
 
-    # One continuous path THROUGH every node — horizontal tangents at each
-    # peak/trough give the same smooth "S" flow Khan Academy uses.
     start_x = nodes[0][0] - step_x * 0.6
     path_parts = [f"M {start_x:.1f} {MIDLINE_Y}"]
     c1x = start_x + (nodes[0][0] - start_x) * 0.5
@@ -469,7 +459,6 @@ elif st.session_state.screen == "adventure_trail":
     )
     path_d = " ".join(path_parts)
 
-    # Build each level node centered exactly on its point on the path
     nodes_svg = ""
     for i, (x, y) in enumerate(nodes):
         lvl_num = i + 1
@@ -478,7 +467,6 @@ elif st.session_state.screen == "adventure_trail":
         fill = "#10b981" if unlocked_lvl > lvl_num else ("#0ea5e9" if unlocked_lvl == lvl_num else "#94a3b8")
         nodes_svg += f"""
             <g transform="translate({x-BOX_W/2:.1f}, {y-BOX_H/2:.1f})" style="cursor:pointer;" onclick="window.parent.location.href='?lvl={lvl_num}'">
-                <circle cx="{BOX_W/2:.1f}" cy="-6" r="7" fill="#ffffff" stroke="{fill}" stroke-width="3"/>
                 <rect x="0" y="0" width="{BOX_W}" height="{BOX_H}" rx="16" fill="{fill}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.18))"/>
                 <text x="{BOX_W/2:.1f}" y="24" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle">Lvl {lvl_num}</text>
                 <text x="{BOX_W/2:.1f}" y="42" font-family="'Fredoka', sans-serif" font-size="8" font-weight="800" fill="#fff" text-anchor="middle">{short_name[:14]}</text>
@@ -509,20 +497,6 @@ elif st.session_state.screen == "adventure_trail":
     </div>
     """
     components.html(road_map_html, height=520)
-
-    params = st.query_params
-    if "lvl" in params:
-        clicked_lvl = int(params["lvl"][0])
-        if clicked_lvl <= unlocked_lvl:
-            target_id = CURRICULUM_LEVELS[clicked_lvl - 1]["id"]
-            st.session_state.active_level_id = target_id
-            st.query_params.clear()
-            st.session_state.screen = "station_play"
-            st.rerun()
-        else:
-            speak(f"Level {clicked_lvl} is locked! Complete previous levels first!")
-            st.query_params.clear()
-            st.warning(f"🔒 Level {clicked_lvl} is locked!")
 
 # =========================================================
 # SCREEN 4: INDIVIDUAL LEVEL PLAY ARENA (MASTERY ENGINE)
