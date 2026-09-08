@@ -101,6 +101,28 @@ def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glas
     """
     return raw_html
 
+def render_book_diagram(part="spine"):
+    spine_border = 'stroke="#facc15" stroke-width="6"' if part == "spine" else 'stroke="#1e3a8a" stroke-width="2"'
+    cover_border = 'stroke="#facc15" stroke-width="6"' if part == "cover" else 'stroke="#2563eb" stroke-width="2"'
+    raw_html = f"""
+    <div style="display:flex; justify-content:center; align-items:center; width:100%;">
+        <svg width="280" height="210" viewBox="0 0 280 210" xmlns="http://www.w3.org/2000/svg">
+            <rect x="25" y="25" width="230" height="160" rx="14" fill="#60a5fa" {cover_border}/>
+            <rect x="25" y="25" width="40" height="160" rx="6" fill="#1d4ed8" {spine_border}/>
+            <line x1="38" y1="40" x2="38" y2="170" stroke="#93c5fd" stroke-width="3" stroke-dasharray="6,4"/>
+            <rect x="80" y="45" width="160" height="42" rx="8" fill="#ffffff"/>
+            <text x="160" y="71" font-family="'Fredoka', sans-serif" font-size="15" font-weight="900" fill="#1e40af" text-anchor="middle">THE BRAVE PUPPY</text>
+            <circle cx="160" cy="120" r="24" fill="#fef08a"/>
+            <ellipse cx="152" cy="116" rx="3.5" ry="4.5" fill="#0f172a"/>
+            <ellipse cx="168" cy="116" rx="3.5" ry="4.5" fill="#0f172a"/>
+            <ellipse cx="160" cy="124" rx="4.5" ry="3" fill="#78350f"/>
+            <rect x="90" y="152" width="140" height="22" rx="6" fill="#ffffffcc"/>
+            <text x="160" y="167" font-family="'Fredoka', sans-serif" font-size="11" font-weight="800" fill="#334155" text-anchor="middle">By Raeven Brown</text>
+        </svg>
+    </div>
+    """
+    components.html(raw_html, height=220)
+
 # =========================================================
 # 2. STYLING & AUDIO SYNTHESIZER
 # =========================================================
@@ -376,7 +398,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: CANDY LAND ROAD MAP (LOCKED CONTAINER WITH 640px IFRAME HEIGHT TO PREVENT CUT-OFF)
+# SCREEN 3: CANDY LAND ROAD MAP (GUARANTEED FULL BOTTOM BORDER OUTLINE WITH 740px IFRAME HEIGHT)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -403,7 +425,7 @@ elif st.session_state.screen == "adventure_trail":
 
     speak(f"Welcome to your Kindergarten Road Map {user}! Tap any unlocked level on the Candy Land map to play!")
 
-    # LOCKED CONTAINER: IFRAME HEIGHT SET TO 640 TO ENSURE THE ENTIRE 520 VIEWBOX RENDERS WITH NO BOTTOM CLIPPING
+    # IFRAME HEIGHT SET TO 740 TO ENSURE STREAMLIT NEVER CHOPS OFF THE BOTTOM BORDER
     road_map_html = f"""
     <div style="background:linear-gradient(135deg, #e0f2fe, #bae6fd); border:6px solid #0284c7; border-radius:36px; padding:35px 25px 45px 25px; box-shadow:0 16px 32px rgba(0,0,0,0.12); position:relative; margin:15px auto; width:100%; box-sizing:border-box;">
         <div style="text-align:center; margin-bottom:15px;">
@@ -521,7 +543,7 @@ elif st.session_state.screen == "adventure_trail":
         </div>
     </div>
     """
-    components.html(road_map_html, height=640)
+    components.html(road_map_html, height=740)
 
     # Check if a map node was clicked via URL parameters
     params = st.query_params
