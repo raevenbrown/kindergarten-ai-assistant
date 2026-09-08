@@ -202,7 +202,7 @@ def speak(text):
     components.html(js, height=0)
 
 # =========================================================
-# 3. CURRICULUM DEFINITION (15 COMPLETE LEVELS)
+# 3. CURRICULUM DEFINITION (16 COMPLETE LEVELS)
 # =========================================================
 
 CURRICULUM_LEVELS = [
@@ -219,8 +219,9 @@ CURRICULUM_LEVELS = [
     {"id": "lvl_11", "name": "Level 11: Reading Picture Word Book"},
     {"id": "lvl_12", "name": "Level 12: Write a Sentence"},
     {"id": "lvl_13", "name": "Level 13: Count by 2s, 5s & 10s"},
-    {"id": "lvl_14", "name": "Level 14: Personal Location (USA, GA, Covington, Belmont Circle)"},
-    {"id": "lvl_15", "name": "Level 15: Spell Full Name (First, Middle, Last)"}
+    {"id": "lvl_14", "name": "Level 14: Personal Location & 50 U.S. States"},
+    {"id": "lvl_15", "name": "Level 15: Spell Full Name (First, Middle, Last)"},
+    {"id": "lvl_16", "name": "Level 16: Seasons, Days of the Week & Months"}
 ]
 
 # =========================================================
@@ -398,7 +399,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: OPTIMIZED 15-LEVEL MAP (EMOJIS REMOVED, FULLY FITS ON SCREEN)
+# SCREEN 3: 16-LEVEL MAP (ALL STATIONS & HOUSE FIT ON SCREEN)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -413,7 +414,7 @@ elif st.session_state.screen == "adventure_trail":
     col_lib, col_title, col_prof = st.columns([1, 3, 1])
     with col_lib:
         if st.button("📚 Library"):
-            st.session_state.active_level_id = "lvl_15"
+            st.session_state.active_level_id = "lvl_16"
             st.session_state.screen = "station_play"
             st.rerun()
     with col_title:
@@ -425,135 +426,142 @@ elif st.session_state.screen == "adventure_trail":
 
     speak(f"Welcome to your Kindergarten Road Map {user}! Tap any unlocked level on the path to play!")
 
-    # COMPACT HEIGHT (500px) CONTAINER WITH EMOJIS REMOVED FROM THE BOTTOM
+    # 16-LEVEL COMPACT CONTAINER (FITS 100% ON SCREEN)
     road_map_html = f"""
-    <div style="background:linear-gradient(135deg, #f0fdf4, #e0f2fe); border:6px solid #0284c7; border-radius:32px; padding:20px 20px 25px 20px; box-shadow:0 14px 28px rgba(0,0,0,0.12); position:relative; margin:10px auto; width:100%; box-sizing:border-box;">
-        <div style="text-align:center; margin-bottom:10px;">
-            <h2 style="color:#0369a1; margin:0; font-size:1.7rem;">🌟 Learning Adventure Map (Level {unlocked_lvl} of 15 Unlocked)</h2>
-            <p style="color:#334155; font-weight:700; font-size:0.95rem; margin-top:2px;">Tap any unlocked station to start learning!</p>
+    <div style="background:linear-gradient(135deg, #f0fdf4, #e0f2fe); border:6px solid #0284c7; border-radius:32px; padding:18px 15px 22px 15px; box-shadow:0 14px 28px rgba(0,0,0,0.12); position:relative; margin:10px auto; width:100%; box-sizing:border-box;">
+        <div style="text-align:center; margin-bottom:8px;">
+            <h2 style="color:#0369a1; margin:0; font-size:1.6rem;">🌟 Learning Adventure Map (Level {unlocked_lvl} of 16 Unlocked)</h2>
+            <p style="color:#334155; font-weight:700; font-size:0.9rem; margin-top:2px;">Tap any unlocked station to start learning!</p>
         </div>
 
-        <svg width="100%" height="350" viewBox="0 0 1400 440" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
-            <!-- Smooth Track Path for all 15 stations -->
-            <path d="M 40 330 Q 120 230 200 280 Q 280 330 360 210 Q 440 90 520 180 Q 600 260 680 140 Q 760 20 840 130 Q 920 230 1000 110 Q 1080 20 1160 90 Q 1220 140 1280 80" fill="none" stroke="#64748b" stroke-width="14" stroke-linecap="round" opacity="0.6"/>
-            <path d="M 40 330 Q 120 230 200 280 Q 280 330 360 210 Q 440 90 520 180 Q 600 260 680 140 Q 760 20 840 130 Q 920 230 1000 110 Q 1080 20 1160 90 Q 1220 140 1280 80" fill="none" stroke="#cbd5e1" stroke-width="5" stroke-linecap="round" stroke-dasharray="10,10" opacity="0.8"/>
+        <svg width="100%" height="320" viewBox="0 0 1500 420" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
+            <!-- Smooth Track Path for all 16 stations -->
+            <path d="M 30 320 Q 110 220 180 265 Q 250 310 320 200 Q 390 90 460 170 Q 530 250 600 130 Q 670 20 740 120 Q 810 220 880 110 Q 950 10 1020 90 Q 1090 170 1160 80 Q 1230 10 1300 70" fill="none" stroke="#64748b" stroke-width="13" stroke-linecap="round" opacity="0.6"/>
+            <path d="M 30 320 Q 110 220 180 265 Q 250 310 320 200 Q 390 90 460 170 Q 530 250 600 130 Q 670 20 740 120 Q 810 220 880 110 Q 950 10 1020 90 Q 1090 170 1160 80 Q 1230 10 1300 70" fill="none" stroke="#cbd5e1" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="9,9" opacity="0.8"/>
 
             <!-- LEVEL 1 -->
-            <g transform="translate(10, 290)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=1'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 1 else '#0ea5e9' if unlocked_lvl == 1 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle">Lvl 1</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">Sight Words 1</text>
+            <g transform="translate(5, 280)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=1'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 1 else '#0ea5e9' if unlocked_lvl == 1 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 1</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Sight Words 1</text>
             </g>
 
             <!-- LEVEL 2 -->
-            <g transform="translate(90, 210)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=2'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 2 else '#0ea5e9' if unlocked_lvl == 2 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle">Lvl 2</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">Sight Words 2</text>
+            <g transform="translate(75, 200)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=2'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 2 else '#0ea5e9' if unlocked_lvl == 2 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 2</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Sight Words 2</text>
             </g>
 
             <!-- LEVEL 3 -->
-            <g transform="translate(170, 255)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=3'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 3 else '#0ea5e9' if unlocked_lvl == 3 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle">Lvl 3</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">ABCs</text>
+            <g transform="translate(145, 240)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=3'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 3 else '#0ea5e9' if unlocked_lvl == 3 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 3</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">ABCs</text>
             </g>
 
             <!-- LEVEL 4 -->
-            <g transform="translate(250, 305)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=4'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 4 else '#0ea5e9' if unlocked_lvl == 4 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle">Lvl 4</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">Count 100</text>
+            <g transform="translate(215, 285)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=4'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 4 else '#0ea5e9' if unlocked_lvl == 4 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 4</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Count 100</text>
             </g>
 
             <!-- LEVEL 5 -->
-            <g transform="translate(330, 190)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=5'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 5 else '#0ea5e9' if unlocked_lvl == 5 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle">Lvl 5</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">Rhymes</text>
+            <g transform="translate(285, 175)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=5'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 5 else '#0ea5e9' if unlocked_lvl == 5 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 5</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Rhymes</text>
             </g>
 
             <!-- LEVEL 6 -->
-            <g transform="translate(410, 80)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=6'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 6 else '#0ea5e9' if unlocked_lvl == 6 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle">Lvl 6</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">Syllables</text>
+            <g transform="translate(355, 75)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=6'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 6 else '#0ea5e9' if unlocked_lvl == 6 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 6</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Syllables</text>
             </g>
 
             <!-- LEVEL 7 -->
-            <g transform="translate(490, 150)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=7'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 7 else '#0ea5e9' if unlocked_lvl == 7 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle">Lvl 7</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">Addition</text>
+            <g transform="translate(425, 140)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=7'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 7 else '#0ea5e9' if unlocked_lvl == 7 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 7</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Addition</text>
             </g>
 
             <!-- LEVEL 8 -->
-            <g transform="translate(570, 225)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=8'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 8 else '#0ea5e9' if unlocked_lvl == 8 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle">Lvl 8</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">Subtraction</text>
+            <g transform="translate(495, 210)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=8'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 8 else '#0ea5e9' if unlocked_lvl == 8 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 8</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Subtraction</text>
             </g>
 
             <!-- LEVEL 9 -->
-            <g transform="translate(650, 115)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=9'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 9 else '#0ea5e9' if unlocked_lvl == 9 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle">Lvl 9</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">Upper/Lower</text>
+            <g transform="translate(565, 105)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=9'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 9 else '#0ea5e9' if unlocked_lvl == 9 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 9</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Upper/Lower</text>
             </g>
 
             <!-- LEVEL 10 -->
-            <g transform="translate(730, 10)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=10'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 10 else '#0ea5e9' if unlocked_lvl == 10 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 10</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">Find Letters</text>
+            <g transform="translate(635, 10)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=10'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 10 else '#0ea5e9' if unlocked_lvl == 10 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="11" font-weight="900" fill="#fff" text-anchor="middle">Lvl 10</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Find Letters</text>
             </g>
 
             <!-- LEVEL 11 -->
-            <g transform="translate(810, 95)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=11'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 11 else '#0ea5e9' if unlocked_lvl == 11 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 11</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">Picture Book</text>
+            <g transform="translate(705, 95)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=11'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 11 else '#0ea5e9' if unlocked_lvl == 11 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="11" font-weight="900" fill="#fff" text-anchor="middle">Lvl 11</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Picture Book</text>
             </g>
 
             <!-- LEVEL 12 -->
-            <g transform="translate(890, 195)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=12'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 12 else '#0ea5e9' if unlocked_lvl == 12 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 12</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">Sentences</text>
+            <g transform="translate(775, 185)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=12'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 12 else '#0ea5e9' if unlocked_lvl == 12 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="11" font-weight="900" fill="#fff" text-anchor="middle">Lvl 12</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Sentences</text>
             </g>
 
             <!-- LEVEL 13 -->
-            <g transform="translate(970, 85)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=13'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 13 else '#0ea5e9' if unlocked_lvl == 13 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 13</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">Count 2,5</text>
+            <g transform="translate(845, 90)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=13'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 13 else '#0ea5e9' if unlocked_lvl == 13 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="11" font-weight="900" fill="#fff" text-anchor="middle">Lvl 13</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Count 2,5,10</text>
             </g>
 
-            <!-- LEVEL 14 -->
-            <g transform="translate(1050, 30)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=14'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 14 else '#0ea5e9' if unlocked_lvl == 14 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 14</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">My Address</text>
+            <!-- LEVEL 14 (50 U.S. STATES & LOCATION) -->
+            <g transform="translate(915, 20)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=14'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 14 else '#0ea5e9' if unlocked_lvl == 14 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="11" font-weight="900" fill="#fff" text-anchor="middle">Lvl 14</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">50 U.S. States</text>
             </g>
 
             <!-- LEVEL 15 -->
-            <g transform="translate(1130, 75)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=15'">
-                <rect x="0" y="0" width="68" height="58" rx="12" fill="{('#10b981' if unlocked_lvl > 15 else '#0ea5e9' if unlocked_lvl == 15 else '#94a3b8')}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))"/>
-                <text x="34" y="24" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 15</text>
-                <text x="34" y="42" font-family="'Fredoka', sans-serif" font-size="8.5" font-weight="800" fill="#fff" text-anchor="middle">Spell Name</text>
+            <g transform="translate(985, 75)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=15'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 15 else '#0ea5e9' if unlocked_lvl == 15 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="11" font-weight="900" fill="#fff" text-anchor="middle">Lvl 15</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Spell Name</text>
+            </g>
+
+            <!-- LEVEL 16 (SEASONS, DAYS, MONTHS) -->
+            <g transform="translate(1055, 30)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=16'">
+                <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 16 else '#0ea5e9' if unlocked_lvl == 16 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
+                <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="11" font-weight="900" fill="#fff" text-anchor="middle">Lvl 16</text>
+                <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Seasons/Days</text>
             </g>
 
             <!-- GRAND LEARNING HOUSE CASTLE -->
-            <g transform="translate(1220, 10)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=15'">
-                <polygon points="45,8 0,48 90,48" fill="#dc2626" stroke="#ffffff" stroke-width="2.5"/>
-                <rect x="12" y="48" width="66" height="60" fill="#f8fafc" stroke="#475569" stroke-width="2.5"/>
-                <rect x="30" y="70" width="26" height="38" rx="3" fill="#78350f"/>
-                <circle cx="43" cy="60" r="11" fill="#14b8a6" stroke="#ffffff" stroke-width="2"/>
+            <g transform="translate(1145, 10)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=16'">
+                <polygon points="40,6 0,42 80,42" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
+                <rect x="12" y="42" width="56" height="56" fill="#f8fafc" stroke="#475569" stroke-width="2"/>
+                <rect x="27" y="64" width="22" height="34" rx="2" fill="#78350f"/>
+                <circle cx="38" cy="53" r="9" fill="#14b8a6" stroke="#ffffff" stroke-width="1.5"/>
             </g>
         </svg>
     </div>
     """
-    components.html(road_map_html, height=500)
+    components.html(road_map_html, height=520)
 
     # Check if a map node was clicked via URL parameters
     params = st.query_params
@@ -1008,12 +1016,12 @@ elif st.session_state.screen == "station_play":
                 st.rerun()
 
     # ---------------------------------------------------------
-    # LEVEL 14: PERSONAL LOCATION
+    # LEVEL 14: PERSONAL LOCATION & 50 U.S. STATES
     # ---------------------------------------------------------
     elif lvl_id == "lvl_14":
         questions = [
             {"q": "What city do you live in?", "correct": "Covington", "opts": ["Atlanta", "Covington", "Savannah"], "hint": "Covington, GA!"},
-            {"q": "What street do you live on?", "correct": "210 Belmont Circle", "opts": ["123 Main St", "210 Belmont Circle", "500 Peachtree Rd"], "hint": "210 Belmont Circle!"},
+            {"q": "How many states are in the United States?", "correct": "50", "opts": ["48", "50", "52"], "hint": "Fifty states!"},
             {"q": "What state do you live in?", "correct": "Georgia (GA)", "opts": ["Florida", "Georgia (GA)", "Texas"], "hint": "The Peach State!"}
         ]
         if current_step < len(questions):
@@ -1064,7 +1072,38 @@ elif st.session_state.screen == "station_play":
                             speak(f"Hint: {q['hint']}")
                             st.warning(f"💡 Hint: {q['hint']}")
         else:
-            st.success("🎉 Congratulations! You have fully completed all 15 Levels of the Kindergarten Road Map!")
+            st.success("🎉 Level 15 Completed! Level 16 Unlocked!")
+            if st.button("Next Level"):
+                st.session_state.active_level_id = "lvl_16"
+                st.rerun()
+
+    # ---------------------------------------------------------
+    # LEVEL 16: SEASONS, DAYS OF THE WEEK & MONTHS
+    # ---------------------------------------------------------
+    elif lvl_id == "lvl_16":
+        questions = [
+            {"q": "How many days are in a week?", "correct": "7", "opts": ["5", "7", "10"], "hint": "Sunday to Saturday!"},
+            {"q": "How many months are in a year?", "correct": "12", "opts": ["10", "12", "4"], "hint": "From January to December!"},
+            {"q": "Which season comes after winter with blooming flowers?", "correct": "Spring", "opts": ["Summer", "Spring", "Fall"], "hint": "Warming up and growing flowers!"}
+        ]
+        if current_step < len(questions):
+            q = questions[current_step]
+            speak(q["q"])
+            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
+            c1, c2, c3 = st.columns(3)
+            for i, opt in enumerate(q["opts"]):
+                with [c1, c2, c3][i]:
+                    if st.button(f"👉 {opt}", key=f"l16_{current_step}_{opt}", use_container_width=True):
+                        if opt == q["correct"]:
+                            record_progress(lvl_id, True)
+                            st.balloons()
+                            speak("Correct!")
+                            st.rerun()
+                        else:
+                            speak(f"Hint: {q['hint']}")
+                            st.warning(f"💡 Hint: {q['hint']}")
+        else:
+            st.success("🎉 Congratulations! You have fully completed all 16 Levels and reached the Learning House!")
             if st.button("🗺️ Return to Road Map"):
                 st.session_state.screen = "adventure_trail"
                 st.rerun()
