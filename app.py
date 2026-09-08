@@ -399,7 +399,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: PERFECTLY ALigned 16-LEVEL MAP (BOXES CENTERED ON ROAD)
+# SCREEN 3: PERFECTLY INTERSECTING 16-LEVEL MAP
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
