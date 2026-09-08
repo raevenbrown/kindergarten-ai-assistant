@@ -399,7 +399,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: INTERSECTING 16-LEVEL MAP (BOXES CENTERED ON ROAD)
+# SCREEN 3: PERFECTLY OVERLAID 16-LEVEL MAP
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -426,7 +426,7 @@ elif st.session_state.screen == "adventure_trail":
 
     speak(f"Welcome to your Kindergarten Road Map {user}! Tap any unlocked level on the path to reach the finish line house!")
 
-    # ROAD MAP CONTAINER WITH BOXES CENTERED DIRECTLY ON THE ROAD PATH
+    # ROAD MAP CONTAINER WITH LEVEL BOXES CENTERED DIRECTLY ON THE ROAD PATH CURVES
     road_map_html = f"""
     <div style="background:linear-gradient(135deg, #f0fdf4, #e0f2fe); border:6px solid #0284c7; border-radius:32px; padding:18px 15px 22px 15px; box-shadow:0 14px 28px rgba(0,0,0,0.12); position:relative; margin:10px auto; width:100%; box-sizing:border-box;">
         <div style="text-align:center; margin-bottom:8px;">
