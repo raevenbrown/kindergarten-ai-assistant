@@ -399,7 +399,7 @@ elif st.session_state.screen == "buddy_dressup":
             if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
 
 # =========================================================
-# SCREEN 3: OVERLAID 16-LEVEL MAP (BOXES CENTERED ON THE ROAD CURVES)
+# SCREEN 3: INTERSECTING 16-LEVEL MAP (BOXES CENTERED ON ROAD)
 # =========================================================
 elif st.session_state.screen == "adventure_trail":
     user = st.session_state.active_user
@@ -426,7 +426,7 @@ elif st.session_state.screen == "adventure_trail":
 
     speak(f"Welcome to your Kindergarten Road Map {user}! Tap any unlocked level on the path to reach the finish line house!")
 
-    # ROAD MAP CONTAINER WITH LEVEL BOXES OVERLAID DIRECTLY ON THE ROAD PATH
+    # ROAD MAP CONTAINER WITH BOXES CENTERED DIRECTLY ON THE ROAD PATH
     road_map_html = f"""
     <div style="background:linear-gradient(135deg, #f0fdf4, #e0f2fe); border:6px solid #0284c7; border-radius:32px; padding:18px 15px 22px 15px; box-shadow:0 14px 28px rgba(0,0,0,0.12); position:relative; margin:10px auto; width:100%; box-sizing:border-box;">
         <div style="text-align:center; margin-bottom:8px;">
@@ -439,14 +439,14 @@ elif st.session_state.screen == "adventure_trail":
             <path d="M 40 210 Q 115 50 190 210 Q 265 370 340 210 Q 415 50 490 210 Q 565 370 640 210 Q 715 50 790 210 Q 865 370 940 210 Q 1015 50 1090 210 Q 1165 370 1240 210 Q 1315 50 1390 210 L 1450 210" fill="none" stroke="#64748b" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
             <path d="M 40 210 Q 115 50 190 210 Q 265 370 340 210 Q 415 50 490 210 Q 565 370 640 210 Q 715 50 790 210 Q 865 370 940 210 Q 1015 50 1090 210 Q 1165 370 1240 210 Q 1315 50 1390 210 L 1450 210" fill="none" stroke="#cbd5e1" stroke-width="6" stroke-linecap="round" stroke-dasharray="12,12" opacity="0.8"/>
 
-            <!-- LEVEL 1 (Valley - Centered directly on road trough at y=310) -->
+            <!-- LEVEL 1 (Valley - Centered directly over road trough at y=310) -->
             <g transform="translate(159, 283)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=1'">
                 <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 1 else '#0ea5e9' if unlocked_lvl == 1 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
                 <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 1</text>
                 <text x="31" y="38" font-family="'Fredoka', sans-serif" font-size="7.5" font-weight="800" fill="#fff" text-anchor="middle">Sight Words 1</text>
             </g>
 
-            <!-- LEVEL 2 (Peak - Centered directly on road crest at y=110) -->
+            <!-- LEVEL 2 (Peak - Centered directly over road crest at y=110) -->
             <g transform="translate(234, 83)" style="cursor:pointer;" onclick="window.parent.location.href='?lvl=2'">
                 <rect x="0" y="0" width="62" height="54" rx="10" fill="{('#10b981' if unlocked_lvl > 2 else '#0ea5e9' if unlocked_lvl == 2 else '#94a3b8')}" stroke="#fff" stroke-width="2.5" filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.15))"/>
                 <text x="31" y="22" font-family="'Fredoka', sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">Lvl 2</text>
