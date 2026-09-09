@@ -1,1029 +1,292 @@
+import json
+import os
+import time
+import urllib.request
+import urllib.error
 import streamlit as st
-import streamlit.components.v1 as components
-import random
-from datetime import datetime
 
+# 1. Page Configuration
 st.set_page_config(
-    page_title="Kindergarten Road Map",
-    page_icon="🌟",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    page_title="The Brown Girls Creative Studio | AI Growth Assistant",
+    page_icon="🤎",
+    layout="wide"
 )
 
-# =========================================================
-# 1. VECTOR GRAPHICS ENGINE (AVATARS & BOOKS)
-# =========================================================
-
-def render_avatar(skin="#8d5524", hair_style="puffs", hair_color="#1a1110", glasses="gold_round", shirt="#ec4899", accessory="crown", size=180):
-    hair_svg = ""
-    if hair_style == "puffs":
-        hair_svg = f"""
-        <circle cx="50" cy="55" r="28" fill="{hair_color}"/>
-        <circle cx="150" cy="55" r="28" fill="{hair_color}"/>
-        <path d="M 65 75 Q 100 45 135 75 Q 100 65 65 75 Z" fill="{hair_color}"/>
-        """
-    elif hair_style == "curly_bob":
-        hair_svg = f"""
-        <circle cx="65" cy="80" r="24" fill="{hair_color}"/>
-        <circle cx="135" cy="80" r="24" fill="{hair_color}"/>
-        <path d="M 60 70 Q 100 35 140 70 Q 100 55 60 70 Z" fill="{hair_color}"/>
-        """
-    elif hair_style == "short_fade":
-        hair_svg = f"""
-        <path d="M 65 80 Q 100 40 135 80 Q 100 60 65 80 Z" fill="{hair_color}"/>
-        <rect x="68" y="70" width="64" height="15" rx="7" fill="{hair_color}"/>
-        """
-    elif hair_style == "ponytail":
-        hair_svg = f"""
-        <circle cx="100" cy="40" r="26" fill="{hair_color}"/>
-        <path d="M 68 75 Q 100 45 132 75 Z" fill="{hair_color}"/>
-        <ellipse cx="100" cy="55" rx="14" ry="6" fill="#ec4899"/>
-        """
-
-    glasses_svg = ""
-    if glasses == "gold_round":
-        glasses_svg = """
-        <circle cx="82" cy="100" r="15" fill="none" stroke="#f59e0b" stroke-width="4"/>
-        <circle cx="118" cy="100" r="15" fill="none" stroke="#f59e0b" stroke-width="4"/>
-        <line x1="97" y1="100" x2="103" y2="100" stroke="#f59e0b" stroke-width="4"/>
-        <line x1="67" y1="98" x2="60" y2="92" stroke="#f59e0b" stroke-width="3"/>
-        <line x1="133" y1="98" x2="140" y2="92" stroke="#f59e0b" stroke-width="3"/>
-        """
-    elif glasses == "cool_shades":
-        glasses_svg = """
-        <polygon points="82,85 86,95 96,96 88,103 91,113 82,107 73,113 76,103 68,96 78,95" fill="#8b5cf6"/>
-        <polygon points="118,85 122,95 132,96 124,103 127,113 118,107 109,113 112,103 104,96 114,95" fill="#8b5cf6"/>
-        <line x1="94" y1="101" x2="106" y2="101" stroke="#6d28d9" stroke-width="4"/>
-        """
-
-    acc_svg = ""
-    if accessory == "crown":
-        acc_svg = """
-        <polygon points="75,55 85,35 100,50 115,35 125,55" fill="#facc15" stroke="#eab308" stroke-width="2"/>
-        <circle cx="100" cy="48" r="3" fill="#ef4444"/>
-        """
-    elif accessory == "cape":
-        acc_svg = """
-        <path d="M 55 140 Q 30 180 40 200 Q 100 190 160 200 Q 170 180 145 140 Z" fill="#ef4444"/>
-        """
-
-    raw_html = f"""
-    <div style="display:flex; justify-content:center; align-items:center; width:100%; margin:0; padding:0;">
-        <svg width="{size}" height="{size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <radialGradient id="glow_{size}" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stop-color="#ffffff"/>
-                    <stop offset="100%" stop-color="#e0f2fe"/>
-                </radialGradient>
-            </defs>
-            <circle cx="100" cy="100" r="95" fill="url(#glow_{size})" stroke="#38bdf8" stroke-width="6"/>
-            {acc_svg if accessory == "cape" else ""}
-            <path d="M 60 185 C 60 145, 140 145, 140 185 Z" fill="{shirt}"/>
-            <path d="M 85 145 Q 100 160 115 145 Z" fill="{skin}"/>
-            <rect x="91" y="132" width="18" height="18" rx="6" fill="{skin}"/>
-            <ellipse cx="100" cy="100" rx="36" ry="42" fill="{skin}"/>
-            <circle cx="63" cy="102" r="9" fill="{skin}"/>
-            <circle cx="137" cy="102" r="9" fill="{skin}"/>
-            {hair_svg}
-            <ellipse cx="84" cy="98" rx="6" ry="8" fill="#ffffff"/>
-            <circle cx="85" cy="98" r="4.5" fill="#0f172a"/>
-            <circle cx="87" cy="95" r="1.5" fill="#ffffff"/>
-            <ellipse cx="116" cy="98" rx="6" ry="8" fill="#ffffff"/>
-            <circle cx="115" cy="98" r="4.5" fill="#0f172a"/>
-            <circle cx="117" cy="95" r="1.5" fill="#ffffff"/>
-            <ellipse cx="78" cy="109" rx="6" ry="3.5" fill="#f43f5e" opacity="0.35"/>
-            <ellipse cx="122" cy="109" rx="6" ry="3.5" fill="#f43f5e" opacity="0.35"/>
-            <path d="M 90 115 Q 100 128 110 115" fill="none" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-            {glasses_svg}
-            {acc_svg if accessory != "cape" else ""}
-        </svg>
-    </div>
-    """
-    return raw_html
-
-# =========================================================
-# 2. STYLING & AUDIO SYNTHESIZER
-# =========================================================
-
+# 2. Studio Brand Styling
 st.markdown("""
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;800&family=Quicksand:wght@600;700;800&display=swap');
-
+    #MainMenu, footer, header {visibility: hidden;}
+    .stAppDeployButton {display: none;}
+    a.anchorjs-link, [data-testid="stHeaderActionElements"] {display: none !important;}
+    
     .stApp {
-        background: linear-gradient(180deg, #60a5fa 0%, #93c5fd 45%, #bbf7d0 100%) !important;
-        font-family: 'Fredoka', 'Quicksand', cursive, sans-serif !important;
+        background-color: #1A120B !important;
+        background-image: 
+            linear-gradient(to right, rgba(197, 155, 88, 0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(197, 155, 88, 0.08) 1px, transparent 1px) !important;
+        background-size: 44px 44px !important;
+        color: #EADBC8 !important;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
     }
 
-    .stButton > button {
-        border-radius: 28px !important;
-        font-size: 1.25rem !important;
-        font-weight: 800 !important;
-        padding: 12px 20px !important;
-        background: #ffffff !important;
-        color: #0369a1 !important;
-        border: 4px solid #38bdf8 !important;
-        box-shadow: 0 8px 0 #0284c7, 0 12px 20px rgba(0,0,0,0.12) !important;
-        transition: transform 0.08s ease !important;
-        width: 100%;
-    }
-    .stButton > button:active {
-        transform: translateY(6px) !important;
-        box-shadow: 0 2px 0 #0284c7 !important;
+    .studio-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0px 24px 0px;
+        border-bottom: 1px solid rgba(197, 155, 88, 0.18);
+        margin-bottom: 30px;
     }
 
-    .game-card {
-        background: #ffffff;
-        border: 5px solid #38bdf8;
-        border-radius: 32px;
-        padding: 22px;
-        box-shadow: 0 14px 30px rgba(0,0,0,0.1);
-        text-align: center;
-        margin-bottom: 18px;
+    .brand-logo {
+        font-family: 'Fraunces', serif !important;
+        font-size: 24px !important;
+        font-weight: 700 !important;
+        color: #FAF5E9 !important;
+        text-decoration: none !important;
+        letter-spacing: -0.3px !important;
+        display: inline-flex !important;
+        align-items: baseline !important;
+        gap: 6px !important;
+    }
+    .brand-logo:hover, .brand-logo:visited, .brand-logo:active {
+        color: #FAF5E9 !important;
+        text-decoration: none !important;
+    }
+    .brand-logo .accent-gold {
+        color: #C59B58 !important;
     }
 
-    .stat-chip {
-        background: #fef08a;
-        color: #854d0e;
-        border-radius: 20px;
-        padding: 6px 16px;
-        font-weight: 800;
-        font-size: 1.2rem;
-        border: 2px solid #facc15;
+    .nav-links {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: #D4C3B3;
+    }
+    
+    .nav-audit-btn {
+        background: #C59B58 !important;
+        color: #1A120B !important;
+        font-weight: 700 !important;
+        font-size: 13px !important;
+        padding: 9px 18px !important;
+        border-radius: 6px !important;
+        text-decoration: none !important;
+        box-shadow: 0 4px 12px rgba(197, 155, 88, 0.25) !important;
+    }
+
+    .section-eyebrow {
+        color: #C59B58;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+    }
+
+    .hero-title {
+        font-family: 'Fraunces', serif;
+        font-size: 46px;
+        font-weight: 700;
+        line-height: 1.15;
+        color: #FAF5E9;
+        letter-spacing: -0.8px;
+        margin-bottom: 16px;
+    }
+    .hero-title em {
+        font-family: 'Fraunces', serif;
+        font-style: italic;
+        color: #C59B58;
+        font-weight: 400;
+    }
+
+    .hero-sub {
+        font-size: 15px;
+        line-height: 1.65;
+        color: #C4B5A5;
+        max-width: 680px;
+        margin-bottom: 32px;
+    }
+
+    label {
+        color: #FAF5E9 !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+    }
+    
+    div[data-baseweb="select"] {
+        background-color: #140D07 !important;
+        border: 1px solid rgba(197, 155, 88, 0.3) !important;
+        border-radius: 6px !important;
+        color: #FAF5E9 !important;
+    }
+
+    .stTextInput input {
+        background-color: #140D07 !important;
+        color: #FAF5E9 !important;
+        border: 1px solid rgba(197, 155, 88, 0.3) !important;
+        border-radius: 6px !important;
+        padding: 10px 14px !important;
+    }
+    .stTextInput input:focus {
+        border-color: #C59B58 !important;
+        box-shadow: 0 0 0 1px #C59B58 !important;
+    }
+
+    .stButton button {
+        background-color: #C59B58 !important;
+        color: #1A120B !important;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        border: none !important;
+        border-radius: 6px !important;
+        padding: 12px 24px !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 4px 12px rgba(197, 155, 88, 0.25) !important;
+    }
+    .stButton button:hover {
+        background-color: #D6AA66 !important;
+        transform: translateY(-1px);
+    }
+    
+    .status-badge {
+        display: inline-block;
+        font-size: 11px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        margin-bottom: 14px;
+        font-weight: 600;
+    }
+    .status-live {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10B981;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .status-demo {
+        background: rgba(245, 158, 11, 0.2);
+        color: #F59E0B;
+        border: 1px solid rgba(245, 158, 11, 0.4);
     }
 </style>
 """, unsafe_allow_html=True)
 
-def speak(text):
-    clean = text.replace('"', '\\"').replace("'", "\\'")
-    js = f"""
-    <script>
-        (function() {{
-            const synth = (window.parent && window.parent.speechSynthesis) ? window.parent.speechSynthesis : window.speechSynthesis;
-            if (!synth) return;
-            try {{
-                synth.cancel();
-                if (synth.paused) synth.resume();
-            }} catch(e) {{}}
-            const utter = new SpeechSynthesisUtterance("{clean}");
-            utter.rate = 0.85;
-            utter.pitch = 1.22;
-            utter.lang = 'en-US';
-            const voices = synth.getVoices();
-            if (voices.length > 0) {{
-                const pref = voices.find(v => (v.name.includes("Samantha") || v.name.includes("Victoria") || v.lang === "en-US") && !v.name.includes("Bad"));
-                if (pref) utter.voice = pref;
-            }}
-            synth.speak(utter);
-        }})();
-    </script>
-    """
-    components.html(js, height=0)
+# 3. Top Studio Navigation Bar
+st.markdown("""
+<div class="studio-nav">
+    <a href="https://raevenbrown.github.io/thebrowngirlsstudio/index.html#education" class="brand-logo" target="_blank">
+        <span>the brown girls</span><span class="accent-gold">creative studio</span>
+    </a>
+    <div class="nav-links">
+        <span>Studio Services</span>
+        <span>Creative Metrix</span>
+        <span>School Labs</span>
+        <span>Apprenticeships</span>
+        <a href="https://raevenbrown.github.io/thebrowngirlsstudio/index.html#education" target="_blank" class="nav-audit-btn">Run Free Audit</a>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-# =========================================================
-# 3. CURRICULUM DEFINITION (16 COMPLETE LEVELS)
-# =========================================================
+# 4. Hero Section
+st.markdown("""
+<div class="section-eyebrow">— DATA ARCHITECTURE · AI INNOVATION · WORKFORCE IMPACT</div>
+<div class="hero-title">Building the front end, back end, <em>and future</em> of local business.</div>
+<div class="hero-sub">
+    We turn disconnected operations into streamlined, data-driven growth machines with Creative Metrix — 
+    while training the next generation of AI and tech talent right here in our community.
+</div>
+""", unsafe_allow_html=True)
 
-CURRICULUM_LEVELS = [
-    {"id": "lvl_1", "name": "Level 1: List 1 Sight Words"},
-    {"id": "lvl_2", "name": "Level 2: List 2 Sight Words"},
-    {"id": "lvl_3", "name": "Level 3: Write & Type ABCs"},
-    {"id": "lvl_4", "name": "Level 4: Count to 100 & What Comes Next"},
-    {"id": "lvl_5", "name": "Level 5: Rhyming Words"},
-    {"id": "lvl_6", "name": "Level 6: Syllables"},
-    {"id": "lvl_7", "name": "Level 7: Addition Up to 10"},
-    {"id": "lvl_8", "name": "Level 8: Subtraction Up to 10"},
-    {"id": "lvl_9", "name": "Level 9: Upper & Lowercase Match"},
-    {"id": "lvl_10", "name": "Level 10: Find Letters in ABCs"},
-    {"id": "lvl_11", "name": "Level 11: Reading Picture Word Book"},
-    {"id": "lvl_12", "name": "Level 12: Write a Sentence"},
-    {"id": "lvl_13", "name": "Level 13: Count by 2s, 5s & 10s"},
-    {"id": "lvl_14", "name": "Level 14: Personal Location & 50 U.S. States"},
-    {"id": "lvl_15", "name": "Level 15: Spell Full Name (First, Middle, Last)"},
-    {"id": "lvl_16", "name": "Level 16: Seasons, Days of the Week & Months"}
-]
+# 5. Handle Authentication
+raw_api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
+api_key = str(raw_api_key).strip() if raw_api_key else ""
 
-# =========================================================
-# 4. PERSISTENT PROFILES & STATE MANAGEMENT
-# =========================================================
+if api_key:
+    st.markdown('<span class="status-badge status-live">🟢 LIVE ENGINE ACTIVE</span>', unsafe_allow_html=True)
+else:
+    st.markdown('<span class="status-badge status-demo">🟡 SIMULATOR MODE (Add GEMINI_API_KEY in Secrets)</span>', unsafe_allow_html=True)
 
-if "profiles" not in st.session_state:
-    st.session_state.profiles = {
-        "Gracyn": {
-            "buddy": {
-                "skin": "#8d5524",
-                "hair_style": "puffs",
-                "hair_color": "#1a1110",
-                "glasses": "gold_round",
-                "shirt": "#ec4899",
-                "accessory": "crown"
-            },
-            "stars": 14,
-            "streak": 3,
-            "unlocked_level": 1,
-            "level_progress": {},
-            "daily_log": []
-        }
+STUDIO_SYSTEM_INSTRUCTION = (
+    "You are the Principal Growth Architect for 'The Brown Girls Creative Studio'. "
+    "Provide actionable, numbered steps with real revenue math, concrete timelines, and specific tools. "
+    "Structure responses into: 1) Revenue Math, 2) Phase 1 (Days 1-30), 3) Phase 2 (Days 31-60), "
+    "4) Phase 3 (Days 61-90), and 5) Executive Standard."
+)
+
+def query_gemini_api(key: str, user_prompt: str, persona: str) -> str:
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}" if key.startswith("AIzaSy") else "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+    
+    payload = {
+        "system_instruction": {"parts": [{"text": STUDIO_SYSTEM_INSTRUCTION}]},
+        "contents": [{"parts": [{"text": f"Advisory Lens: {persona}\nGoal: {user_prompt}"}]}],
+        "generationConfig": {"temperature": 0.7}
+    }
+    
+    headers = {"Content-Type": "application/json"}
+    if key.startswith("AQ."):
+        headers["Authorization"] = f"Bearer {key}"
+        
+    req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
+    
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        result = json.loads(resp.read().decode("utf-8"))
+        return result["candidates"][0]["content"]["parts"][0]["text"]
+
+# 6. Interactive Studio AI Assistant Panel
+st.markdown('<div class="section-eyebrow">— INTERACTIVE AI STRATEGY ENGINE</div>', unsafe_allow_html=True)
+
+col1, col2 = st.columns([1, 2])
+
+with col1:
+    persona_options = [
+        "Creative Entrepreneur",
+        "Content & Brand Strategy",
+        "Operations & Automation",
+        "Brand Identity & Design",
+        "Client Acquisition"
+    ]
+    selected_persona = st.selectbox("Select Advisory Lens:", persona_options)
+    placeholder_map = {
+        "Creative Entrepreneur": "How to get $7k in 3 months?",
+        "Content & Brand Strategy": "How do I create short-form hooks that convert viewers into paying clients?",
+        "Operations & Automation": "How do I automate client onboarding without writing complex code?",
+        "Brand Identity & Design": "How do I position my business as an executive, high-ticket brand?",
+        "Client Acquisition": "How do I pitch corporate clients and close bigger ongoing retainers?"
     }
 
-if "active_user" not in st.session_state:
-    st.session_state.active_user = "Gracyn"
+with col2:
+    user_input = st.text_input("Ask a Growth or Systems Question:", placeholder=placeholder_map[selected_persona])
+    generate_btn = st.button("Generate Strategic Blueprint ✨")
 
-if "screen" not in st.session_state:
-    st.session_state.screen = "profile_select"
+# 7. Response Generation
+if generate_btn:
+    if not user_input.strip():
+        st.warning("⚠️ Please enter a strategic question or goal above.")
+    else:
+        st.markdown(f"### Strategic Output: *{selected_persona}*")
+        message_placeholder = st.empty()
 
-if "active_level_id" not in st.session_state:
-    st.session_state.active_level_id = "lvl_1"
+        if api_key:
+            try:
+                with st.spinner("Generating Strategic Blueprint..."):
+                    answer = query_gemini_api(api_key, user_input.strip(), selected_persona)
+                
+                full_text = ""
+                for line in answer.split("\n"):
+                    full_text += line + "\n"
+                    message_placeholder.markdown(full_text + "▌")
+                    time.sleep(0.015)
+                message_placeholder.markdown(answer)
 
-def record_progress(level_id, is_correct):
-    user = st.session_state.active_user
-    if user not in st.session_state.profiles:
-        return
-    prof = st.session_state.profiles[user]
-    if "level_progress" not in prof:
-        prof["level_progress"] = {}
-    
-    current_step = prof["level_progress"].get(level_id, 0)
-    if is_correct:
-        prof["stars"] += 1
-        prof["streak"] += 1
-        prof["level_progress"][level_id] = current_step + 1
-        
-        if prof["level_progress"][level_id] >= 3:
-            for idx, lvl in enumerate(CURRICULUM_LEVELS):
-                if lvl["id"] == level_id and prof["unlocked_level"] <= idx + 1:
-                    if idx + 1 < len(CURRICULUM_LEVELS):
-                        prof["unlocked_level"] = idx + 2
-
-# =========================================================
-# SCREEN 1: PROFILE HUB
-# =========================================================
-if st.session_state.screen == "profile_select":
-    st.markdown("""
-    <div style="text-align:center; padding: 18px 0 10px 0;">
-        <h1 style="color:#0369a1; font-size:3.2rem; font-weight:900; margin-bottom:4px;">ADVENTURE LEARNING ACADEMY</h1>
-        <p style="font-size:1.5rem; color:#1e293b; font-weight:800;">Who is playing today? Tap your character or delete profiles below!</p>
-    </div>
-    """, unsafe_allow_html=True)
-    speak("Who is playing today? Tap your character or design a new buddy!")
-
-    prof_names = list(st.session_state.profiles.keys())
-    cols = st.columns(len(prof_names) + 1)
-
-    for i, name in enumerate(prof_names):
-        p_data = st.session_state.profiles[name]
-        b = p_data["buddy"]
-        with cols[i]:
-            avatar_html = render_avatar(skin=b["skin"], hair_style=b["hair_style"], hair_color=b["hair_color"], glasses=b["glasses"], shirt=b["shirt"], accessory=b["accessory"], size=160)
-            components.html(avatar_html, height=170)
-            
-            if st.button(f"Play as {name}", key=f"prof_{name}", use_container_width=True):
-                st.session_state.active_user = name
-                st.session_state.screen = "adventure_trail"
-                speak(f"Welcome back {name}! Follow your Kindergarten Road Map to learn and grow!")
-                st.rerun()
-
-            if st.button(f"🗑️ Delete {name}", key=f"del_{name}", use_container_width=True):
-                if len(st.session_state.profiles) > 1:
-                    del st.session_state.profiles[name]
-                    remaining = list(st.session_state.profiles.keys())
-                    st.session_state.active_user = remaining[0] if remaining else ""
-                    speak(f"Player {name} deleted.")
-                    st.success(f"🗑️ Player '{name}' deleted successfully!")
-                    st.rerun()
-                else:
-                    st.warning("⚠️ You must keep at least one profile in the academy!")
-
-    with cols[-1]:
-        raw_plus = """
-        <div style="display:flex; justify-content:center; align-items:center; width:100%;">
-            <svg width="160" height="160" viewBox="0 0 200 200">
-                <circle cx="100" cy="100" r="90" fill="#f8fafc" stroke="#94a3b8" stroke-width="6" stroke-dasharray="12,8"/>
-                <line x1="100" y1="65" x2="100" y2="135" stroke="#0284c7" stroke-width="12" stroke-linecap="round"/>
-                <line x1="65" y1="100" x2="135" y2="100" stroke="#0284c7" stroke-width="12" stroke-linecap="round"/>
-            </svg>
-        </div>
-        """
-        components.html(raw_plus, height=170)
-        if st.button("New Buddy Studio", use_container_width=True):
-            st.session_state.screen = "buddy_dressup"
-            st.rerun()
-
-# =========================================================
-# SCREEN 2: BUDDY DRESS-UP STUDIO
-# =========================================================
-elif st.session_state.screen == "buddy_dressup":
-    st.markdown("""
-    <div class="game-card" style="padding:14px;">
-        <h2 style="color:#0369a1; font-size:2.2rem; margin:0;">BUDDY DRESS-UP STUDIO</h2>
-        <p style="color:#475569; font-weight:700; font-size:1.15rem; margin:4px 0 0 0;">Create your custom avatar for the Kindergarten Road Map!</p>
-    </div>
-    """, unsafe_allow_html=True)
-    speak("Design your buddy! Pick hairstyles, skin tones, and outfits!")
-
-    if "temp_buddy" not in st.session_state:
-        st.session_state.temp_buddy = {"skin": "#c68642", "hair_style": "puffs", "hair_color": "#1a1110", "glasses": "gold_round", "shirt": "#0284c7", "accessory": "crown"}
-
-    tb = st.session_state.temp_buddy
-    col_preview, col_options = st.columns([1.1, 1.4])
-
-    with col_preview:
-        avatar_html = render_avatar(skin=tb['skin'], hair_style=tb['hair_style'], hair_color=tb['hair_color'], glasses=tb['glasses'], shirt=tb['shirt'], accessory=tb['accessory'], size=230)
-        components.html(avatar_html, height=240)
-        new_profile_name = st.text_input("Enter Profile Name:", value="Superstar")
-        if st.button("Save & Start Learning!", use_container_width=True):
-            clean_name = new_profile_name.strip() if new_profile_name.strip() else "Learner"
-            st.session_state.profiles[clean_name] = {
-                "buddy": tb,
-                "stars": 10,
-                "streak": 1,
-                "unlocked_level": 1,
-                "level_progress": {},
-                "daily_log": []
-            }
-            st.session_state.active_user = clean_name
-            st.session_state.screen = "adventure_trail"
-            speak(f"Awesome! Welcome to Kindergarten Road Map, {clean_name}!")
-            st.rerun()
-
-        if st.button("⬅️ Back to Profiles", use_container_width=True):
-            st.session_state.screen = "profile_select"
-            st.rerun()
-
-    with col_options:
-        tab_h, tab_s, tab_c, tab_a = st.tabs(["Hairstyle", "Skin Tone", "Outfit", "Accessories"])
-        with tab_h:
-            h1, h2 = st.columns(2)
-            if h1.button("Afro Puffs"): tb["hair_style"] = "puffs"; st.rerun()
-            if h2.button("Curly Bob"): tb["hair_style"] = "curly_bob"; st.rerun()
-            if h1.button("Fresh Fade"): tb["hair_style"] = "short_fade"; st.rerun()
-            if h2.button("Ponytail"): tb["hair_style"] = "ponytail"; st.rerun()
-        with tab_s:
-            s1, s2, s3, s4 = st.columns(4)
-            if s1.button("Deep"): tb["skin"] = "#5c3818"; st.rerun()
-            if s2.button("Bronze"): tb["skin"] = "#8d5524"; st.rerun()
-            if s3.button("Tan"): tb["skin"] = "#c68642"; st.rerun()
-            if s4.button("Peach"): tb["skin"] = "#f1c27d"; st.rerun()
-        with tab_c:
-            c1, c2, c3, c4 = st.columns(4)
-            if c1.button("Pink"): tb["shirt"] = "#ec4899"; st.rerun()
-            if c2.button("Sky"): tb["shirt"] = "#0284c7"; st.rerun()
-            if c3.button("Gold"): tb["shirt"] = "#eab308"; st.rerun()
-            if c4.button("Green"): tb["shirt"] = "#16a34a"; st.rerun()
-        with tab_a:
-            a1, a2 = st.columns(2)
-            if a1.button("Gold Glasses"): tb["glasses"] = "gold_round"; st.rerun()
-            if a2.button("Star Shades"): tb["glasses"] = "cool_shades"; st.rerun()
-            if a1.button("Royal Crown"): tb["accessory"] = "crown"; st.rerun()
-            if a2.button("Hero Cape"): tb["accessory"] = "cape"; st.rerun()
-
-# =========================================================
-# SCREEN 3: ROAD MAP (CLICK ROUTING FIXED)
-# =========================================================
-elif st.session_state.screen == "adventure_trail":
-    user = st.session_state.active_user
-    if user not in st.session_state.profiles:
-        st.session_state.screen = "profile_select"
-        st.rerun()
-
-    pdata = st.session_state.profiles[user]
-    b = pdata["buddy"]
-    unlocked_lvl = pdata.get("unlocked_level", 1)
-
-    # Check if a map node was clicked via URL parameters and route immediately
-    params = st.query_params
-    if "lvl" in params:
-        try:
-            clicked_lvl = int(params["lvl"])
-            if clicked_lvl <= unlocked_lvl:
-                target_id = CURRICULUM_LEVELS[clicked_lvl - 1]["id"]
-                st.session_state.active_level_id = target_id
-                st.query_params.clear()
-                st.session_state.screen = "station_play"
-                st.rerun()
-            else:
-                st.query_params.clear()
-                speak(f"Level {clicked_lvl} is locked! Complete previous levels first!")
-                st.warning(f"🔒 Level {clicked_lvl} is locked!")
-        except Exception:
-            st.query_params.clear()
-
-    col_lib, col_title, col_prof = st.columns([1, 3, 1])
-    with col_lib:
-        if st.button("📚 Library"):
-            st.session_state.active_level_id = "lvl_16"
-            st.session_state.screen = "station_play"
-            st.rerun()
-    with col_title:
-        st.markdown("<h1 style='text-align:center; color:#0f172a; margin:0; font-size:2.8rem;'>🌱 Kindergarten Road Map</h1>", unsafe_allow_html=True)
-    with col_prof:
-        if st.button("Switch Profile", key="switch_p", use_container_width=True):
-            st.session_state.screen = "profile_select"
-            st.rerun()
-
-    speak(f"Welcome to your Kindergarten Road Map {user}! Tap any unlocked level on the path to reach the finish line house!")
-
-    N = len(CURRICULUM_LEVELS)
-    SVG_W, SVG_H = 1550, 440
-    MIDLINE_Y = 210
-    PEAK_Y, TROUGH_Y = 110, 310
-    MARGIN_LEFT, MARGIN_RIGHT = 90, 170
-    BOX_W, BOX_H = 76, 62
-
-    usable_w = SVG_W - MARGIN_LEFT - MARGIN_RIGHT
-    step_x = usable_w / (N - 1)
-
-    nodes = []
-    for i in range(N):
-        x = MARGIN_LEFT + i * step_x
-        y = PEAK_Y if i % 2 == 0 else TROUGH_Y
-        nodes.append((x, y))
-
-    house_x = nodes[-1][0] + step_x * 0.9
-    house_y = MIDLINE_Y
-
-    start_x = nodes[0][0] - step_x * 0.6
-    path_parts = [f"M {start_x:.1f} {MIDLINE_Y}"]
-    c1x = start_x + (nodes[0][0] - start_x) * 0.5
-    path_parts.append(
-        f"C {c1x:.1f} {MIDLINE_Y}, {nodes[0][0]-step_x*0.25:.1f} {nodes[0][1]:.1f}, "
-        f"{nodes[0][0]:.1f} {nodes[0][1]:.1f}"
-    )
-    for (x0, y0), (x1, y1) in zip(nodes, nodes[1:]):
-        cA = x0 + (x1 - x0) * 0.5
-        cB = x1 - (x1 - x0) * 0.5
-        path_parts.append(f"C {cA:.1f} {y0:.1f}, {cB:.1f} {y1:.1f}, {x1:.1f} {y1:.1f}")
-    cEnd = nodes[-1][0] + (house_x - nodes[-1][0]) * 0.5
-    path_parts.append(
-        f"C {cEnd:.1f} {nodes[-1][1]:.1f}, {house_x-step_x*0.2:.1f} {MIDLINE_Y}, "
-        f"{house_x:.1f} {MIDLINE_Y}"
-    )
-    path_d = " ".join(path_parts)
-
-    nodes_svg = ""
-    for i, (x, y) in enumerate(nodes):
-        lvl_num = i + 1
-        info = CURRICULUM_LEVELS[i]
-        short_name = info["name"].split(": ", 1)[1] if ": " in info["name"] else info["name"]
-        fill = "#10b981" if unlocked_lvl > lvl_num else ("#0ea5e9" if unlocked_lvl == lvl_num else "#94a3b8")
-        nodes_svg += f"""
-            <g transform="translate({x-BOX_W/2:.1f}, {y-BOX_H/2:.1f})" style="cursor:pointer;" onclick="window.parent.location.href='?lvl={lvl_num}'">
-                <rect x="0" y="0" width="{BOX_W}" height="{BOX_H}" rx="16" fill="{fill}" stroke="#fff" stroke-width="3" filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.18))"/>
-                <text x="{BOX_W/2:.1f}" y="24" font-family="'Fredoka', sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle">Lvl {lvl_num}</text>
-                <text x="{BOX_W/2:.1f}" y="42" font-family="'Fredoka', sans-serif" font-size="8" font-weight="800" fill="#fff" text-anchor="middle">{short_name[:14]}</text>
-            </g>
-        """
-
-    house_svg = f"""
-        <g transform="translate({house_x-40:.1f}, {house_y-50:.1f})" style="cursor:pointer;" onclick="window.parent.location.href='?lvl={N}'">
-            <polygon points="40,6 0,42 80,42" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
-            <rect x="12" y="42" width="56" height="56" fill="#f8fafc" stroke="#475569" stroke-width="2"/>
-            <rect x="27" y="64" width="22" height="34" rx="2" fill="#78350f"/>
-            <circle cx="38" cy="53" r="9" fill="#14b8a6" stroke="#ffffff" stroke-width="1.5"/>
-        </g>
-    """
-
-    road_map_html = f"""
-    <div style="background:linear-gradient(135deg, #f0fdf4, #e0f2fe); border:6px solid #0284c7; border-radius:32px; padding:18px 15px 22px 15px; box-shadow:0 14px 28px rgba(0,0,0,0.12); position:relative; margin:10px auto; width:100%; box-sizing:border-box;">
-        <div style="text-align:center; margin-bottom:8px;">
-            <h2 style="color:#0369a1; margin:0; font-size:1.6rem;">🌟 Learning Adventure Map (Level {unlocked_lvl} of {N} Unlocked)</h2>
-            <p style="color:#334155; font-weight:700; font-size:0.9rem; margin-top:2px;">Tap any unlocked station to reach the finish line house!</p>
-        </div>
-        <svg width="100%" height="340" viewBox="0 0 {SVG_W} {SVG_H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
-            <path d="{path_d}" fill="none" stroke="#64748b" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
-            <path d="{path_d}" fill="none" stroke="#cbd5e1" stroke-width="6" stroke-linecap="round" stroke-dasharray="12,12" opacity="0.8"/>
-            {nodes_svg}
-            {house_svg}
-        </svg>
-    </div>
-    """
-    components.html(road_map_html, height=520)
-
-# =========================================================
-# SCREEN 4: INDIVIDUAL LEVEL PLAY ARENA (MASTERY ENGINE)
-# =========================================================
-elif st.session_state.screen == "station_play":
-    user = st.session_state.active_user
-    if user not in st.session_state.profiles:
-        st.session_state.screen = "profile_select"
-        st.rerun()
-        
-    pdata = st.session_state.profiles[user]
-    lvl_id = st.session_state.active_level_id
-    
-    current_lvl_info = next((l for l in CURRICULUM_LEVELS if l["id"] == lvl_id), CURRICULUM_LEVELS[0])
-    
-    if "level_progress" not in pdata:
-        pdata["level_progress"] = {}
-    current_step = pdata["level_progress"].get(lvl_id, 0)
-
-    # Top Navigation Bar
-    b1, b2, b3 = st.columns([1, 1, 1])
-    with b1:
-        if st.button("🗺️ Back to Road Map"):
-            st.session_state.screen = "adventure_trail"
-            st.rerun()
-    with b2:
-        if st.button("🏠 Switch Profile"):
-            st.session_state.screen = "profile_select"
-            st.rerun()
-    with b3:
-        st.markdown(f"<div class='stat-chip' style='text-align:center;'>⭐ {pdata['stars']} Stars</div>", unsafe_allow_html=True)
-
-    st.markdown(f"<h2 style='color:#0369a1; text-align:center;'>{current_lvl_info['name']} (Question {min(current_step + 1, 3)} of 3)</h2>", unsafe_allow_html=True)
-
-    # ---------------------------------------------------------
-    # LEVEL 1: LIST 1 SIGHT WORDS
-    # ---------------------------------------------------------
-    if lvl_id == "lvl_1":
-        questions = [
-            {"q": "Which word says 'the'?", "correct": "the", "opts": ["the", "at", "it"], "hint": "Starts with T!"},
-            {"q": "Which word says 'and'?", "correct": "and", "opts": ["dog", "and", "run"], "hint": "Starts with A!"},
-            {"q": "Which word says 'you'?", "correct": "you", "opts": ["see", "cat", "you"], "hint": "Starts with Y!"}
-        ]
-        
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l1_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
+            except urllib.error.HTTPError as err:
+                st.error(f"API Error ({err.code}): {err.read().decode('utf-8')}")
+            except Exception as e:
+                st.error(f"Error: {e}")
         else:
-            st.success("🎉 Level 1 Completed! Level 2 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_2"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 2: LIST 2 SIGHT WORDS
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_2":
-        questions = [
-            {"q": "Which word says 'look'?", "correct": "look", "opts": ["look", "dog", "big"], "hint": "Starts with L!"},
-            {"q": "Which word says 'play'?", "correct": "play", "opts": ["run", "play", "red"], "hint": "Starts with P!"},
-            {"q": "Which word says 'said'?", "correct": "said", "opts": ["said", "cat", "sun"], "hint": "Starts with S!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l2_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 2 Completed! Level 3 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_3"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 3: WRITE & TYPE ABCs (Sound & Order)
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_3":
-        questions = [
-            {"q": "What letter comes right after A?", "correct": "B", "opts": ["B", "C", "D"], "hint": "A, B, C!"},
-            {"q": "What sound does the letter 'S' make?", "correct": "/s/ snake sound", "opts": ["/s/ snake sound", "/m/ monkey sound", "/b/ bear sound"], "hint": "S says ssss!"},
-            {"q": "What letter comes right before Z?", "correct": "Y", "opts": ["X", "Y", "W"], "hint": "X, Y, Z!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l3_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 3 Completed! Level 4 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_4"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 4: COUNT TO 100 & WHAT COMES NEXT
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_4":
-        questions = [
-            {"q": "What number comes after 9?", "correct": "10", "opts": ["8", "10", "11"], "hint": "9, 10!"},
-            {"q": "What number comes after 19?", "correct": "20", "opts": ["18", "20", "21"], "hint": "19, 20!"},
-            {"q": "What number comes after 49?", "correct": "50", "opts": ["48", "50", "60"], "hint": "49, 50!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l4_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 4 Completed! Level 5 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_5"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 5: RHYMING WORDS
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_5":
-        questions = [
-            {"q": "What word rhymes with 'cat'?", "correct": "hat", "opts": ["dog", "hat", "sun"], "hint": "Listen to the ending: -at!"},
-            {"q": "What word rhymes with 'pig'?", "correct": "wig", "opts": ["car", "wig", "hop"], "hint": "Listen to the ending: -ig!"},
-            {"q": "What word rhymes with 'sun'?", "correct": "run", "opts": ["run", "cup", "pen"], "hint": "Listen to the ending: -un!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l5_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 5 Completed! Level 6 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_6"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 6: SYLLABLES
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_6":
-        questions = [
-            {"q": "How many syllables in 'cat'? (Clap it out: cat)", "correct": "1", "opts": ["1", "2", "3"], "hint": "Cat is 1 clap!"},
-            {"q": "How many syllables in 'apple'? (Clap it out: ap-ple)", "correct": "2", "opts": ["1", "2", "3"], "hint": "Ap-ple is 2 claps!"},
-            {"q": "How many syllables in 'elephant'? (Clap it out: el-e-phant)", "correct": "3", "opts": ["1", "2", "3"], "hint": "El-e-phant is 3 claps!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l6_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 6 Completed! Level 7 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_7"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 7: ADDITION UP TO 10
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_7":
-        questions = [
-            {"q": "What is 3 + 2?", "correct": "5", "opts": ["4", "5", "6"], "hint": "Count 3, then add 2 more!"},
-            {"q": "What is 4 + 4?", "correct": "8", "opts": ["7", "8", "9"], "hint": "Count all together!"},
-            {"q": "What is 5 + 5?", "correct": "10", "opts": ["9", "10", "11"], "hint": "Two hands of fingers!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l7_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 7 Completed! Level 8 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_8"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 8: SUBTRACTION UP TO 10
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_8":
-        questions = [
-            {"q": "What is 5 - 2?", "correct": "3", "opts": ["2", "3", "4"], "hint": "Take away 2 from 5!"},
-            {"q": "What is 7 - 3?", "correct": "4", "opts": ["3", "4", "5"], "hint": "Count backward 3 from 7!"},
-            {"q": "What is 10 - 5?", "correct": "5", "opts": ["4", "5", "6"], "hint": "Half of 10!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l8_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 8 Completed! Level 9 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_9"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 9: UPPER & LOWERCASE MATCH
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_9":
-        questions = [
-            {"q": "What is the lowercase partner for uppercase 'A'?", "correct": "a", "opts": ["a", "b", "c"], "hint": "Round circle with a tail!"},
-            {"q": "What is the lowercase partner for uppercase 'B'?", "correct": "b", "opts": ["d", "b", "p"], "hint": "Straight line with a belly!"},
-            {"q": "What is the lowercase partner for uppercase 'M'?", "correct": "m", "opts": ["n", "m", "w"], "hint": "Two humps!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l9_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 9 Completed! Level 10 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_10"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 10: FIND LETTERS IN ABCs
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_10":
-        questions = [
-            {"q": "Which letter comes first in the alphabet?", "correct": "A", "opts": ["A", "Z", "M"], "hint": "Starts with the very beginning!"},
-            {"q": "Find the letter 'K' in the alphabet.", "correct": "K", "opts": ["J", "K", "L"], "hint": "Between J and L!"},
-            {"q": "Which letter comes last in the alphabet?", "correct": "Z", "opts": ["A", "T", "Z"], "hint": "The very end!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l10_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 10 Completed! Level 11 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_11"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 11: READING PICTURE WORD BOOK
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_11":
-        questions = [
-            {"q": "Read: 'I see the cat.' Which word is a sight word?", "correct": "the", "opts": ["cat", "the", "see"], "hint": "T-H-E!"},
-            {"q": "Read: 'Look at the big dog.' Which word is a sight word?", "correct": "look", "opts": ["dog", "big", "look"], "hint": "L-O-O-K!"},
-            {"q": "Read: 'Play with me.' Which word is a sight word?", "correct": "play", "opts": ["play", "me", "with"], "hint": "P-L-A-Y!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l11_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 11 Completed! Level 12 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_12"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 12: WRITE A SENTENCE
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_12":
-        questions = [
-            {"q": "What goes at the very end of a sentence?", "correct": "Period (.)", "opts": ["Comma", "Period (.)", "Question mark"], "hint": "A dot!"},
-            {"q": "What should the first letter of a sentence be?", "correct": "Capital letter", "opts": ["Small letter", "Capital letter", "Any letter"], "hint": "Uppercase!"},
-            {"q": "What needs to be between words in a sentence?", "correct": "Finger spaces", "opts": ["Spaces", "Glue", "Nothing"], "hint": "Keep them apart!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l12_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 12 Completed! Level 13 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_13"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 13: COUNT BY 2s, 5s & 10s
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_13":
-        questions = [
-            {"q": "Count by 2s: 2, 4, 6, ... What's next?", "correct": "8", "opts": ["7", "8", "9"], "hint": "Add 2!"},
-            {"q": "Count by 5s: 5, 10, 15, ... What's next?", "correct": "20", "opts": ["18", "20", "25"], "hint": "Add 5!"},
-            {"q": "Count by 10s: 10, 20, 30, ... What's next?", "correct": "40", "opts": ["35", "40", "50"], "hint": "Add 10!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l13_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 13 Completed! Level 14 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_14"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 14: PERSONAL LOCATION & 50 U.S. STATES
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_14":
-        questions = [
-            {"q": "What city do you live in?", "correct": "Covington", "opts": ["Atlanta", "Covington", "Savannah"], "hint": "Covington, GA!"},
-            {"q": "How many states are in the United States?", "correct": "50", "opts": ["48", "50", "52"], "hint": "Fifty states!"},
-            {"q": "What state do you live in?", "correct": "Georgia (GA)", "opts": ["Florida", "Georgia (GA)", "Texas"], "hint": "The Peach State!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l14_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 14 Completed! Level 15 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_15"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 15: SPELL FULL NAME
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_15":
-        questions = [
-            {"q": "What is your first name?", "correct": "Gracyn", "opts": ["Gracyn", "Alex", "Taylor"], "hint": "Gracyn!"},
-            {"q": "What is your middle name / last name initial?", "correct": "Brown", "opts": ["Smith", "Brown", "Johnson"], "hint": "Brown!"},
-            {"q": "Are you a Kindergarten Star?", "correct": "Yes!", "opts": ["No", "Yes!", "Maybe"], "hint": "Always yes!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l15_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Level 15 Completed! Level 16 Unlocked!")
-            if st.button("Next Level"):
-                st.session_state.active_level_id = "lvl_16"
-                st.rerun()
-
-    # ---------------------------------------------------------
-    # LEVEL 16: SEASONS, DAYS OF THE WEEK & MONTHS
-    # ---------------------------------------------------------
-    elif lvl_id == "lvl_16":
-        questions = [
-            {"q": "How many days are in a week?", "correct": "7", "opts": ["5", "7", "10"], "hint": "Sunday to Saturday!"},
-            {"q": "How many months are in a year?", "correct": "12", "opts": ["10", "12", "4"], "hint": "From January to December!"},
-            {"q": "Which season comes after winter with blooming flowers?", "correct": "Spring", "opts": ["Summer", "Spring", "Fall"], "hint": "Warming up and growing flowers!"}
-        ]
-        if current_step < len(questions):
-            q = questions[current_step]
-            speak(q["q"])
-            st.markdown(f"<div class='game-card'><h3>{q['q']}</h3></div>", unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            for i, opt in enumerate(q["opts"]):
-                with [c1, c2, c3][i]:
-                    if st.button(f"👉 {opt}", key=f"l16_{current_step}_{opt}", use_container_width=True):
-                        if opt == q["correct"]:
-                            record_progress(lvl_id, True)
-                            st.balloons()
-                            speak("Correct!")
-                            st.rerun()
-                        else:
-                            speak(f"Hint: {q['hint']}")
-                            st.warning(f"💡 Hint: {q['hint']}")
-        else:
-            st.success("🎉 Congratulations! You have fully completed all 16 Levels and reached the Learning House Finish Line!")
-            if st.button("🗺️ Return to Road Map"):
-                st.session_state.screen = "adventure_trail"
-                st.rerun()
+            st.warning("Please verify your `GEMINI_API_KEY` is added under Streamlit Settings > Secrets.")
